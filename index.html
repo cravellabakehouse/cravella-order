@@ -19,7 +19,7 @@
 @media (prefers-color-scheme:dark){:root{--bg:#1d1612;--card:#271e18;--ink:#f6ece0;--mut:#b5a393;--line:#3c2f26;--acc:#e08a5e;--acc-ink:#2a160b;--ok:#5fc08a;--warn-bg:#33281a;--warn-line:#54402a;--warn-ink:#e7c996;--shadow:none}}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font:400 15px/1.45 'Hanken Grotesk',system-ui,sans-serif;padding-bottom:130px;min-height:100vh}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.45 'Hanken Grotesk',system-ui,sans-serif;padding-bottom:110px;min-height:100vh}
 h1,h2,.t{font-family:'Bricolage Grotesque','Hanken Grotesk',system-ui,sans-serif}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .band{background:var(--cream);text-align:center;padding:calc(14px + env(safe-area-inset-top)) 16px 10px}
@@ -125,7 +125,7 @@ body.acct-open .bar{z-index:25}
 <main id="panel"></main>
 <div class="foot"><a class="fph" href="tel:+919845904310">📞 98459-04310</a><br>Pre-orders &amp; enquiries · FSSAI Lic. No. 21225177003525<br>Prices are per item as listed. Delivery, if needed, is charged separately.</div>
 
-<div class="bar empty" id="bar"><div class="sum"><div class="a" id="barA">0 items</div><div class="b" id="barB">₹0</div></div><button class="go" id="barGo">Order now</button></div>
+<div class="bar hide" id="bar"><div class="sum"><div class="a" id="barA">0 items</div><div class="b" id="barB">₹0</div></div><button class="go" id="barGo">Order now</button></div>
 <div class="toast" id="toast"></div>
 
 <div class="ov" id="review">
@@ -269,7 +269,7 @@ function renderPanel(){
   $('panel').innerHTML=h;
 }
 function renderBar(){
-  const t=totals();$('bar').classList.toggle('empty',!t.count);
+  const t=totals();$('bar').classList.toggle('hide',!t.count);
   $('barA').textContent=t.count+(t.count===1?' item':' items');$('barB').textContent=inr(t.sub);
   $('barGo').textContent=t.count?'Order now ›':'Order now';
 }
@@ -464,7 +464,11 @@ $('acBody').addEventListener('click',e=>{
     if(r.ok){A.view='code'}else A.msg=r.error||'Could not send the code.'});
   if(a==='verify')return acDo(x,async()=>{
     const r=await api({action:'otp_verify',email:A.email,code:$('aCode').value});
-    if(r.ok){setTok(r.token);A.profile=r.profile;A.orders=null;A.view='home';accBtn();acRender();await loadMe();toast('Signed in')}else A.msg=r.error||'That code is not right.'});
+    if(r.ok){setTok(r.token);A.profile=r.profile;A.orders=null;A.view='home';accBtn();
+      const inReview=$('review').classList.contains('on');closeAcct();
+      if(!inReview)scrollTo({top:Math.max(0,$('tabs').offsetTop),behavior:'smooth'});
+      toast('Signed in. Choose what you would like to order.');loadMe().then(()=>{accBtn();if($('review').classList.contains('on'))prefill()})}
+    else A.msg=r.error||'That code is not right.'});
   if(a==='save')return acDo(x,async()=>{
     const r=await api({action:'save_profile',token:A.tok,name:$('pName').value,phone:$('pPhone').value,address:$('pAddr').value});
     if(r.ok){A.profile=r.profile;accBtn();toast('Details saved')}else if(r.error==='auth'){setTok('');A.view='in';A.msg='Please sign in again.'}else A.msg=r.error});
