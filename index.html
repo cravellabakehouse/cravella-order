@@ -49,6 +49,7 @@ main{padding:6px 16px 0;max-width:640px;margin:0 auto}
 .step span{min-width:46px;text-align:center;font-weight:700}
 .add{background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:12px;font-weight:700}
 .add:active,.go:active{transform:scale(.97)}
+.add.off{opacity:.45}
 .kg{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--mut)}
 .note{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink);border-radius:12px;padding:10px 12px;font-size:13px;margin:12px 0}
 .bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:616px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:18px;padding:11px 12px 11px 18px;display:flex;justify-content:space-between;align-items:center;z-index:8;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .2s}
@@ -210,7 +211,7 @@ const findCookie=id=>MENU.cookies.find(c=>c.id===id);
 
 /* ---------- state ---------- */
 const S={tab:'cakes',cakes:[],pc:{},cookie:{},sel:{},mode:'Pickup',photos:[]};
-function selOf(id){if(!S.sel[id])S.sel[id]={cream:findCake(id).creams[0].id,wi:1,kg:3};return S.sel[id]}
+function selOf(id){if(!S.sel[id]){const cs=findCake(id).creams;S.sel[id]={cream:cs.length>1?null:cs[0].id,wi:null,kg:3}};return S.sel[id]}
 
 function lines(){
   const out=[];
@@ -233,13 +234,16 @@ function renderTabs(){
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${n}${cnt[k]?`<span class="n">${cnt[k]}</span>`:''}</button>`).join('');
 }
 function cakeCard(c){
-  const s=selOf(c.id),cr=c.creams.find(x=>x.id===s.cream)||c.creams[0],other=s.wi==='o';
-  const kg=other?s.kg:MENU.weights[s.wi],p=cakePrice(c,s.cream,kg);
+  const s=selOf(c.id),cr=c.creams.find(x=>x.id===s.cream),other=s.wi==='o';
+  const needCream=c.creams.length>1&&s.cream===null,needSize=s.wi===null,ready=!needCream&&!needSize;
+  const kg=other?s.kg:MENU.weights[s.wi],p=ready?cakePrice(c,s.cream,kg):null;
+  const pv=i=>cr?cr.prices[i]:Math.min(...c.creams.map(x=>x.prices[i]));
+  const miss=needCream&&needSize?'cream and size':needCream?'a cream type':'a size';
   return `<div class="card" data-cake="${c.id}"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div>
   ${c.creams.length>1?`<div class="chips">${c.creams.map(x=>`<button class="chip cr ${x.id===s.cream?'on':''}" data-cream="${x.id}">${x.label}</button>`).join('')}</div>`:''}
-  <div class="chips">${MENU.weights.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${inr(cr.prices[i])}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
+  <div class="chips">${MENU.weights.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${cr?'':'from '}${inr(pv(i))}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
   ${other?`<div class="kg"><span>Weight</span><div class="step"><button data-kgm>−</button><span>${kgLabel(s.kg)}</span><button class="p" data-kgp>+</button></div></div>`:''}
-  <div class="row"><div class="pr">${inr(p.amount)}<small>${p.exact?'as per menu':'estimate · we\'ll confirm'}</small></div><button class="add" data-add>Add</button></div></div>`;
+  <div class="row"><div class="pr">${ready?inr(p.amount):'Choose '+miss}<small>${ready?(p.exact?'as per menu':'estimate · we\'ll confirm'):'to see the price'}</small></div><button class="add${ready?'':' off'}" data-add>Add</button></div></div>`;
 }
 function pcCard(d,unit){
   const q=S.pc[d.id]||0,bx=q/d.size;
@@ -284,6 +288,8 @@ $('panel').addEventListener('click',e=>{
     else if(e.target.closest('[data-kgm]')){s.kg=Math.max(0.5,s.kg-0.5)}
     else if(e.target.closest('[data-kgp]')){s.kg=Math.min(15,s.kg+0.5)}
     else if(e.target.closest('[data-add]')){
+      if(c.creams.length>1&&s.cream===null){toast('Please choose a cream type first');return}
+      if(s.wi===null){toast('Please choose a size first');return}
       const kg=s.wi==='o'?s.kg:MENU.weights[s.wi];
       const ex=S.cakes.find(l=>l.id===c.id&&l.cream===s.cream&&l.kg===kg);
       if(ex)ex.q=Math.min(20,ex.q+1);else S.cakes.push({id:c.id,cream:s.cream,kg,q:1});
