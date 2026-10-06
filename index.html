@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Order from Cravella Bake House</title>
+<meta name="description" content="Eggless cakes, cupcakes, muffins, cookies and brownies, baked to order. Choose your items and send an order request.">
+<meta name="theme-color" content="#fffbbe">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cravella">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#fffbbe;--bg:#fffdf6;--card:#ffffff;--ink:#3b2416;--mut:#7d6a58;--line:#eadfc9;--acc:#b4532a;--acc-ink:#fff;--ok:#2f7d4f;--warn-bg:#fff4e4;--warn-line:#f0dcb8;--warn-ink:#7a5a30;--shadow:0 1px 2px rgba(60,36,22,.06)}
+@media (prefers-color-scheme:dark){:root{--bg:#1d1612;--card:#271e18;--ink:#f6ece0;--mut:#b5a393;--line:#3c2f26;--acc:#e08a5e;--acc-ink:#2a160b;--ok:#5fc08a;--warn-bg:#33281a;--warn-line:#54402a;--warn-ink:#e7c996;--shadow:none}}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.45 'Hanken Grotesk',system-ui,sans-serif;padding-bottom:110px;min-height:100vh}
+h1,h2,.t{font-family:'Bricolage Grotesque','Hanken Grotesk',system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.band{background:var(--cream);text-align:center;padding:calc(14px + env(safe-area-inset-top)) 16px 10px}
+.band img{height:84px;max-width:70%;object-fit:contain;display:block;margin:0 auto}
+.band p{font-size:12.5px;color:#6a5a2a;margin-top:2px}
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow-x:auto;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:8px 14px;border:1px solid var(--line);border-radius:999px;font-weight:600;font-size:14px;background:var(--card)}
+.tab.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab .n{display:inline-block;min-width:18px;margin-left:6px;padding:0 5px;border-radius:9px;background:var(--acc);color:var(--acc-ink);font-size:11px;line-height:18px}
+main{padding:6px 16px 0;max-width:640px;margin:0 auto}
+.sec{margin:18px 0 8px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:10px;box-shadow:var(--shadow)}
+.t{font-weight:700;font-size:16.5px;letter-spacing:-.005em}
+.d{font-size:13px;color:var(--mut);margin-top:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{padding:7px 11px;border:1px solid var(--line);border-radius:11px;font-size:13px;text-align:center;line-height:1.25;background:var(--bg)}
+.chip b{display:block;font-weight:700}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.chip.cr{padding:7px 13px;font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:11px}
+.pr{font-weight:700;color:var(--acc);font-size:16px}
+.pr small{display:block;font-weight:500;font-size:11.5px;color:var(--mut)}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center}
+.step button.p{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.step span{min-width:46px;text-align:center;font-weight:700}
+.add{background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:12px;font-weight:700}
+.add:active,.go:active{transform:scale(.97)}
+.kg{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--mut)}
+.note{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink);border-radius:12px;padding:10px 12px;font-size:13px;margin:12px 0}
+.bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:616px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:18px;padding:11px 12px 11px 18px;display:flex;justify-content:space-between;align-items:center;z-index:8;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .2s}
+.bar.hide{transform:translateY(140%)}
+.bar .a{font-size:11.5px;opacity:.75}.bar .b{font:700 21px 'Bricolage Grotesque',sans-serif}
+.go{background:var(--acc);color:var(--acc-ink);padding:12px 18px;border-radius:13px;font-weight:700;font-size:15px}
+.go[disabled]{opacity:.55}
+.foot{max-width:640px;margin:26px auto 0;padding:0 16px;font-size:12.5px;color:var(--mut);text-align:center;line-height:1.6}
+.foot a{color:inherit}
+/* overlays */
+.ov{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;display:none;padding-bottom:40px}
+.ov.on{display:block}
+.ovh{position:sticky;top:0;z-index:2;background:var(--cream);display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
+.ovh button.back{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.7);font-size:20px;color:#3b2416}
+.ovh h2{font-size:18px;color:#3b2416}
+.wrap{max-width:560px;margin:0 auto;padding:6px 16px}
+.line{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:14.5px}
+.line .l{flex:1;min-width:0}.line .l small{display:block;color:var(--mut);font-size:12px}
+.hr{border-top:1px dashed var(--line);margin:8px 0}
+.tot{font:700 20px 'Bricolage Grotesque',sans-serif}
+label.f{display:block;font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--mut);margin:16px 0 6px}
+input.i,textarea.i,select.i{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+textarea.i{min-height:78px;resize:vertical}
+input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outline-offset:0}
+.two{display:grid;grid-template-columns:1.2fr 1fr;gap:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{padding:11px;border:1px solid var(--line);border-radius:12px;font-weight:600;background:var(--card)}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.up{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px dashed var(--line);border-radius:14px;padding:16px;text-align:center;color:var(--mut);font-size:13.5px;background:var(--card);cursor:pointer}
+.th{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.th div{position:relative;width:76px;height:76px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:13px;line-height:1}
+.err{color:#c0392b;font-size:13.5px;margin-top:10px;font-weight:600}
+@media (prefers-color-scheme:dark){.err{color:#ff8a7a}}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.ok{width:76px;height:76px;border-radius:50%;background:var(--ok);color:#fff;font-size:42px;display:flex;align-items:center;justify-content:center;margin:30px auto 12px}
+.btn{display:block;width:100%;text-align:center;padding:14px;border-radius:14px;font-weight:700;margin-top:10px;text-decoration:none;font-size:15px}
+.btn.wa{background:#25a244;color:#fff}.btn.ol{border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:98px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:12px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:30}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.hint{font-size:13px;color:var(--mut);margin-top:6px}
+.empty{text-align:center;color:var(--mut);padding:30px 0}
+</style>
+</head>
+<body>
+<div class="band"><img src="data:image/png;base64,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" alt="Cravella Bake House" width="300" height="136"><p>Eggless · Freshly baked to order</p></div>
+<div class="tabs" id="tabs"></div>
+<main id="panel"></main>
+<div class="foot">Pre-orders: <a href="tel:+919845904310">98459-04310</a> · FSSAI Lic. No. 21225177003525<br>Prices are per item as listed. Delivery, if needed, is charged separately.</div>
+
+<div class="bar hide" id="bar"><div><div class="a" id="barA">0 items</div><div class="b" id="barB">₹0</div></div><button class="go" id="barGo">Review order ›</button></div>
+<div class="toast" id="toast"></div>
+
+<div class="ov" id="review">
+ <div class="ovh"><button class="back" id="revBack" aria-label="Back">‹</button><h2>Your order</h2></div>
+ <div class="wrap">
+  <div id="revLines" style="margin-top:10px"></div>
+  <div class="hr"></div>
+  <div class="line"><span>Subtotal</span><b id="revSub"></b></div>
+  <div class="line" id="revDelRow" style="color:var(--mut)"><span>Delivery</span><span>fee confirmed by us</span></div>
+  <div class="line"><span class="tot">Estimated total</span><span class="tot" id="revTot"></span></div>
+  <div class="note" id="revNote" style="display:none"></div>
+
+  <label class="f">Pickup or delivery</label>
+  <div class="seg" id="modeSeg"><button data-m="Pickup" class="on">Pickup</button><button data-m="Delivery">Delivery</button></div>
+  <div id="addrBox" style="display:none"><label class="f">Delivery address</label><textarea class="i" id="fAddr" placeholder="House / flat, street, area, landmark"></textarea><div class="hint">We'll confirm the delivery fee on WhatsApp.</div></div>
+
+  <label class="f">Date &amp; time</label>
+  <div class="two"><input class="i" type="date" id="fDate"><select class="i" id="fTime"></select></div>
+  <div class="hint" id="dateHint"></div>
+
+  <label class="f">Your details</label>
+  <input class="i" id="fName" placeholder="Your name" autocomplete="name" maxlength="80">
+  <input class="i" id="fPhone" placeholder="WhatsApp / mobile number" inputmode="numeric" autocomplete="tel" maxlength="16" style="margin-top:8px">
+  <label class="f">Message on cake / notes</label>
+  <textarea class="i" id="fNotes" placeholder="e.g. “Happy Birthday Aarav”, allergies, theme, colours" maxlength="500"></textarea>
+
+  <label class="f">Reference photo (optional)</label>
+  <label class="up"><span style="font-size:24px">📷</span><span>Tap to add a design you like<br><small>Up to 3 photos · helps us quote custom cakes</small></span><input type="file" id="fPhoto" accept="image/*" multiple hidden></label>
+  <div class="th" id="thumbs"></div>
+
+  <input class="hp" id="fHp" tabindex="-1" autocomplete="off" aria-hidden="true">
+  <div class="err" id="err"></div>
+  <button class="go" id="submit" style="width:100%;margin-top:16px;padding:15px;font-size:16px">Place order request</button>
+  <p class="hint" style="text-align:center;margin-top:10px">This is a request, not a confirmed booking. We'll confirm the order and final price on WhatsApp. Advance is paid by UPI after confirmation. Your details are used only to process your order.</p>
+ </div>
+</div>
+
+<div class="ov" id="done">
+ <div class="ovh"><h2 style="margin-left:8px">Cravella Bake House</h2></div>
+ <div class="wrap">
+  <div class="ok">✓</div>
+  <h2 style="text-align:center;font-size:23px">Request received!</h2>
+  <p class="d" style="text-align:center;margin:8px 10px 18px;font-size:14px">Thank you, <span id="dName"></span>. We'll confirm your order and the final price on WhatsApp shortly. Advance is paid by UPI after confirmation.</p>
+  <div class="card"><div class="sec" style="margin-top:0" id="dId"></div><div id="dLines"></div><div class="hr"></div><div class="line"><span>Pickup / delivery</span><b id="dWhen" style="text-align:right"></b></div><div class="line"><span>Estimated total</span><b id="dTot"></b></div></div>
+  <a class="btn wa" id="dWa" target="_blank" rel="noopener">💬 Message us on WhatsApp</a>
+  <button class="btn ol" id="dInstall" style="display:none">Add Cravella to your home screen</button>
+  <div class="hint" id="dIos" style="display:none;text-align:center">Order faster next time: tap <b>Share</b>, then <b>Add to Home Screen</b>.</div>
+  <button class="btn ol" id="dAgain">Place another order</button>
+ </div>
+</div>
+
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycby9cbU5BitbWeEFyYj2jAESAmIIvtLnEs85GHcKa_yxMGtX0k044V-Bp2dnLC0r6BP9Kg/exec';
+const WA='919845904310';
+const MENU={"weights":[0.5,1,1.5,2],"cakes":[{"id":"truffle","name":"Truffle Cake","group":"Chocolate cakes","desc":"Rich dark chocolate ganache","creams":[{"id":"","label":"","prices":[700,1250,1750,2300]}]},{"id":"orange","name":"Orange Chocolate Cake","group":"Chocolate cakes","desc":"Chocolate with a zesty orange note","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"blackforest","name":"Black Forest","group":"Chocolate cakes","desc":"Chocolate, cream and cherries","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"whiteforest","name":"White Forest","group":"Chocolate cakes","desc":"White chocolate and cream","creams":[{"id":"","label":"","prices":[800,1400,2000,2600]}]},{"id":"strawberry","name":"Strawberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"blueberry","name":"Blueberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"raspberry","name":"Raspberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"mango","name":"Mango Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]},{"id":"pineapple","name":"Pineapple Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]}],"cupcakes":[{"id":"cup0","name":"Chocolate","rate":85,"box":500,"size":6},{"id":"cup1","name":"Strawberry","rate":75,"box":450,"size":6},{"id":"cup2","name":"Blueberry","rate":80,"box":480,"size":6},{"id":"cup3","name":"Raspberry","rate":80,"box":480,"size":6},{"id":"cup4","name":"Mango","rate":80,"box":480,"size":6}],"muffins":[{"id":"muf0","name":"Banana Chocochip","rate":80,"box":480,"size":6},{"id":"muf1","name":"Mocha Almond","rate":80,"box":480,"size":6},{"id":"muf2","name":"Chocolate Cranberry","rate":95,"box":570,"size":6},{"id":"muf3","name":"Vanilla Chocochip","rate":80,"box":480,"size":6},{"id":"muf4","name":"Carrot","rate":80,"box":480,"size":6},{"id":"muf5","name":"Pista Mawa Cake","rate":100,"box":600,"size":6}],"brownies":[{"id":"brn0","name":"Crinkle Top","rate":90,"box":350,"size":4},{"id":"brn1","name":"Walnut","rate":100,"box":380,"size":4},{"id":"brn2","name":"Red Velvet Cream Cheese","rate":130,"box":500,"size":4},{"id":"brn3","name":"Triple Chocolate","rate":140,"box":530,"size":4},{"id":"brn4","name":"Fudgy Cookie & Cream","rate":130,"box":500,"size":4},{"id":"brn5","name":"Lotus Biscoff","rate":160,"box":600,"size":4},{"id":"brn6","name":"Tiramisu","rate":160,"box":600,"size":4}],"blondies":[{"id":"bld0","name":"Pista & Rose","rate":160,"box":620,"size":4},{"id":"bld1","name":"Coconut","rate":150,"box":580,"size":4}],"cookies":[{"id":"cok0","name":"Coffee Bean","rate":350},{"id":"cok1","name":"Center-filled Chocochip","rate":425},{"id":"cok2","name":"Checker Board","rate":400},{"id":"cok3","name":"Digestive (Atta & Jaggery)","rate":350},{"id":"cok4","name":"Gluten Free Vegan","rate":450},{"id":"cok5","name":"Butter","rate":350}]};
+const LEAD={cake:2,other:1};
+const TIMES=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
+const TABS=[['cakes','Cakes'],['cupcakes','Cupcakes'],['muffins','Muffins'],['cookies','Cookies'],['brownies','Brownies']];
+const $=id=>document.getElementById(id);
+const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gLabel=g=>g>=1000?(g/1000)+' kg':g+' g';
+const kgLabel=k=>k<1?(k*1000)+' g':(k%1?k.toFixed(1):k)+' kg';
+
+/* ---------- pricing (the server recalculates all of this) ---------- */
+function cakePrice(c,cream,kg){
+  const cr=c.creams.find(x=>x.id===cream)||c.creams[0],ws=MENU.weights,ex=ws.indexOf(kg);
+  if(ex>=0)return{amount:cr.prices[ex],exact:true};
+  let i=ws.findIndex(w=>w>=kg);if(i<0)i=ws.length-1;
+  return{amount:Math.round(cr.prices[i]/ws[i]*kg),exact:false};
+}
+const pcAmount=(d,q)=>Math.floor(q/d.size)*d.box+(q%d.size)*d.rate;
+const cookieAmount=(d,g)=>g/250*d.rate;
+const findCake=id=>MENU.cakes.find(c=>c.id===id);
+const findPc=id=>[...MENU.cupcakes,...MENU.muffins,...MENU.brownies,...MENU.blondies].find(d=>d.id===id);
+const findCookie=id=>MENU.cookies.find(c=>c.id===id);
+
+/* ---------- state ---------- */
+const S={tab:'cakes',cakes:[],pc:{},cookie:{},sel:{},mode:'Pickup',photos:[]};
+function selOf(id){if(!S.sel[id])S.sel[id]={cream:findCake(id).creams[0].id,wi:1,kg:3};return S.sel[id]}
+
+function lines(){
+  const out=[];
+  S.cakes.forEach((l,i)=>{const c=findCake(l.id),p=cakePrice(c,l.cream,l.kg),cr=c.creams.find(x=>x.id===l.cream);
+    out.push({ref:['cake',i],name:c.name,sub:[cr&&cr.label,kgLabel(l.kg)+(l.q>1?' × '+l.q:''),p.exact?'':'estimate – we\'ll confirm'].filter(Boolean).join(' · '),q:l.q,qLabel:'×'+l.q,amount:p.amount*l.q,flag:!p.exact,kind:'cake'})});
+  for(const id in S.pc){const q=S.pc[id];if(!q)continue;const d=findPc(id);
+    out.push({ref:['pc',id],name:d.name+' '+kindName(id),sub:q+' pcs · '+(q/d.size)+(q/d.size>1?' boxes':' box')+' of '+d.size,q,amount:pcAmount(d,q),kind:'other'})}
+  for(const id in S.cookie){const g=S.cookie[id];if(!g)continue;const d=findCookie(id);
+    out.push({ref:['cookie',id],name:d.name+' Cookies',sub:gLabel(g),q:g,amount:cookieAmount(d,g),kind:'other'})}
+  return out;
+}
+function kindName(id){return id.startsWith('cup')?'Cupcakes':id.startsWith('muf')?'Muffins':id.startsWith('brn')?'Brownies':'Blondies'}
+const totals=()=>{const L=lines();return{L,sub:L.reduce((a,l)=>a+l.amount,0),count:L.length,flag:L.some(l=>l.flag)}};
+
+/* ---------- menu rendering ---------- */
+function renderTabs(){
+  const cnt={cakes:S.cakes.length,cupcakes:0,muffins:0,cookies:0,brownies:0};
+  for(const id in S.pc)if(S.pc[id]){const k=id.startsWith('cup')?'cupcakes':id.startsWith('muf')?'muffins':'brownies';cnt[k]++}
+  for(const id in S.cookie)if(S.cookie[id])cnt.cookies++;
+  $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${n}${cnt[k]?`<span class="n">${cnt[k]}</span>`:''}</button>`).join('');
+}
+function cakeCard(c){
+  const s=selOf(c.id),cr=c.creams.find(x=>x.id===s.cream)||c.creams[0],other=s.wi==='o';
+  const kg=other?s.kg:MENU.weights[s.wi],p=cakePrice(c,s.cream,kg);
+  return `<div class="card" data-cake="${c.id}"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div>
+  ${c.creams.length>1?`<div class="chips">${c.creams.map(x=>`<button class="chip cr ${x.id===s.cream?'on':''}" data-cream="${x.id}">${x.label}</button>`).join('')}</div>`:''}
+  <div class="chips">${MENU.weights.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${inr(cr.prices[i])}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
+  ${other?`<div class="kg"><span>Weight</span><div class="step"><button data-kgm>−</button><span>${kgLabel(s.kg)}</span><button class="p" data-kgp>+</button></div></div>`:''}
+  <div class="row"><div class="pr">${inr(p.amount)}<small>${p.exact?'as per menu':'estimate · we\'ll confirm'}</small></div><button class="add" data-add>Add</button></div></div>`;
+}
+function pcCard(d,unit){
+  const q=S.pc[d.id]||0,bx=q/d.size;
+  return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div></div>
+  <div class="step"><button data-m aria-label="Remove one box">−</button><span>${q}</span><button class="p" data-p aria-label="Add one box">+</button></div></div>
+  ${q?`<div class="row" style="margin-top:6px"><span class="d">${bx} ${bx>1?'boxes':'box'} = ${q} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,q))}</span></div>`:''}</div>`;
+}
+function cookieCard(d){
+  const g=S.cookie[d.id]||0;
+  return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div></div>
+  <div class="step"><button data-m>−</button><span>${g?gLabel(g):'0'}</span><button class="p" data-p>+</button></div></div>
+  ${g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(g)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,g))}</span></div>`:''}</div>`;
+}
+function renderPanel(){
+  let h='';
+  if(S.tab==='cakes'){
+    let g='';MENU.cakes.forEach(c=>{if(c.group!==g){g=c.group;h+=`<div class="sec">${g}</div>`}h+=cakeCard(c)});
+    h+=`<div class="note">Cakes need 2 days' notice. Custom or theme cake? Add a reference photo when you review your order.</div>`;
+  }else if(S.tab==='cupcakes'){h+=`<div class="sec">Cupcakes</div>`+MENU.cupcakes.map(d=>pcCard(d,'cupcakes')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
+  else if(S.tab==='muffins'){h+=`<div class="sec">Muffins</div>`+MENU.muffins.map(d=>pcCard(d,'muffins')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
+  else if(S.tab==='cookies'){h+=`<div class="sec">Cookies · per 250 g</div>`+MENU.cookies.map(cookieCard).join('')+`<div class="note">Minimum 250 g per flavour. Bakes need 1 day's notice.</div>`}
+  else{h+=`<div class="sec">Brownies</div>`+MENU.brownies.map(d=>pcCard(d,'brownies')).join('')+`<div class="sec">Blondies</div>`+MENU.blondies.map(d=>pcCard(d,'blondies')).join('')+`<div class="note">Sold by the box of 4. Each + adds one box (4 pieces). Bakes need 1 day's notice.</div>`}
+  $('panel').innerHTML=h;
+}
+function renderBar(){
+  const t=totals();$('bar').classList.toggle('hide',!t.count);
+  $('barA').textContent=t.count+(t.count===1?' item':' items');$('barB').textContent=inr(t.sub);
+}
+function renderAll(keepScroll){const y=scrollY;renderTabs();renderPanel();renderBar();if(keepScroll)scrollTo(0,y)}
+let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1400)}
+
+/* ---------- menu events ---------- */
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;renderTabs();renderPanel();scrollTo(0,0)});
+$('panel').addEventListener('click',e=>{
+  const card=e.target.closest('.card');if(!card)return;
+  if(card.dataset.cake){
+    const c=findCake(card.dataset.cake),s=selOf(c.id);
+    const cr=e.target.closest('[data-cream]'),wi=e.target.closest('[data-wi]');
+    if(cr){s.cream=cr.dataset.cream}
+    else if(wi){s.wi=wi.dataset.wi==='o'?'o':+wi.dataset.wi}
+    else if(e.target.closest('[data-kgm]')){s.kg=Math.max(0.5,s.kg-0.5)}
+    else if(e.target.closest('[data-kgp]')){s.kg=Math.min(15,s.kg+0.5)}
+    else if(e.target.closest('[data-add]')){
+      const kg=s.wi==='o'?s.kg:MENU.weights[s.wi];
+      const ex=S.cakes.find(l=>l.id===c.id&&l.cream===s.cream&&l.kg===kg);
+      if(ex)ex.q=Math.min(20,ex.q+1);else S.cakes.push({id:c.id,cream:s.cream,kg,q:1});
+      toast('Added: '+c.name+' · '+kgLabel(kg));renderAll(true);return;
+    }else return;
+    card.outerHTML=cakeCard(c);return;
+  }
+  const m=e.target.closest('[data-m]'),p=e.target.closest('[data-p]');if(!m&&!p)return;
+  if(card.dataset.pc){const id=card.dataset.pc,d=findPc(id);S.pc[id]=Math.max(0,Math.min(d.size*20,(S.pc[id]||0)+(p?d.size:-d.size)));if(!S.pc[id])delete S.pc[id]}
+  else{const id=card.dataset.ck;S.cookie[id]=Math.max(0,Math.min(10000,(S.cookie[id]||0)+(p?250:-250)));if(!S.cookie[id])delete S.cookie[id]}
+  renderAll(true);
+});
+
+/* ---------- review ---------- */
+const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function leadDays(){return S.cakes.length?LEAD.cake:LEAD.other}
+function minDate(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+leadDays());return d}
+function fmtDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
+function renderReview(){
+  const t=totals();
+  if(!t.count){closeReview();return}
+  $('revLines').innerHTML=t.L.map((l,i)=>`<div class="line" data-i="${i}"><div class="l"><b>${esc(l.name)}</b><small>${esc(l.sub)}</small></div>
+   <div style="text-align:right"><b>${inr(l.amount)}</b><div class="step" style="margin-top:4px;justify-content:flex-end"><button data-rm>−</button><button class="p" data-ad>+</button></div></div></div>`).join('');
+  $('revSub').textContent=inr(t.sub);$('revTot').textContent=inr(t.sub);
+  $('revDelRow').style.display=S.mode==='Delivery'?'flex':'none';
+  const n=$('revNote'),msgs=[];
+  if(t.flag)msgs.push('Some cake weights are estimates; we\'ll confirm the final price.');
+  if(S.photos.length)msgs.push('Custom designs may cost extra; we\'ll confirm after seeing your photo.');
+  n.style.display=msgs.length?'block':'none';n.textContent=msgs.join(' ');
+  const md=minDate(),f=$('fDate');f.min=ymd(md);
+  if(f.value&&f.value<f.min)f.value='';
+  $('dateHint').textContent='Earliest date: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+(S.cakes.length?' (cakes need 2 days\' notice)':'');
+}
+function openReview(){$('review').classList.add('on');document.body.style.overflow='hidden';renderReview();$('review').scrollTop=0}
+function closeReview(){$('review').classList.remove('on');document.body.style.overflow=''}
+$('barGo').onclick=openReview;$('revBack').onclick=closeReview;
+$('revLines').addEventListener('click',e=>{
+  const row=e.target.closest('[data-i]');if(!row)return;const l=lines()[+row.dataset.i];const up=!!e.target.closest('[data-ad]');if(!up&&!e.target.closest('[data-rm]'))return;
+  const [k,r]=l.ref;
+  if(k==='cake'){const c=S.cakes[r];c.q+=up?1:-1;if(c.q<=0)S.cakes.splice(r,1);else if(c.q>20)c.q=20}
+  else if(k==='pc'){const d=findPc(r);S.pc[r]=Math.max(0,Math.min(d.size*20,S.pc[r]+(up?d.size:-d.size)));if(!S.pc[r])delete S.pc[r]}
+  else{S.cookie[r]=Math.max(0,S.cookie[r]+(up?250:-250));if(!S.cookie[r])delete S.cookie[r]}
+  renderAll(true);renderReview();
+});
+$('fTime').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;S.mode=b.dataset.m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));$('addrBox').style.display=S.mode==='Delivery'?'block':'none';renderReview()});
+
+/* photos: shrink on the phone before upload */
+function shrink(file){return new Promise((res,rej)=>{const img=new Image(),u=URL.createObjectURL(file);
+  img.onload=()=>{const M=1100,r=Math.min(1,M/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.72))};
+  img.onerror=()=>{URL.revokeObjectURL(u);rej()};img.src=u})}
+$('fPhoto').addEventListener('change',async e=>{
+  for(const f of [...e.target.files]){if(S.photos.length>=3){toast('Maximum 3 photos');break}try{S.photos.push(await shrink(f))}catch(_){toast('Could not read that photo')}}
+  e.target.value='';renderThumbs();renderReview();
+});
+function renderThumbs(){$('thumbs').innerHTML=S.photos.map((p,i)=>`<div><img src="${p}" alt=""><button data-x="${i}" aria-label="Remove">×</button></div>`).join('')}
+$('thumbs').addEventListener('click',e=>{const b=e.target.closest('[data-x]');if(!b)return;S.photos.splice(+b.dataset.x,1);renderThumbs();renderReview()});
+
+/* ---------- submit ---------- */
+function cleanPhone(v){let d=String(v).replace(/\D/g,'');if(d.length===12&&d.startsWith('91'))d=d.slice(2);if(d.length===11&&d.startsWith('0'))d=d.slice(1);return d}
+function summaryText(id,t,when,name){
+  return `Hi Cravella Bake House, I placed an order request${id?' ('+id+')':''}.\n\n`+t.L.map(l=>`• ${l.name} – ${l.sub} – ${inr(l.amount)}`).join('\n')+`\n\nEstimated total: ${inr(t.sub)}\n${when}\nName: ${name}`;
+}
+$('submit').onclick=async()=>{
+  const t=totals(),err=$('err');err.textContent='';
+  const name=$('fName').value.trim(),phone=cleanPhone($('fPhone').value),date=$('fDate').value,time=$('fTime').value,notes=$('fNotes').value.trim(),addr=$('fAddr').value.trim();
+  if(!t.count)return;
+  if(name.length<2)return fail('Please enter your name.','fName');
+  if(!/^[6-9]\d{9}$/.test(phone))return fail('Please enter a valid 10-digit mobile number.','fPhone');
+  if(!date)return fail('Please choose a date.','fDate');
+  if(date<ymd(minDate()))return fail('That date is too soon for your items. Please pick a later date.','fDate');
+  if(!time)return fail('Please choose a preferred time.','fTime');
+  if(S.mode==='Delivery'&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
+  function fail(m,id){err.textContent=m;const el=$(id);el.focus();el.scrollIntoView({block:'center',behavior:'smooth'})}
+  const payload={hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes,photos:S.photos,
+    items:[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.cream,kg:l.kg,q:l.q})),
+      ...Object.entries(S.pc).map(([id,q])=>({t:'pc',id,q})),
+      ...Object.entries(S.cookie).map(([id,g])=>({t:'cookie',id,q:g}))],clientTotal:Math.round(t.sub)};
+  const btn=$('submit');btn.disabled=true;btn.textContent='Sending…';
+  const when=(S.mode==='Delivery'?'Delivery: ':'Pickup: ')+fmtDate(date)+', '+time;
+  try{
+    let r;
+    if(API_URL.startsWith('__')||API_URL.includes('PASTE')){await new Promise(x=>setTimeout(x,700));r={ok:true,id:'DEMO-0001',total:t.sub}}
+    else{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});r=await res.json()}
+    if(!r.ok)throw new Error(r.error||'failed');
+    showDone(r.id,t,when,name,r.total);
+  }catch(ex){
+    err.innerHTML='Sorry, we could not send your request. Please <a href="https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText('',t,when,name))+'" target="_blank" rel="noopener" style="color:inherit">send it on WhatsApp instead</a>.';
+  }finally{btn.disabled=false;btn.textContent='Place order request'}
+};
+function showDone(id,t,when,name,total){
+  closeReview();
+  $('dName').textContent=name.split(' ')[0];$('dId').textContent='Request '+id;
+  $('dLines').innerHTML=t.L.map(l=>`<div class="line"><div class="l">${esc(l.name)}<small>${esc(l.sub)}</small></div><b>${inr(l.amount)}</b></div>`).join('');
+  $('dWhen').textContent=when;$('dTot').textContent=inr(total!=null?total:t.sub);
+  $('dWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText(id,t,when,name));
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches;
+  $('dIos').style.display=ios?'block':'none';$('dInstall').style.display=deferred?'block':'none';
+  $('done').classList.add('on');document.body.style.overflow='hidden';$('done').scrollTop=0;
+}
+$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};['fNotes','fAddr'].forEach(i=>$(i).value='');renderThumbs();
+  $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
+let deferred=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+$('dInstall').onclick=async()=>{if(deferred){deferred.prompt();await deferred.userChoice;deferred=null;$('dInstall').style.display='none'}};
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+try{const p=JSON.parse(sessionStorage.getItem('cb_contact')||'null');if(p){$('fName').value=p.n||'';$('fPhone').value=p.p||''}}catch(_){}
+['fName','fPhone'].forEach(i=>$(i).addEventListener('change',()=>{try{sessionStorage.setItem('cb_contact',JSON.stringify({n:$('fName').value,p:$('fPhone').value}))}catch(_){}}));
+renderAll();
+</script>
+</body>
+</html>

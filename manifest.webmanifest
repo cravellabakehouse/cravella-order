@@ -1,0 +1,23 @@
+{
+ "name": "Cravella Bake House \u2013 Order",
+ "short_name": "Cravella",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#fffdf6",
+ "theme_color": "#fffbbe",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  }
+ ]
+}
