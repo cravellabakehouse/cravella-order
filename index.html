@@ -244,6 +244,7 @@ function cakeCard(c){
   ${c.creams.length>1?`<div class="chips">${c.creams.map(x=>`<button class="chip cr ${x.id===s.cream?'on':''}" data-cream="${x.id}">${x.label}</button>`).join('')}</div>`:''}
   <div class="chips">${MENU.weights.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${cr?'':'from '}${inr(pv(i))}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
   ${other?`<div class="kg"><span>Weight</span><div class="step"><button data-kgm>−</button><span>${kgLabel(s.kg)}</span><button class="p" data-kgp>+</button></div></div>`:''}
+  <div class="hint" style="margin-top:8px">${cr||s.wi!==null?'Tap a selected option again to unselect it.':''}</div>
   <div class="row"><div class="pr">${ready?inr(p.amount):'Choose '+miss}<small>${ready?(p.exact?'as per menu':'estimate · we\'ll confirm'):'to see the price'}</small></div><button class="add${ready?'':' off'}" data-add>Add</button></div></div>`;
 }
 function pcCard(d,unit){
@@ -284,8 +285,8 @@ $('panel').addEventListener('click',e=>{
   if(card.dataset.cake){
     const c=findCake(card.dataset.cake),s=selOf(c.id);
     const cr=e.target.closest('[data-cream]'),wi=e.target.closest('[data-wi]');
-    if(cr){s.cream=cr.dataset.cream}
-    else if(wi){s.wi=wi.dataset.wi==='o'?'o':+wi.dataset.wi}
+    if(cr){s.cream=s.cream===cr.dataset.cream?null:cr.dataset.cream}
+    else if(wi){const v=wi.dataset.wi==='o'?'o':+wi.dataset.wi;s.wi=s.wi===v?null:v}
     else if(e.target.closest('[data-kgm]')){s.kg=Math.max(0.5,s.kg-0.5)}
     else if(e.target.closest('[data-kgp]')){s.kg=Math.min(15,s.kg+0.5)}
     else if(e.target.closest('[data-add]')){
