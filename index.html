@@ -172,7 +172,9 @@ body.acct-open .bar{z-index:25}
   <h2 style="text-align:center;font-size:23px">Request received!</h2>
   <p class="d" style="text-align:center;margin:8px 10px 18px;font-size:14px">Thank you, <span id="dName"></span>. We'll confirm your order and the final price on WhatsApp shortly. Advance is paid by UPI after confirmation.</p>
   <div class="card"><div class="sec" style="margin-top:0" id="dId"></div><div id="dLines"></div><div class="hr"></div><div class="line"><span>Pickup / delivery</span><b id="dWhen" style="text-align:right"></b></div><div class="line"><span>Estimated total</span><b id="dTot"></b></div></div>
-  <a class="btn wa" id="dWa" target="_blank" rel="noopener">💬 Message us on WhatsApp</a>
+  <button class="btn wa" id="dImg">💬 Send order picture on WhatsApp</button>
+  <div class="hint" id="dImgNote" style="text-align:center;margin:-4px 0 8px">Choose WhatsApp, then our chat "Cravella", and press send.</div>
+  <a class="btn ol" id="dWa" target="_blank" rel="noopener">Or send as a text message</a>
   <button class="btn ol" id="dInstall" style="display:none">Add Cravella to your home screen</button>
   <div class="hint" id="dIos" style="display:none;text-align:center">Order faster next time: tap <b>Share</b>, then <b>Add to Home Screen</b>.</div>
   <button class="btn ol" id="dAgain">Place another order</button>
@@ -378,11 +380,12 @@ $('submit').onclick=async()=>{
     let r;
     if(API_URL.startsWith('__')||API_URL.includes('PASTE')){await new Promise(x=>setTimeout(x,700));r={ok:true,id:'DEMO-0001',total:t.sub}}
     else{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});r=await res.json()}
-    if(!r.ok)throw new Error(r.error||'failed');
+    if(!r.ok){const e=new Error(r.error||'failed');e.server=!!r.error;throw e}
     if(A.tok){A.orders=null;loadMe()}
     showDone(r.id,t,when,name,r.total);
   }catch(ex){
-    err.innerHTML='Sorry, we could not send your request. Please <a href="https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText('',t,when,name))+'" target="_blank" rel="noopener" style="color:inherit">send it on WhatsApp instead</a>.';
+    const why=ex&&ex.server?esc(ex.message)+' ':'Sorry, we could not send your request. ';
+    err.innerHTML=why+'You can also <a href="https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText('',t,when,name))+'" target="_blank" rel="noopener" style="color:inherit">send it on WhatsApp instead</a>.';
   }finally{btn.disabled=false;btn.textContent='Place order request'}
 };
 function showDone(id,t,when,name,total){
@@ -391,10 +394,46 @@ function showDone(id,t,when,name,total){
   $('dLines').innerHTML=t.L.map(l=>`<div class="line"><div class="l">${esc(l.name)}<small>${esc(l.sub)}</small></div><b>${inr(l.amount)}</b></div>`).join('');
   $('dWhen').textContent=when;$('dTot').textContent=inr(total!=null?total:t.sub);
   $('dWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText(id,t,when,name));
+  lastOrder={id,t,when,name,total:total!=null?total:t.sub};
   const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches;
   $('dIos').style.display=ios?'block':'none';$('dInstall').style.display=deferred?'block':'none';
   $('done').classList.add('on');document.body.style.overflow='hidden';$('done').scrollTop=0;
 }
+let lastOrder=null;
+function orderImage(o){
+  const W=1080,P=64,c=document.createElement('canvas'),x=c.getContext('2d'),F='"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+  const wrap=(txt,max,font)=>{x.font=font;const w=String(txt).split(' '),out=[];let cur='';w.forEach(k=>{const n=cur?cur+' '+k:k;if(x.measureText(n).width>max&&cur){out.push(cur);cur=k}else cur=n});if(cur)out.push(cur);return out};
+  const rows=o.t.L.map(l=>({a:wrap(l.name,640,'700 34px '+F),b:wrap(l.sub,640,'28px '+F),amt:inr(l.amount)}));
+  let H=360;rows.forEach(r=>{H+=r.a.length*44+r.b.length*38+78});
+  const whenL=wrap(o.when,W-2*P,'700 32px '+F);H+=whenL.length*42+210;
+  c.width=W;c.height=H;
+  x.fillStyle='#fbf4ea';x.fillRect(0,0,W,H);x.fillStyle='#3b2416';x.fillRect(0,0,W,12);
+  const lg=document.querySelector('.band img');if(lg&&lg.naturalWidth){const lw=300,lh=lw*lg.naturalHeight/lg.naturalWidth;x.drawImage(lg,(W-lw)/2,40,lw,lh)}
+  x.textAlign='center';x.fillStyle='#3b2416';x.font='700 44px '+F;x.fillText('Order request'+(o.id?' · '+o.id:''),W/2,260);
+  x.font='28px '+F;x.fillStyle='#7a5a44';x.fillText(new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+' · '+o.name,W/2,306);
+  x.textAlign='left';let y=370;
+  rows.forEach(r=>{const y0=y;x.fillStyle='#3b2416';x.font='700 34px '+F;r.a.forEach(t=>{x.fillText(t,P,y);y+=44});x.fillStyle='#7a5a44';x.font='28px '+F;r.b.forEach(t=>{x.fillText(t,P,y);y+=38});
+    x.fillStyle='#3b2416';x.font='700 34px '+F;x.textAlign='right';x.fillText(r.amt,W-P,y0);x.textAlign='left';y+=22;x.fillStyle='#e6d6c2';x.fillRect(P,y,W-2*P,2);y+=56});
+  y+=20;x.fillStyle='#3b2416';x.font='700 32px '+F;whenL.forEach(t=>{x.fillText(t,P,y);y+=42});
+  y+=30;x.font='700 46px '+F;x.fillText('Estimated total',P,y);x.textAlign='right';x.fillText(inr(o.total),W-P,y);x.textAlign='center';
+  y+=70;x.fillStyle='#7a5a44';x.font='26px '+F;x.fillText('Eggless · Freshly baked to order · 98459-04310',W/2,y);
+  y+=40;x.fillText('FSSAI Lic. No. 21225177003525',W/2,y);
+  return new Promise(r=>c.toBlob(r,'image/png'));
+}
+$('dImg').onclick=async()=>{
+  if(!lastOrder)return;const b=$('dImg'),txt=b.textContent;b.disabled=true;b.textContent='Preparing…';
+  try{
+    const blob=await orderImage(lastOrder),file=new File([blob],'Cravella-order-'+(lastOrder.id||'request')+'.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],text:'Hi Cravella Bake House, my order request'+(lastOrder.id?' ('+lastOrder.id+')':'')+'.'})}catch(e){if(e&&e.name!=='AbortError')throw e}
+    }else{
+      const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+      $('dImgNote').textContent='Picture saved. Open WhatsApp, attach it in our chat and send.';
+      setTimeout(()=>{location.href='https://wa.me/'+WA},600);
+    }
+  }catch(_){$('dImgNote').textContent='Could not make the picture. Please use the text message option below.'}
+  b.disabled=false;b.textContent=txt;
+};
 $('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};['fNotes','fAddr','fDate','fTime'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
   $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
 
