@@ -465,7 +465,7 @@ function orderImage(o){
   const W=1080,P=64,c=document.createElement('canvas'),x=c.getContext('2d'),F='"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
   const wrap=(txt,max,font)=>{x.font=font;const w=String(txt).split(' '),out=[];let cur='';w.forEach(k=>{const n=cur?cur+' '+k:k;if(x.measureText(n).width>max&&cur){out.push(cur);cur=k}else cur=n});if(cur)out.push(cur);return out};
   const rows=o.t.L.map(l=>({a:wrap(l.name,640,'700 34px '+F),b:wrap(l.sub,640,'28px '+F),amt:inr(l.amount)}));
-  let H=360+(o.disc?110:0);rows.forEach(r=>{H+=r.a.length*44+r.b.length*38+78});
+  let H=360+(o.disc?150:0);rows.forEach(r=>{H+=r.a.length*44+r.b.length*38+78});
   const whenL=wrap(o.when,W-2*P,'700 32px '+F);H+=whenL.length*42+210;
   c.width=W;c.height=H;
   x.fillStyle='#fbf4ea';x.fillRect(0,0,W,H);x.fillStyle='#3b2416';x.fillRect(0,0,W,12);
@@ -477,8 +477,8 @@ function orderImage(o){
     x.fillStyle='#3b2416';x.font='700 34px '+F;x.textAlign='right';x.fillText(r.amt,W-P,y0);x.textAlign='left';y+=22;x.fillStyle='#e6d6c2';x.fillRect(P,y,W-2*P,2);y+=56});
   y+=20;x.fillStyle='#3b2416';x.font='700 32px '+F;whenL.forEach(t=>{x.fillText(t,P,y);y+=42});
   if(o.disc){y+=24;x.font='28px '+F;x.fillStyle='#7a5a44';x.fillText('Subtotal',P,y);x.textAlign='right';x.fillText(inr(o.subt),W-P,y);x.textAlign='left';
-    y+=44;x.fillStyle='#1f7a4d';x.font='700 30px '+F;x.fillText('Discount · '+o.dnote,P,y);x.textAlign='right';x.fillText('−'+inr(o.disc),W-P,y);x.textAlign='left';x.fillStyle='#3b2416'}
-  y+=30;x.font='700 46px '+F;x.fillText('Estimated total',P,y);x.textAlign='right';x.fillText(inr(o.total),W-P,y);x.textAlign='center';
+    y+=48;x.fillStyle='#1f7a4d';x.font='700 30px '+F;x.fillText('Discount · '+o.dnote,P,y);x.textAlign='right';x.fillText('−'+inr(o.disc),W-P,y);x.textAlign='left';x.fillStyle='#3b2416'}
+  y+=(o.disc?72:30);x.font='700 46px '+F;x.fillText('Estimated total',P,y);x.textAlign='right';x.fillText(inr(o.total),W-P,y);x.textAlign='center';
   y+=70;x.fillStyle='#7a5a44';x.font='26px '+F;x.fillText('Eggless · Freshly baked to order · 98459-04310',W/2,y);
   y+=40;x.fillText('FSSAI Lic. No. 21225177003525',W/2,y);
   return new Promise(r=>c.toBlob(r,'image/png'));
