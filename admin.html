@@ -91,12 +91,14 @@ textarea.i{min-height:230px;resize:vertical;line-height:1.45}
   <div class="card">
     <img id="lgBig" alt="Cravella Bake House" width="154" height="70" style="display:block;margin:2px auto 14px;height:64px;width:auto;background:#fffbbe;padding:10px 22px;border-radius:14px">
     <div class="t" style="font-size:20px;text-align:center">Admin sign in</div>
-    <p class="hint">Only approved admin emails can sign in. We will email you a 6-digit code.</p>
-    <label class="f">Email</label>
-    <input class="i" id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com">
+    <p class="hint" id="lHint">Sign in with your admin email and password.</p>
+    <label class="f">Email (your username)</label>
+    <input class="i" id="aEmail" type="email" autocomplete="username" inputmode="email" placeholder="you@example.com">
+    <div id="pwBox"><label class="f">Password</label><input class="i" id="aPw" type="password" autocomplete="current-password" placeholder="Password"></div>
     <div id="codeBox" class="hide"><label class="f">6-digit code</label><input class="i" id="aCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456"></div>
     <div class="err" id="lErr"></div>
-    <button class="btn" id="lGo" style="width:100%;margin-top:14px">Send code</button>
+    <button class="btn" id="lGo" style="width:100%;margin-top:14px">Sign in</button>
+    <button class="btn ol sm" id="lMode" style="width:100%;margin-top:10px">First time or forgot password? Email me a code</button>
   </div>
 </div>
 
@@ -105,6 +107,7 @@ textarea.i{min-height:230px;resize:vertical;line-height:1.45}
   <div class="wrap" id="panel"></div>
 </div>
 <div class="save hide" id="saveBar"><button class="btn" id="saveBtn">Save changes</button></div>
+<div class="sheet hide" id="pwSheet"><div class="in" id="pwIn"></div></div>
 <div class="sheet hide" id="mailSheet"><div class="in" id="mailIn"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -129,24 +132,57 @@ const fmtD=s=>{const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return
 /* ---------- sign in ---------- */
 function showLogin(msg){$('login').classList.remove('hide');$('app').classList.add('hide');$('saveBar').classList.add('hide');$('out').classList.add('hide');$('who').textContent='Orders and settings';if(msg)$('lErr').textContent=msg}
 $('lgBig').src=$('lgTop').src;
-let step='email';
+let step='pw';
 $('aEmail').value=ST('cb_admin_email')||'';
+function loginMode(m){step=m;const pw=m==='pw';$('pwBox').classList.toggle('hide',!pw);$('codeBox').classList.add('hide');$('lErr').textContent='';
+  $('lGo').textContent=pw?'Sign in':'Send code';$('lMode').textContent=pw?'First time or forgot password? Email me a code':'Back to password sign in';
+  $('lHint').textContent=pw?'Sign in with your admin email and password.':'We will email a 6-digit code to approved admin emails. After signing in you can set a new password.'}
+$('lMode').onclick=()=>loginMode(step==='pw'?'email':'pw');
+async function finishLogin(t,err){tok=t;const m=await api({action:'admin_me'});
+  if(!m.ok){tok='';err.textContent='This email is not an approved admin.';return false}
+  SS('cb_admin_tok',tok);me=m.email;hasPw=!!m.hasPw;await start();if(!hasPw)openPw(true);return true}
 $('lGo').onclick=async()=>{
   const b=$('lGo'),e=$('aEmail').value.trim(),err=$('lErr');err.textContent='';err.style.color='';b.disabled=true;
   try{
-    if(step==='email'){
-      if(!/^\S+@\S+\.\S+$/.test(e)){err.textContent='Please enter a valid email.';return}
+    if(!/^\S+@\S+\.\S+$/.test(e)){err.textContent='Please enter a valid email.';return}
+    if(step==='pw'){
+      const r=await api({action:'admin_pw_login',email:e,password:$('aPw').value,token:''});if(!r.ok){err.textContent=r.error||'Could not sign in.';return}
+      SS('cb_admin_email',e);$('aPw').value='';await finishLogin(r.token,err)
+    }else if(step==='email'){
       const r=await api({action:'otp_request',email:e,token:''});if(!r.ok){err.textContent=r.error||'Could not send the code.';return}
       SS('cb_admin_email',e);step='code';$('codeBox').classList.remove('hide');b.textContent='Sign in';$('aCode').focus();err.style.color='var(--mut)';err.textContent='Code sent to '+e+'. It can take a minute to arrive (check Spam). Please do not press Send again: your code stays valid for 10 minutes.'
     }else{
       const r=await api({action:'otp_verify',email:e,code:$('aCode').value,token:''});if(!r.ok){err.textContent=r.error||'That code is not right.';return}
-      tok=r.token;const m=await api({action:'admin_me'});
-      if(!m.ok){tok='';err.textContent='This email is not an approved admin.';step='email';$('codeBox').classList.add('hide');b.textContent='Send code';return}
-      SS('cb_admin_tok',tok);me=m.email;start()
+      if(!await finishLogin(r.token,err)){loginMode('email')}
     }
   }catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false}
 };
-$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);step='email';$('codeBox').classList.add('hide');$('aCode').value='';$('lGo').textContent='Send code';showLogin()};
+['aPw','aCode','aEmail'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')$('lGo').click()}));
+
+/* ---------- password ---------- */
+let hasPw=true;
+function closePw(){$('pwSheet').classList.add('hide')}
+function openPw(first){
+  $('pwIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">${first?'Set your password':'Change password'}</div><button class="btn ol sm" id="pCancel">${first?'Later':'Close'}</button></div>
+  <div class="hint">${first?'Next time you can sign in with your email and this password.':'Use at least 8 characters.'}</div>
+  ${first?'':'<label class="f">Current password</label><input class="i" id="pOld" type="password" autocomplete="current-password">'}
+  <label class="f">New password</label><input class="i" id="pNew" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+  <label class="f">Type it again</label><input class="i" id="pNew2" type="password" autocomplete="new-password">
+  <div class="err" id="pErr"></div><button class="btn" id="pSave" style="width:100%;margin-top:12px">Save password</button>`;
+  $('pwSheet').classList.remove('hide');$('pwSheet').dataset.first=first?'1':''
+}
+$('pwSheet').addEventListener('click',async e=>{
+  if(e.target===$('pwSheet')||e.target.closest('#pCancel')){closePw();return}
+  if(!e.target.closest('#pSave'))return;
+  const err=$('pErr'),n=$('pNew').value;err.textContent='';
+  if(n.length<8){err.textContent='Please use at least 8 characters.';return}
+  if(n!==$('pNew2').value){err.textContent='The two passwords do not match.';return}
+  const b=$('pSave');b.disabled=true;b.textContent='Saving…';
+  try{const r=await api({action:'admin_pw_set',password:n,old:$('pOld')?$('pOld').value:''});
+    if(r.ok){hasPw=true;closePw();toast('Password saved')}else err.textContent=r.error||'Could not save.'}
+  catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false;b.textContent='Save password'}
+});
+$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);$('aCode').value='';loginMode('pw');showLogin()};
 
 function showApp(){$('login').classList.add('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');$('who').textContent=me||'Signed in';bakeDate=bakeDate||ymd(new Date(Date.now()+86400000))}
 function saveCache(){SS('cb_admin_cache',JSON.stringify({orders:D.orders,statuses:D.statuses,mails:D.mails,me}))}
@@ -166,7 +202,7 @@ async function boot(){
   }catch(_){if(!cached)showLogin('No connection. Please reload.');else toast('No connection. Showing your last saved orders.')}
 }
 async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok)applyOrders(r);else if(r.error==='auth'){tok='';showLogin('Please sign in again.')}}
-async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=r.items;dirty=false}}
+async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=r.items;hasPw=r.hasPw!==false;dirty=false}}
 
 /* ---------- layout ---------- */
 const TABS=[['orders','Orders'],['bake','Bake list'],['menu','Menu'],['cust','Customers'],['settings','Settings']];
@@ -309,6 +345,7 @@ $('panel').addEventListener('click',async e=>{
   }
   const a=e.target.closest('[data-del]');if(a){const d=a.dataset.del;D.settings.closed=D.settings.closed.filter(x=>x!==d);dirty=true;render();return}
   if(e.target.closest('#addClosed')){const v=$('closedIn').value;if(!v)return;if(!D.settings.closed.includes(v))D.settings.closed.push(v);D.settings.closed.sort();dirty=true;render();return}
+  if(e.target.closest('#chgPw')){openPw(!hasPw);return}
   if(e.target.closest('#bakeGo')){bakeDate=$('bakeIn').value;bake=null;render();return}
   if(e.target.closest('#bakePrint')){print();return}
   const tg=e.target.closest('[data-tg]');if(tg){const id=tg.dataset.tg,u=D.settings.unavailable,i=u.indexOf(id);if(i>=0)u.splice(i,1);else u.push(id);dirty=true;tg.classList.toggle('on');return}
@@ -362,7 +399,8 @@ function settingsHtml(){
   <label class="f">Most bakes orders per day (cupcakes, muffins, cookies, brownies)</label><input class="i" id="capOther" type="number" min="0" inputmode="numeric" value="${s.capOther}">
   <div class="hint">Cakes count each cake. Bakes count each order. Cancelled orders free up a place.</div></div>
   <div class="sec">Notice on the website</div><div class="card"><div class="hint" style="margin-top:0">A short message shown at the top of the ordering page, such as "Closed 12 to 14 Oct for Diwali". Leave empty for none.</div>
-  <input class="i" id="banner" maxlength="200" style="margin-top:10px" value="${esc(s.banner)}" placeholder="e.g. Closed 12–14 Oct for Diwali"></div>`
+  <input class="i" id="banner" maxlength="200" style="margin-top:10px" value="${esc(s.banner)}" placeholder="e.g. Closed 12–14 Oct for Diwali"></div>
+  <div class="sec">Your login</div><div class="card"><div class="hint" style="margin-top:0">Signed in as ${esc(me)}. Your username is this email.</div><button class="btn ol sm" id="chgPw" style="margin-top:10px">${hasPw?'Change password':'Set a password'}</button></div>`
 }
 $('saveBtn').onclick=async()=>{
   const b=$('saveBtn');b.disabled=true;b.textContent='Saving…';
