@@ -8,6 +8,9 @@ const SHEET_ID     = '';   // leave EMPTY: the script creates a Google Sheet cal
 const NOTIFY_EMAIL = 'connect@cravellabakehouse.in,connect@cravellabakehouse.com';
 // Your UPI ID for advance payments, used in the Confirm message (leave empty to skip)
 const UPI_ID = '';
+// People who can open the admin screen (order.cravellabakehouse.com/admin.html). They sign in with an emailed code.
+// By default this is the same address list as NOTIFY_EMAIL. Add more addresses inside the brackets, e.g. ['priyanka@gmail.com']
+const ADMIN_EXTRA = [];
 const PHOTO_FOLDER = 'Cravella order photos';
 const TAB          = 'Requests';
 const MAX_PER_HOUR_PER_PHONE = 5;
@@ -493,6 +496,7 @@ function doPost(e){
     const last = sh.getLastRow();
     sh.getRange(last,5).setNumberFormat('@').setValue(v.phone);
     sh.getRange(last,2).setNumberFormat('dd mmm yyyy hh:mm');
+    CacheService.getScriptCache().remove('load');
     if (v.couponUsed) bumpCoupon_(v.couponUsed);
     if (email) touchCustomer_(email, {name:v.name, phone:v.phone, address:v.address});
     notify_(id, v, photos);
@@ -579,6 +583,8 @@ function validate_(r){
       if (!(sd === r.date && st === r.time)) split = {date:sd, time:st};
     }
   }
+  const cfgErr = settingsCheck_(items, r.date, split);
+  if (cfgErr) return {error:cfgErr};
   const subtotal = Math.round(pr.total);
   const dc = discount_(subtotal, r.coupon);
   if (dc.error) return {error:dc.error};
@@ -691,7 +697,7 @@ function sheet_(){
     sh.getRange('G:G').setNumberFormat('@');
     sh.setColumnWidths(10, 1, 320);
     sh.getRange('C2:C').setDataValidation(SpreadsheetApp.newDataValidation()
-      .requireValueInList(['New','Confirmed','Advance received','Delivered','Cancelled'], true).build());
+      .requireValueInList(['New','Confirmed','Advance received','Ready','Delivered','Cancelled'], true).build());
   }
   if (!sh.getRange(1,18).getValue()) sh.getRange(1,18,1,3).setValues([['Subtotal (₹)','Discount (₹)','Discount note']]).setFontWeight('bold').setBackground('#fffbbe');
   if (!sh.getRange(1,21).getValue()) sh.getRange(1,21,1,2).setValues([['Bakes date (split)','Bakes time (split)']]).setFontWeight('bold').setBackground('#fffbbe');
@@ -888,8 +894,13 @@ function accountApi_(r){
     return {ok:true, token:token, profile:profileOf_(email)};
   }
   if (a === 'coupon_check') return couponCheck_(r);
+  if (a === 'settings') return {ok:true, settings:publicSettings_()};
   const email = authEmail_(r.token);
   if (!email) return {ok:false, error:'auth'};
+  if (a.indexOf('admin_') === 0){
+    if (!isAdmin_(email)) return {ok:false, error:'This account is not an admin.'};
+    return adminApi_(a, r, email);
+  }
   if (a === 'me') return {ok:true, profile:profileOf_(email), orders:ordersOf_(email)};
   if (a === 'save_profile'){
     const clean = function(s){ return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim(); };
@@ -923,6 +934,7 @@ function upgrade(){
   sh.getRange('P:Q').setNumberFormat('@');
   sh.getRange('R1:V1').setValues([['Subtotal (₹)','Discount (₹)','Discount note','Bakes date (split)','Bakes time (split)']]).setFontWeight('bold').setBackground('#fffbbe');
   discSheet_();
+  sh.getRange('C2:C').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).setAllowInvalid(true).build());
   const n = sh.getLastRow();
   for (let r = 2; r <= n; r++){
     const c = sh.getRange(r, 16), d = sh.getRange(r, 6).getValue();
@@ -938,4 +950,179 @@ function upgrade(){
   s.getRange('A1:C1').setFontWeight('bold').setBackground('#fffbbe');
   s.getRange('C:C').setNumberFormat('#,##0'); s.getRange('F3').setNumberFormat('#,##0');
   s.setColumnWidths(1, 1, 120); s.setColumnWidths(3, 1, 150); s.setColumnWidths(5, 1, 150);
+}
+
+
+/* ===================== ADMIN + SETTINGS ===================== */
+const STATUSES = ['New','Confirmed','Advance received','Ready','Delivered','Cancelled'];
+function isAdmin_(email){
+  const all = NOTIFY_EMAIL.split(',').concat(ADMIN_EXTRA).map(function(x){ return String(x).trim().toLowerCase(); });
+  return !!email && all.indexOf(String(email).toLowerCase()) >= 0;
+}
+function getSettings_(){
+  let s = {};
+  try { s = JSON.parse(PropertiesService.getScriptProperties().getProperty('settings') || '{}') || {}; } catch (_) {}
+  return {
+    unavailable: Array.isArray(s.unavailable) ? s.unavailable : [],
+    closed: Array.isArray(s.closed) ? s.closed : [],
+    capCake: Math.max(0, Number(s.capCake) || 0),
+    capOther: Math.max(0, Number(s.capOther) || 0),
+    banner: String(s.banner || '')
+  };
+}
+function menuItems_(){
+  const out = [];
+  MENU.cakes.forEach(function(c){ out.push({id:c.id, name:c.name, group:c.custom ? 'Custom cake' : 'Cakes'}); });
+  [['Cupcakes', MENU.cupcakes], ['Muffins', MENU.muffins], ['Brownies', MENU.brownies], ['Blondies', MENU.blondies]].forEach(function(g){
+    g[1].forEach(function(d){ out.push({id:d.id, name:d.name, group:g[0]}); });
+  });
+  MENU.cookies.forEach(function(d){ out.push({id:d.id, name:d.name, group:'Cookies'}); });
+  return out;
+}
+// how many cakes / bakes orders are already booked per day (cached for a minute)
+function dayLoad_(){
+  const cache = CacheService.getScriptCache(), hit = cache.get('load');
+  if (hit) { try { return JSON.parse(hit); } catch (_) {} }
+  const load = {cake:{}, other:{}};
+  const sh = sheet_(), n = sh.getLastRow();
+  if (n >= 2){
+    const v = sh.getRange(2, 1, n - 1, 15).getValues();
+    for (let i = 0; i < v.length; i++){
+      if (String(v[i][2]) === 'Cancelled') continue;
+      let j = {}; try { j = JSON.parse(v[i][14]) || {}; } catch (_) { continue; }
+      const items = Array.isArray(j.items) ? j.items : []; if (!items.length) continue;
+      const cq = items.filter(function(x){ return x.t === 'cake'; }).reduce(function(a, x){ return a + (Number(x.q) || 0); }, 0);
+      const hasO = items.some(function(x){ return x.t !== 'cake'; });
+      const cd = String(j.date || ''), od = j.split && j.split.date ? String(j.split.date) : cd;
+      if (cq && cd) load.cake[cd] = (load.cake[cd] || 0) + cq;
+      if (hasO && od) load.other[od] = (load.other[od] || 0) + 1;
+    }
+  }
+  cache.put('load', JSON.stringify(load), 60);
+  return load;
+}
+function publicSettings_(){
+  const s = getSettings_(), load = dayLoad_(), today = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd');
+  const full = {cake:[], other:[]};
+  if (s.capCake) Object.keys(load.cake).forEach(function(d){ if (d >= today && load.cake[d] >= s.capCake) full.cake.push(d); });
+  if (s.capOther) Object.keys(load.other).forEach(function(d){ if (d >= today && load.other[d] >= s.capOther) full.other.push(d); });
+  return {unavailable:s.unavailable, closed:s.closed.filter(function(d){ return d >= today; }), full:full, banner:s.banner};
+}
+function settingsCheck_(items, cakeDate, split){
+  const s = getSettings_();
+  for (let i = 0; i < items.length; i++) if (s.unavailable.indexOf(String(items[i].id)) >= 0)
+    return 'Sorry, one of the items in your order is not available right now. Please refresh the page and review your order.';
+  const hasCake = items.some(function(x){ return x.t === 'cake'; }), hasOther = items.some(function(x){ return x.t !== 'cake'; });
+  const od = split ? split.date : cakeDate;
+  if (s.closed.indexOf(cakeDate) >= 0 || (hasOther && s.closed.indexOf(od) >= 0))
+    return 'We are closed on that date. Please pick another date.';
+  if (s.capCake || s.capOther){
+    const load = dayLoad_();
+    const cq = items.filter(function(x){ return x.t === 'cake'; }).reduce(function(a, x){ return a + (Number(x.q) || 0); }, 0);
+    if (hasCake && s.capCake && (load.cake[cakeDate] || 0) + cq > s.capCake) return 'Sorry, we are fully booked for cakes on that date. Please pick another date.';
+    if (hasOther && s.capOther && (load.other[od] || 0) + 1 > s.capOther) return 'Sorry, we are fully booked for bakes on that date. Please pick another date.';
+  }
+  return '';
+}
+function adminOrder_(row){
+  let j = {}; try { j = JSON.parse(row[14]) || {}; } catch (_) {}
+  const rec = row[1];
+  return {
+    id: String(row[0]),
+    placed: (rec instanceof Date) ? Utilities.formatDate(rec, 'Asia/Kolkata', 'dd MMM, h:mm a') : String(rec),
+    status: String(row[2] || 'New'), name: String(row[3]), phone: String(row[4]),
+    date: j.date || String(row[5]), time: j.time || String(row[6]),
+    split: j.split || null,
+    mode: String(row[7]), address: String(row[8]),
+    lines: String(row[9] || '').split('\n'), total: Number(row[10]) || 0,
+    toConfirm: String(row[11]) === 'Yes', notes: String(row[12] || ''),
+    photos: String(row[13] || '').split('\n').filter(String),
+    email: String(row[16] || ''), subtotal: Number(row[17]) || 0, discount: Number(row[18]) || 0
+  };
+}
+function statusMail_(o, status){
+  if (!o.email) return false;
+  const first = String(o.name).split(' ')[0], trip = o.mode === 'Delivery' ? 'delivery' : 'pickup';
+  const msgs = {
+    'Confirmed': 'Your order ' + o.id + ' is confirmed. We will message you on WhatsApp with the details.',
+    'Advance received': 'We have received your advance. Your order ' + o.id + ' is booked. Thank you!',
+    'Ready': 'Your order ' + o.id + ' is ready' + (o.mode === 'Delivery' ? ' and will be on its way shortly.' : ' for pickup.'),
+    'Delivered': 'Your order ' + o.id + ' is complete. Thank you for choosing Cravella Bake House! We would love to hear how it was.',
+    'Cancelled': 'Your order ' + o.id + ' has been cancelled. If this is a surprise, please WhatsApp us on 98459-04310.'
+  };
+  if (!msgs[status]) return false;
+  MailApp.sendEmail({to: o.email, name: 'Cravella Bake House', subject: 'Cravella order ' + o.id + ': ' + status,
+    body: 'Hi ' + first + ',\n\n' + msgs[status] + '\n\nCravella Bake House · 98459-04310'});
+  return true;
+}
+function adminApi_(a, r, email){
+  const sh = sheet_();
+  if (a === 'admin_me') return {ok:true, admin:true, email:email};
+  if (a === 'admin_orders'){
+    const n = sh.getLastRow(), out = [];
+    if (n >= 2){
+      const v = sh.getRange(Math.max(2, n - 399), 1, Math.min(400, n - 1), 22).getValues();
+      for (let i = v.length - 1; i >= 0; i--) out.push(adminOrder_(v[i]));
+    }
+    return {ok:true, orders:out, statuses:STATUSES};
+  }
+  if (a === 'admin_status'){
+    const id = String(r.id || ''), st = String(r.status || '');
+    if (STATUSES.indexOf(st) < 0) return {ok:false, error:'Unknown status.'};
+    const row = findRow_(sh, 1, id.toLowerCase());
+    if (!row) return {ok:false, error:'Order not found.'};
+    sh.getRange(row, 3).setValue(st);
+    CacheService.getScriptCache().remove('load');
+    let mailed = false;
+    if (r.notify) { try { mailed = statusMail_(adminOrder_(sh.getRange(row, 1, 1, 22).getValues()[0]), st); } catch (_) {} }
+    return {ok:true, status:st, mailed:mailed};
+  }
+  if (a === 'admin_bake'){
+    const date = String(r.date || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return {ok:false, error:'Please choose a date.'};
+    const n = sh.getLastRow(), tally = {}, orders = [];
+    if (n >= 2){
+      const v = sh.getRange(2, 1, n - 1, 15).getValues();
+      for (let i = 0; i < v.length; i++){
+        const st = String(v[i][2]); if (st === 'Cancelled' || st === 'Delivered') continue;
+        let j = {}; try { j = JSON.parse(v[i][14]) || {}; } catch (_) { continue; }
+        const items = Array.isArray(j.items) ? j.items : [], md = String(j.date || ''), sd = j.split && j.split.date ? String(j.split.date) : md;
+        const mine = items.filter(function(x){ return (x.t === 'cake' ? md : sd) === date; });
+        if (!mine.length) continue;
+        const when = (x) => (x.t === 'cake' ? j.time : (j.split && j.split.time ? j.split.time : j.time));
+        mine.forEach(function(x){
+          let name = '', qty = 0;
+          if (x.t === 'cake'){
+            const c = MENU.cakes.filter(function(k){ return k.id === x.id; })[0]; if (!c) return;
+            const cr = c.creams.filter(function(k){ return k.id === x.cream; })[0];
+            name = c.name + (cr && cr.label ? ' (' + cr.label + ')' : '') + ' · ' + kgLabel_(Number(x.kg)); qty = Number(x.q) || 0;
+          } else if (x.t === 'pc'){
+            const d = allPc_().filter(function(k){ return k.id === x.id; })[0]; if (!d) return;
+            name = d.name + ' ' + pcKind_(d.id) + ' (box of ' + d.size + ')'; qty = (Number(x.q) || 0) / d.size;
+          } else if (x.t === 'cookie'){
+            const d = MENU.cookies.filter(function(k){ return k.id === x.id; })[0]; if (!d) return;
+            name = d.name + ' Cookies (250 g packs)'; qty = (Number(x.q) || 0) / 250;
+          } else return;
+          tally[name] = (tally[name] || 0) + qty;
+        });
+        orders.push({id:String(v[i][0]), name:String(v[i][3]), mode:String(v[i][7]), status:st,
+          time: mine.some(function(x){ return x.t === 'cake'; }) ? String(j.time || '') : String(j.split && j.split.time ? j.split.time : j.time || ''),
+          cake: mine.some(function(x){ return x.t === 'cake'; }), other: mine.some(function(x){ return x.t !== 'cake'; })});
+      }
+    }
+    const rows = Object.keys(tally).sort().map(function(k){ return {name:k, qty:tally[k]}; });
+    return {ok:true, date:date, rows:rows, orders:orders};
+  }
+  if (a === 'admin_settings_get') return {ok:true, settings:getSettings_(), items:menuItems_()};
+  if (a === 'admin_settings_save'){
+    const known = menuItems_().map(function(x){ return x.id; });
+    const un = (Array.isArray(r.unavailable) ? r.unavailable : []).map(String).filter(function(x){ return known.indexOf(x) >= 0; });
+    const cl = (Array.isArray(r.closed) ? r.closed : []).map(String).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }).slice(0, 200);
+    const cap = function(x){ x = Math.floor(Number(x) || 0); return x < 0 ? 0 : x > 500 ? 500 : x; };
+    const banner = String(r.banner || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 200);
+    PropertiesService.getScriptProperties().setProperty('settings', JSON.stringify({unavailable:un, closed:cl, capCake:cap(r.capCake), capOther:cap(r.capOther), banner:banner}));
+    CacheService.getScriptCache().remove('load');
+    return {ok:true, settings:getSettings_()};
+  }
+  return {ok:false, error:'Unknown request.'};
 }
