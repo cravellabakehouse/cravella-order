@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--cream:#fffbbe;--bg:#fffdf6;--card:#ffffff;--ink:#3b2416;--mut:#7d6a58;--line:#eadfc9;--acc:#b4532a;--acc-ink:#fff;--ok:#2f7d4f;--bad:#b3261e;--shadow:0 1px 2px rgba(60,36,22,.06)}
-@media (prefers-color-scheme:dark){:root{--bg:#1d1612;--card:#271e18;--ink:#f6ece0;--mut:#b5a393;--line:#3c2f26;--acc:#e08a5e;--acc-ink:#2a160b;--ok:#5fc08a;--bad:#f2766e;--shadow:none}}
+:root{--cream:#fffbbe;--bg:#fffdf6;--card:#ffffff;--ink:#3b2416;--mut:#7d6a58;--line:#eadfc9;--acc:#b4532a;--acc-ink:#fff;--ok:#2f7d4f;--bad:#b3261e;--shadow:0 1px 2px rgba(60,36,22,.06);--warn:#b06a00}
+@media (prefers-color-scheme:dark){:root{--bg:#1d1612;--card:#271e18;--ink:#f6ece0;--mut:#b5a393;--line:#3c2f26;--acc:#e08a5e;--acc-ink:#2a160b;--ok:#5fc08a;--bad:#f2766e;--shadow:none;--warn:#e8b04b}}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--ink);font:400 15px/1.45 'Hanken Grotesk',system-ui,sans-serif;min-height:100vh;padding-bottom:90px}
 h1,h2,.t{font-family:'Bricolage Grotesque','Hanken Grotesk',system-ui,sans-serif}
@@ -67,6 +67,16 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .stat b{display:block;font:700 22px 'Bricolage Grotesque'}
 .stat span{font-size:12px;color:var(--mut)}
 table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+.tm{display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:6px;font-size:13.5px;font-weight:700}
+.tm .g{color:var(--mut);font-weight:600}.tm .ok{color:var(--ok)}.tm .w{color:var(--warn)}.tm .r{color:var(--bad)}
+.rep{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;background:#e5dcf7;color:#4b2c8a;margin-left:6px;vertical-align:1px}
+.rep.new{background:#e1f0e4;color:#2c6a3c}
+@media (prefers-color-scheme:dark){.rep{background:#3a2f57;color:#d6c8f5}.rep.new{background:#24382a;color:#9fd9ae}}
+.hist{border-top:1px dashed var(--line);margin-top:10px;padding-top:6px;font-size:13.5px}
+.hist .h{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet .in{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+textarea.i{min-height:230px;resize:vertical;line-height:1.45}
 .hide{display:none!important}
 @media print{.top,.tabs,.save,.noprint{display:none!important}body{padding:0;background:#fff;color:#000}.card{box-shadow:none;border-color:#999}}
 </style>
@@ -91,6 +101,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px sol
   <div class="wrap" id="panel"></div>
 </div>
 <div class="save hide" id="saveBar"><button class="btn" id="saveBtn">Save changes</button></div>
+<div class="sheet hide" id="mailSheet"><div class="in" id="mailIn"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -100,11 +111,15 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 const ST=(k=>{try{return localStorage.getItem(k)}catch(_){return null}});
 const SS=((k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}});
-let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[]},tab='orders',filt='active',q='',bakeDate='',bake=null,dirty=false;
+let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[],mails:{}},tab='orders',filt='active',q='',bakeDate='',bake=null,dirty=false,CM={},cq='',skew=0;
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
 async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const todayS=()=>ymd(new Date());
+const nowMs=()=>Date.now()+skew;
+const dueMs=(d,t)=>{const m=String(t).match(/^(\d+):(\d+) (AM|PM)$/);if(!m||!/^\d{4}-\d{2}-\d{2}$/.test(d))return 0;return Date.parse(d+'T'+pad((+m[1]%12)+(m[3]==='PM'?12:0))+':'+m[2]+':00+05:30')||0};
+const dur=ms=>{const m=Math.floor(Math.abs(ms)/60000),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mi=m%60;return d?d+'d '+h+'h':h?h+'h '+mi+'m':mi+'m'};
+const dueOf=o=>o.split?[{l:'Cakes due',ms:dueMs(o.date,o.time)},{l:'Bakes due',ms:dueMs(o.split.date,o.split.time)}]:[{l:'Due',ms:dueMs(o.date,o.time)}];
 const fmtD=s=>{const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return s;return new Date(+m[1],m[2]-1,+m[3]).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
 
 /* ---------- sign in ---------- */
@@ -138,18 +153,18 @@ async function boot(){
   try{const m=await api({action:'admin_me'});if(!m.ok){tok='';SS('cb_admin_tok',null);showLogin(m.error==='auth'?'':m.error);return}me=m.email;start()}
   catch(_){showLogin('No connection. Please reload.')}
 }
-async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok){D.orders=r.orders;D.statuses=r.statuses}else if(r.error==='auth'){tok='';showLogin('Please sign in again.')}}
+async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok){D.orders=r.orders;D.statuses=r.statuses;D.mails=r.mails||{};if(r.now)skew=r.now-Date.now()}else if(r.error==='auth'){tok='';showLogin('Please sign in again.')}}
 async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=r.items;dirty=false}}
 
 /* ---------- layout ---------- */
-const TABS=[['orders','Orders'],['bake','Bake list'],['menu','Menu'],['settings','Settings']];
+const TABS=[['orders','Orders'],['bake','Bake list'],['menu','Menu'],['cust','Customers'],['settings','Settings']];
 function renderTabs(){
   const nNew=D.orders.filter(o=>o.status==='New').length;
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}">${n}${k==='orders'&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('');
   $('saveBar').classList.toggle('hide',!(tab==='menu'||tab==='settings'));
 }
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;render();scrollTo(0,0)});
-function render(){renderTabs();$('panel').innerHTML=tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():settingsHtml();if(tab==='bake'&&!bake)loadBake()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():settingsHtml();if(tab==='bake'&&!bake)loadBake()}
 
 /* ---------- orders ---------- */
 const ACTIVE=['New','Confirmed','Advance received','Ready'];
@@ -166,7 +181,7 @@ function visible(){
 function ordersHtml(){
   const t=todayS(),act=D.orders.filter(o=>ACTIVE.includes(o.status)),tod=D.orders.filter(o=>o.status!=='Cancelled'&&(o.date===t||(o.split&&o.split.date===t)));
   const adv=act.filter(o=>o.status==='Confirmed').length;
-  let h=`<div class="stat"><div><b>${D.orders.filter(o=>o.status==='New').length}</b><span>New</span></div><div><b>${tod.length}</b><span>Today</span></div><div><b>${adv}</b><span>Awaiting advance</span></div></div>
+  let h=`<div class="stat"><div><b>${D.orders.filter(o=>o.status==='New').length}</b><span>New</span></div><div><b>${tod.length}</b><span>Today</span></div><div><b>${adv}</b><span>Awaiting advance</span></div><div><b>${act.filter(o=>dueOf(o).some(x=>x.ms&&x.ms<=nowMs()+864e5)).length}</b><span>Due in 24h</span></div></div>
   <div class="chips">${[['active','Active'],['new','New'],['today','Today'],['all','All']].map(([k,n])=>`<button class="chip ${filt===k?'on':''}" data-f="${k}">${n}</button>`).join('')}<button class="chip" id="refresh">↻ Refresh</button></div>
   <input class="i" id="search" placeholder="Search name, phone or order number" value="${esc(q)}">`;
   const L=visible();
@@ -184,8 +199,9 @@ function orderCard(o){
   const sc=o.status==='Advance received'?'Advance':o.status;
   const when=o.split?`Cakes: ${fmtD(o.date)}, ${esc(o.time)}<br>Other bakes: ${fmtD(o.split.date)}, ${esc(o.split.time)}`:`${fmtD(o.date)}, ${esc(o.time)}`;
   return `<div class="card o" data-id="${esc(o.id)}">
-  <div class="row"><span class="id">${esc(o.id)} · ${esc(o.name)}</span><span class="pill ${esc(sc)}">${esc(o.status)}</span></div>
-  <div class="m">Placed ${esc(o.placed)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div>
+  <div class="row"><span class="id">${esc(o.id)} · ${esc(o.name)}${repBadge(o)}</span><span class="pill ${esc(sc)}">${esc(o.status)}</span></div>
+  <div class="m">Placed ${esc(o.placed)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>${o.email?' · '+esc(o.email):''}</div>
+  <div class="tm" data-id="${esc(o.id)}">${tmHtml(o)}</div>
   <div class="when">${o.mode==='Delivery'?'🚚 Delivery':'🛍 Pickup'} · ${when}</div>
   ${o.address?`<div class="m">${esc(o.address)}</div>`:''}
   <div class="lines">${esc(o.lines.join('\n'))}</div>
@@ -194,18 +210,86 @@ function orderCard(o){
   ${o.notes?`<div class="note">${esc(o.notes)}</div>`:''}
   ${o.photos.length?`<div class="ph">${o.photos.filter(u=>/^https:\/\//.test(u)).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">🖼 Photo</a>`).join(' ')}</div>`:''}
   <div class="st">${D.statuses.map(s=>`<button data-s="${esc(s)}" class="${o.status===s?'on':''}">${esc(s)}</button>`).join('')}</div>
-  ${o.email?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status</label>`:''}
-  <div class="acts"><a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'c'))}">WhatsApp: Confirm</a><a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'a'))}">Advance received</a><a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'r'))}">Ready</a></div></div>`
+  ${o.email?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status (Confirmed opens the editable email instead)</label>`:''}
+  ${mailNote(o)}
+  <div class="acts"><button class="btn sm" data-mail="${esc(o.id)}">✉ Email customer</button>${histBtn(o)}<a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'c'))}">WhatsApp: Confirm</a><a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'a'))}">Advance received</a><a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'r'))}">Ready</a></div>${histBox(o)}</div>`
 }
+/* ---------- countdowns ---------- */
+function tmHtml(o){
+  const now=nowMs();let h='';
+  if(o.placedMs)h+=`<span class="g">⏱ Placed ${dur(now-o.placedMs)} ago</span>`;
+  if(ACTIVE.includes(o.status))dueOf(o).forEach(x=>{if(!x.ms)return;const dl=x.ms-now,c=dl<6*36e5?'r':dl<24*36e5?'w':'ok';
+    h+=`<span class="${c}">${dl<0?'⚠ '+x.l.replace(' due','')+' overdue by '+dur(dl):'⏳ '+x.l+' in '+dur(dl)}</span>`});
+  return h
+}
+setInterval(()=>{document.querySelectorAll('.tm[data-id]').forEach(el=>{const o=D.orders.find(x=>x.id===el.dataset.id);if(o)el.innerHTML=tmHtml(o)})},30000);
+
+/* ---------- repeat customers ---------- */
+const keyOf=o=>{const p=String(o.phone||'').replace(/\D/g,'').slice(-10);return p.length===10?'p'+p:(o.email?'e'+o.email.toLowerCase():'i'+o.id)};
+function custMap(){const m={};D.orders.forEach(o=>{(m[keyOf(o)]=m[keyOf(o)]||[]).push(o)});Object.keys(m).forEach(k=>m[k].sort((a,b)=>(a.placedMs-b.placedMs)||a.id.localeCompare(b.id)));return m}
+const spent=a=>a.filter(o=>o.status!=='Cancelled').reduce((t,o)=>t+o.total,0);
+const sumLine=o=>o.lines.map(l=>l.split(' – ₹')[0]).join(', ').slice(0,140);
+function repBadge(o){const a=CM[keyOf(o)]||[o];return a.length>1?`<span class="rep">Repeat customer · order ${a.indexOf(o)+1} of ${a.length}</span>`:`<span class="rep new">New customer</span>`}
+function histRows(a,skip){return a.filter(x=>x!==skip).slice().reverse().map(x=>`<div class="h"><span>${esc(x.id)} · ${esc(x.placed)} · ${esc(x.status)}<div class="hint" style="margin-top:2px">${esc(sumLine(x))}</div></span><b>${inr(x.total)}</b></div>`).join('')}
+function histBtn(o){const a=CM[keyOf(o)]||[];return a.length>1?`<button class="btn ol sm" data-hist="h_${esc(o.id)}">History (${a.length-1})</button>`:''}
+function histBox(o){const a=CM[keyOf(o)]||[];return a.length>1?`<div class="hist hide" id="h_${esc(o.id)}"><div class="m"><b>${a.length} orders · ${inr(spent(a))} lifetime</b> (cancelled not counted)</div>${histRows(a,o)}</div>`:''}
+function mailNote(o){const m=D.mails[String(o.id).toLowerCase()];return m?`<div class="hint">✉ Emailed ${m.n} time${m.n>1?'s':''} · last ${new Date(m.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</div>`:''}
+function custHtml(){
+  const all=Object.keys(CM).map(k=>({k,a:CM[k]})),rp=all.filter(c=>c.a.length>1).length,s=cq.trim().toLowerCase();
+  const L=all.filter(c=>!s||c.a.some(o=>(o.name+' '+o.phone+' '+o.email).toLowerCase().includes(s))).sort((x,y)=>y.a[y.a.length-1].placedMs-x.a[x.a.length-1].placedMs);
+  let h=`<div class="stat"><div><b>${all.length}</b><span>Customers</span></div><div><b>${rp}</b><span>Repeat</span></div><div><b>${all.length?Math.round(rp*100/all.length):0}%</b><span>Repeat rate</span></div></div>
+  <input class="i" id="cSearch" placeholder="Search name, phone or email" value="${esc(cq)}">`;
+  h+=L.length?L.map(({k,a})=>{const l=a[a.length-1],em=a.map(o=>o.email).filter(Boolean).pop()||'';
+    return `<div class="card"><div class="row"><span class="id" style="font-weight:700">${esc(l.name)}${a.length>1?'<span class="rep">Repeat</span>':'<span class="rep new">New</span>'}</span><b>${inr(spent(a))}</b></div>
+    <div class="m"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>${em?' · '+esc(em):''}</div>
+    <div class="m">${a.length} order${a.length>1?'s':''} · last ${esc(l.placed)}${a.length>1?' · avg '+inr(spent(a)/a.filter(o=>o.status!=='Cancelled').length||0):''}</div>
+    <div class="acts"><button class="btn ol sm" data-hist="c_${esc(k)}">Order history</button><a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${esc(String(l.phone).replace(/\D/g,'').slice(-10))}">WhatsApp</a><button class="btn ol sm" data-mail="${esc(l.id)}">✉ Email</button></div>
+    <div class="hist hide" id="c_${esc(k)}">${histRows(a)}</div></div>`}).join(''):`<div class="card"><div class="hint">No customers yet.</div></div>`;
+  return h
+}
+
+/* ---------- email composer ---------- */
+const MK=[['confirm','Confirmed'],['advance','Advance received'],['ready','Ready'],['thanks','Thank you'],['ask','Question']];
+let MS=null;
+function closeMail(){MS=null;$('mailSheet').classList.add('hide')}
+async function openMail(id,kind,keepTo){
+  const o=D.orders.find(x=>x.id===id);if(!o)return;
+  MS={id,kind:kind||'confirm'};$('mailSheet').classList.remove('hide');if(!keepTo)$('mailIn').innerHTML='<div class="hint">Loading…</div>';
+  const prevTo=keepTo&&$('mTo')?$('mTo').value:'';
+  let r;try{r=await api({action:'admin_email_draft',id,kind:MS.kind})}catch(_){closeMail();toast('No connection');return}
+  if(!r.ok){closeMail();toast(r.error||'Could not load');return}
+  const to=prevTo||r.to||'';
+  $('mailIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">Email ${esc(o.name.split(' ')[0])} · ${esc(o.id)}</div><button class="btn ol sm" id="mCancel">Close</button></div>
+  <div class="chips">${MK.map(([k,n])=>`<button class="chip ${MS.kind===k?'on':''}" data-mk="${k}">${n}</button>`).join('')}</div>
+  <label class="f" style="margin-top:4px">To</label><input class="i" id="mTo" type="email" inputmode="email" value="${esc(to)}" placeholder="customer@email.com">
+  ${to?'':`<div class="hint">This customer ordered without signing in, so we have no email. Type one to send, or use the WhatsApp buttons.</div>`}
+  <label class="f">Subject</label><input class="i" id="mSub" maxlength="150" value="${esc(r.subject)}">
+  <label class="f">Message (you can edit it)</label><textarea class="i" id="mBody" maxlength="4000">${esc(r.body)}</textarea>
+  <div class="err" id="mErr"></div>
+  <button class="btn" id="mSend" style="width:100%;margin-top:12px">Send email</button>`
+}
+$('mailSheet').addEventListener('click',async e=>{
+  if(e.target===$('mailSheet')||e.target.closest('#mCancel')){closeMail();return}
+  const k=e.target.closest('[data-mk]');if(k&&MS){openMail(MS.id,k.dataset.mk,true);return}
+  if(e.target.closest('#mSend')&&MS){
+    const b=$('mSend'),err=$('mErr');err.textContent='';b.disabled=true;b.textContent='Sending…';const id=MS.id;
+    try{const r=await api({action:'admin_email_send',id,to:$('mTo').value.trim(),subject:$('mSub').value,body:$('mBody').value});
+      if(r.ok){const m=D.mails[id.toLowerCase()]||(D.mails[id.toLowerCase()]={n:0,last:0});m.n++;m.last=Date.now();closeMail();toast('Email sent to '+r.to);const y=scrollY;render();scrollTo(0,y)}
+      else err.textContent=r.error||'Could not send.'}
+    catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false;b.textContent='Send email'}
+  }
+});
 $('panel').addEventListener('click',async e=>{
   const f=e.target.closest('[data-f]');if(f){filt=f.dataset.f;render();return}
+  const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
+  const hb=e.target.closest('[data-hist]');if(hb){const x=document.getElementById(hb.dataset.hist);if(x)x.classList.toggle('hide');return}
   if(e.target.closest('#refresh')){await loadOrders();render();toast('Updated');return}
   const sb=e.target.closest('[data-s]');if(sb){
     const card=sb.closest('.o'),id=card.dataset.id,st=sb.dataset.s,o=D.orders.find(x=>x.id===id);if(!o||o.status===st)return;
     if(st==='Cancelled'&&!confirm('Cancel order '+id+'?'))return;
-    const notify=!!(card.querySelector('[data-notify]')&&card.querySelector('[data-notify]').checked);
+    const notify=st!=='Confirmed'&&!!(card.querySelector('[data-notify]')&&card.querySelector('[data-notify]').checked);
     sb.disabled=true;
-    try{const r=await api({action:'admin_status',id,status:st,notify});if(r.ok){o.status=st;toast(st+(r.mailed?' · customer emailed':''));const y=scrollY;render();scrollTo(0,y)}else toast(r.error||'Could not update')}catch(_){toast('No connection')}
+    try{const r=await api({action:'admin_status',id,status:st,notify});if(r.ok){o.status=st;toast(st+(r.mailed?' · customer emailed':''));const y=scrollY;render();scrollTo(0,y);if(st==='Confirmed')openMail(id,'confirm')}else toast(r.error||'Could not update')}catch(_){toast('No connection')}
     return
   }
   const a=e.target.closest('[data-del]');if(a){const d=a.dataset.del;D.settings.closed=D.settings.closed.filter(x=>x!==d);dirty=true;render();return}
@@ -216,6 +300,7 @@ $('panel').addEventListener('click',async e=>{
 });
 $('panel').addEventListener('input',e=>{
   if(e.target.id==='search'){q=e.target.value;const pos=e.target.selectionStart;render();const s=$('search');s.focus();s.setSelectionRange(pos,pos)}
+  if(e.target.id==='cSearch'){cq=e.target.value;const pos=e.target.selectionStart;render();const s=$('cSearch');s.focus();s.setSelectionRange(pos,pos)}
   if(['capCake','capOther','banner'].includes(e.target.id)){D.settings[e.target.id]=e.target.id==='banner'?e.target.value:Math.max(0,parseInt(e.target.value)||0);dirty=true}
 });
 

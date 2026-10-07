@@ -1030,6 +1030,7 @@ function adminOrder_(row){
   return {
     id: String(row[0]),
     placed: (rec instanceof Date) ? Utilities.formatDate(rec, 'Asia/Kolkata', 'dd MMM, h:mm a') : String(rec),
+    placedMs: (rec instanceof Date) ? rec.getTime() : 0,
     status: String(row[2] || 'New'), name: String(row[3]), phone: String(row[4]),
     date: j.date || String(row[5]), time: j.time || String(row[6]),
     split: j.split || null,
@@ -1055,16 +1056,74 @@ function statusMail_(o, status){
     body: 'Hi ' + first + ',\n\n' + msgs[status] + '\n\nCravella Bake House · 98459-04310'});
   return true;
 }
+
+/* ---- emails to customers from the admin screen ---- */
+const MAIL_LOG = 'Email log', MAIL_LOG_HEAD = ['Sent','Order','To','Subject','Sent by'];
+function fdate_(d){
+  const q = String(d).split('-'), MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return q.length === 3 ? Number(q[2]) + ' ' + MON[Number(q[1]) - 1] : String(d);
+}
+function mailDraft_(o, kind){
+  const first = String(o.name).split(' ')[0], trip = o.mode === 'Delivery' ? 'delivery' : 'pickup';
+  const when = o.split ? 'Cakes: ' + fdate_(o.date) + ', ' + o.time + ' (' + trip + ')\nOther bakes: ' + fdate_(o.split.date) + ', ' + o.split.time + ' (separate ' + trip + ')'
+    : (o.mode === 'Delivery' ? 'Delivery' : 'Pickup') + ': ' + fdate_(o.date) + ', ' + o.time;
+  const items = o.lines.map(function(l){ return '• ' + l; }).join('\n');
+  const custom = o.lines.some(function(l){ return /custom – price to confirm/.test(l); });
+  const adv = Math.round(o.total / 2);
+  const sign = '\n\nWarm regards,\nCravella Bake House\nEggless · Freshly baked to order\n98459-04310';
+  const pay = UPI_ID ? 'To book your order, please pay the advance by UPI to ' + UPI_ID + ' and reply with a screenshot.' : 'To book your order, please pay the advance by UPI. We will share the details with you.';
+  const hello = 'Hi ' + first + ',\n\n';
+  if (kind === 'advance') return {subject:'Advance received · order ' + o.id, body: hello + 'We have received your advance. Your order ' + o.id + ' is booked.\n\n' + when + sign};
+  if (kind === 'ready') return {subject:'Your order ' + o.id + ' is ready', body: hello + 'Your order ' + o.id + ' is ready' + (o.mode === 'Delivery' ? ' and will be on its way shortly.' : ' for pickup.') + sign};
+  if (kind === 'thanks') return {subject:'Thank you from Cravella Bake House', body: hello + 'Thank you for choosing Cravella Bake House for order ' + o.id + '. We hope you loved it! If you have a minute, we would love to hear your feedback, and a photo of the celebration makes our day.' + sign};
+  if (kind === 'ask') return {subject:'A quick question about your order ' + o.id, body: hello + 'Thank you for your order ' + o.id + '. Before we confirm, we need to check a detail with you:\n\n' + sign.trim()};
+  return {subject:'Order confirmed · ' + o.id + ' · Cravella Bake House',
+    body: hello + 'Thank you for ordering from Cravella Bake House! Your order ' + o.id + ' is confirmed.\n\n' + items
+      + (o.discount ? '\n\nSubtotal: ₹' + o.subtotal + '\nDiscount: −₹' + o.discount : '')
+      + '\n\nTotal: ₹' + o.total + (custom ? ' (final amount confirmed once the design is agreed)' : '') + '\n' + when
+      + (custom ? '\n\nCustom / theme cakes need a 50% advance (₹' + adv + ') to book. The balance 50% is paid on ' + trip + '.' : '')
+      + '\n\n' + pay + sign};
+}
+function mailLog_(){
+  const sh = book_().getSheetByName(MAIL_LOG), out = {};
+  if (!sh) return out;
+  const n = sh.getLastRow(); if (n < 2) return out;
+  const v = sh.getRange(Math.max(2, n - 499), 1, Math.min(500, n - 1), 2).getValues();
+  v.forEach(function(r){
+    const id = String(r[1]).toLowerCase(), t = (r[0] instanceof Date) ? r[0].getTime() : 0;
+    const m = out[id] || (out[id] = {n:0, last:0}); m.n++; if (t > m.last) m.last = t;
+  });
+  return out;
+}
 function adminApi_(a, r, email){
   const sh = sheet_();
   if (a === 'admin_me') return {ok:true, admin:true, email:email};
   if (a === 'admin_orders'){
     const n = sh.getLastRow(), out = [];
     if (n >= 2){
-      const v = sh.getRange(Math.max(2, n - 399), 1, Math.min(400, n - 1), 22).getValues();
+      const v = sh.getRange(Math.max(2, n - 999), 1, Math.min(1000, n - 1), 22).getValues();
       for (let i = v.length - 1; i >= 0; i--) out.push(adminOrder_(v[i]));
     }
-    return {ok:true, orders:out, statuses:STATUSES};
+    return {ok:true, orders:out, statuses:STATUSES, mails:mailLog_(), now:Date.now()};
+  }
+  if (a === 'admin_email_draft' || a === 'admin_email_send'){
+    const row = findRow_(sh, 1, String(r.id || '').toLowerCase());
+    if (!row) return {ok:false, error:'Order not found.'};
+    const o = adminOrder_(sh.getRange(row, 1, 1, 22).getValues()[0]);
+    if (a === 'admin_email_draft'){
+      const k = ['confirm','advance','ready','thanks','ask'].indexOf(String(r.kind)) >= 0 ? String(r.kind) : 'confirm';
+      const d = mailDraft_(o, k); return {ok:true, to:o.email, subject:d.subject, body:d.body};
+    }
+    const to = emailOk_(r.to || o.email);
+    if (!to) return {ok:false, error:'Please enter a valid email address for the customer.'};
+    const subject = String(r.subject || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 150);
+    const body = String(r.body || '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim().slice(0, 4000);
+    if (subject.length < 3) return {ok:false, error:'Please add a subject.'};
+    if (body.length < 5) return {ok:false, error:'Please write a message.'};
+    if (!bump_('amail', 60, 3600)) return {ok:false, error:'Too many emails this hour. Please try again later.'};
+    MailApp.sendEmail({to:to, name:'Cravella Bake House', replyTo:String(NOTIFY_EMAIL).split(',')[0].trim(), subject:subject, body:body});
+    tab_(MAIL_LOG, MAIL_LOG_HEAD).appendRow([new Date(), o.id, to, subject, email]);
+    return {ok:true, sent:true, to:to};
   }
   if (a === 'admin_status'){
     const id = String(r.id || ''), st = String(r.status || '');
