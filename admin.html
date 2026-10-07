@@ -78,7 +78,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px sol
 .hist{border-top:1px dashed var(--line);margin-top:10px;padding-top:6px;font-size:13.5px}
 .hist .h{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
 .sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
-.sheet .in{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.sheet .in{background:var(--bg);width:100%;max-width:720px;max-height:92vh;max-height:calc(100dvh - 12px);overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
 textarea.i{min-height:230px;resize:vertical;line-height:1.45}
 .hide{display:none!important}
 @media print{.top,.tabs,.save,.noprint{display:none!important}body{padding:0;background:#fff;color:#000}.card{box-shadow:none;border-color:#999}}
@@ -90,6 +90,10 @@ textarea.i{min-height:230px;resize:vertical;line-height:1.45}
 .ir{border-top:1px dashed var(--line);margin-top:12px;padding-top:10px;display:grid;gap:8px}
 ol.ms{padding-left:20px;margin:8px 0}ol.ms li{margin:5px 0}
 select.i{appearance:auto}.row .btn.sm{white-space:nowrap}
+
+.top,.tabs{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+.wrap{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+@media (max-height:520px) and (orientation:landscape){.tabs{position:static}.top{padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:6px}.top .lg{height:32px}.sheet{align-items:center}.sheet .in{border-radius:18px;max-height:calc(100dvh - 16px)}.save{padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}body{padding-bottom:70px}}
 </style>
 </head>
 <body>
@@ -232,7 +236,7 @@ function recipesHtml(){
   <div class="acts"><button class="btn" id="kBake">Baked it: use from stock</button><button class="btn ol sm" id="kEditRec">Edit recipe</button></div></div>`;
   return h
 }
-function closeEd(){ES=null;$('edSheet').classList.add('hide')}
+function closeEd(){ES=null;$('edSheet').classList.add('hide');popSheet()}
 function openStockEdit(id){
   const x=D.stock.find(s=>s.id===id);if(!x)return;ES={k:'stock',id};
   $('edIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">Edit item</div><button class="btn ol sm" id="eClose">Close</button></div>
@@ -242,7 +246,7 @@ function openStockEdit(id){
   <label class="f">Warn me when below</label><input class="i" id="eLow" type="number" min="0" step="any" inputmode="decimal" value="${x.low}">
   <div class="err" id="eErr"></div><button class="btn" id="eSave" style="width:100%;margin-top:12px">Save</button>
   <button class="btn ol" id="eDel" style="width:100%;margin-top:10px">Delete this item</button>`;
-  $('edSheet').classList.remove('hide')
+  showSheet('edSheet')
 }
 function irow(g){
   g=g||{n:'',q:'',u:'g',s:''};
@@ -263,7 +267,7 @@ function openRecipeEdit(id){
   <label class="f">Notes (oven, time, tips)</label><textarea class="i" id="rNotes" style="min-height:70px">${esc(g.notes)}</textarea>
   <div class="err" id="eErr"></div><button class="btn" id="eSave" style="width:100%;margin-top:12px">Save recipe</button>
   ${r?'<button class="btn ol" id="eDel" style="width:100%;margin-top:10px">Delete this recipe</button>':''}`;
-  $('edSheet').classList.remove('hide')
+  showSheet('edSheet')
 }
 async function kAdjust(id,sign){
   const inp=document.querySelector(`[data-adj="${id}"]`),v=parseFloat(inp&&inp.value);
@@ -330,7 +334,7 @@ $('edSheet').addEventListener('click',async e=>{
 
 /* ---------- password ---------- */
 let hasPw=true;
-function closePw(){$('pwSheet').classList.add('hide')}
+function closePw(){$('pwSheet').classList.add('hide');popSheet()}
 function openPw(first){
   $('pwIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">${first?'Set your password':'Change password'}</div><button class="btn ol sm" id="pCancel">${first?'Later':'Close'}</button></div>
   <div class="hint">${first?'Next time you can sign in with your email and this password.':'Use at least 8 characters.'}</div>
@@ -338,7 +342,7 @@ function openPw(first){
   <label class="f">New password</label><input class="i" id="pNew" type="password" autocomplete="new-password" placeholder="At least 8 characters">
   <label class="f">Type it again</label><input class="i" id="pNew2" type="password" autocomplete="new-password">
   <div class="err" id="pErr"></div><button class="btn" id="pSave" style="width:100%;margin-top:12px">Save password</button>`;
-  $('pwSheet').classList.remove('hide');$('pwSheet').dataset.first=first?'1':''
+  showSheet('pwSheet');$('pwSheet').dataset.first=first?'1':''
 }
 $('pwSheet').addEventListener('click',async e=>{
   if(e.target===$('pwSheet')||e.target.closest('#pCancel')){closePw();return}
@@ -351,7 +355,7 @@ $('pwSheet').addEventListener('click',async e=>{
     if(r.ok){hasPw=true;closePw();toast('Password saved')}else err.textContent=r.error||'Could not save.'}
   catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false;b.textContent='Save password'}
 });
-$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);$('aCode').value='';loginMode('pw');showLogin()};
+$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);D.orders=[];D.mails={};D.settings=null;D.stock=null;D.recipes=null;$('panel').innerHTML='';$('aCode').value='';loginMode('pw');showLogin()};
 
 function showApp(){$('login').classList.add('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');$('who').textContent=me||'Signed in';bakeDate=bakeDate||ymd(new Date(Date.now()+86400000))}
 function saveCache(){SS('cb_admin_cache',JSON.stringify({orders:D.orders,statuses:D.statuses,mails:D.mails,me}))}
@@ -380,7 +384,7 @@ function renderTabs(){
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}">${n}${k==='orders'&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('');
   $('saveBar').classList.toggle('hide',!(tab==='menu'||tab==='settings'));
 }
-$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;render();scrollTo(0,0)});
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;if(b.dataset.tab===tab)return;tab=b.dataset.tab;try{history.pushState({cb:'tab',tab},'')}catch(_){}render();scrollTo(0,0)});
 function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='bake'&&!bake)loadBake()}
 
 /* ---------- orders ---------- */
@@ -468,10 +472,10 @@ function custHtml(){
 /* ---------- email composer ---------- */
 const MK=[['confirm','Confirmed'],['advance','Advance received'],['ready','Ready'],['thanks','Thank you'],['ask','Question']];
 let MS=null;
-function closeMail(){MS=null;$('mailSheet').classList.add('hide')}
+function closeMail(){MS=null;$('mailSheet').classList.add('hide');popSheet()}
 async function openMail(id,kind,keepTo){
   const o=D.orders.find(x=>x.id===id);if(!o)return;
-  MS={id,kind:kind||'confirm'};$('mailSheet').classList.remove('hide');if(!keepTo)$('mailIn').innerHTML='<div class="hint">Loading…</div>';
+  MS={id,kind:kind||'confirm'};showSheet('mailSheet');if(!keepTo)$('mailIn').innerHTML='<div class="hint">Loading…</div>';
   const prevTo=keepTo&&$('mTo')?$('mTo').value:'';
   let r;try{r=await api({action:'admin_email_draft',id,kind:MS.kind})}catch(_){closeMail();toast('No connection');return}
   if(!r.ok){closeMail();toast(r.error||'Could not load');return}
@@ -578,6 +582,18 @@ $('saveBtn').onclick=async()=>{
   catch(_){toast('No connection')}finally{b.disabled=false;b.textContent='Save changes'}
 };
 addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+/* ---------- phone Back button: closes sheets, steps back through tabs, never reveals the app after sign out ---------- */
+function showSheet(id){const el=$(id),was=el.classList.contains('hide');el.classList.remove('hide');if(was){try{history.pushState({cb:'sheet'},'')}catch(_){}}}
+function popSheet(){try{if(history.state&&history.state.cb==='sheet')history.back()}catch(_){}}
+try{history.replaceState({cb:'tab',tab},'')}catch(_){}
+addEventListener('popstate',e=>{
+  if(!tok){showLogin();return}
+  const CL={pwSheet:closePw,edSheet:closeEd,mailSheet:closeMail};
+  for(const id in CL){if(!$(id).classList.contains('hide')){CL[id]();return}}
+  const st=e.state;if(st&&st.cb==='tab'&&st.tab!==tab){tab=st.tab;render();scrollTo(0,0)}
+});
+addEventListener('pageshow',e=>{if(e.persisted&&!tok)showLogin()});
+
 boot();
 </script>
 </body>
