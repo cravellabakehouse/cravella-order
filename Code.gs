@@ -877,8 +877,8 @@ function accountApi_(r){
   if (a === 'otp_request'){
     const email = emailOk_(r.email);
     if (!email) return {ok:false, error:'Please enter a valid email address.'};
-    if (!bump_('otpr:' + h_(email), 3, 3600) || !bump_('otpg', 60, 3600))
-      return {ok:false, error:'Too many codes requested. Please try again in an hour, or WhatsApp us.'};
+    if (!bump_('otpr:' + h_(email), isAdmin_(email) ? 30 : 8, 3600) || !bump_('otpg', 200, 3600))
+      return {ok:false, error:'Too many codes requested. Please wait a few minutes and try again, or WhatsApp us on 98459-04310.'};
     const code = ('000000' + Math.floor(Math.random() * 1000000)).slice(-6);
     CacheService.getScriptCache().put('otp:' + h_(email), JSON.stringify({c: h_(code + '|' + email), t: 0}), 600);
     MailApp.sendEmail({
