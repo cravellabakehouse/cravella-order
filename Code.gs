@@ -129,8 +129,7 @@ function validate_(r){
       if (TIMES.indexOf(st) < 0) return {error:'Please choose a time for the other bakes.'};
       const min1 = Utilities.formatDate(new Date(Date.UTC(today[0], today[1]-1, today[2] + LEAD_OTHER)), 'UTC', 'yyyy-MM-dd');
       if (sd < min1) return {error:'That date is too soon for the other bakes. Please pick a later date.'};
-      if (sd === r.date) return {error:'The other bakes date is the same as the cake date. Untick the separate date option instead.'};
-      split = {date:sd, time:st};
+      if (!(sd === r.date && st === r.time)) split = {date:sd, time:st};
     }
   }
   const subtotal = Math.round(pr.total);

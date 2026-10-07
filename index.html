@@ -175,8 +175,8 @@ body.acct-open .bar{z-index:25}
   <label class="f" id="dateLbl">Date &amp; time</label>
   <div class="two"><input class="i" type="date" id="fDate"><select class="i" id="fTime"></select></div>
   <div class="hint" id="dateHint"></div>
-  <div id="splitBox" style="display:none"><label class="spl"><input type="checkbox" id="splitChk"><span>Need the other bakes sooner? Pick a separate earlier date for them.</span></label>
-    <div id="splitWrap" style="display:none"><label class="f">Other bakes: date &amp; time</label><div class="two"><input class="i" type="date" id="fDate2"><select class="i" id="fTime2"></select></div><div class="hint" id="dateHint2"></div></div></div>
+  <div id="splitBox" style="display:none">
+    <div id="splitWrap"><label class="f">Cupcakes &amp; other bakes: date &amp; time</label><div class="two"><input class="i" type="date" id="fDate2"><select class="i" id="fTime2"></select></div><div class="hint" id="dateHint2"></div></div></div>
 
   <label class="f">Your details</label>
   <input class="i" id="fName" placeholder="Your name" autocomplete="name" maxlength="80">
@@ -377,11 +377,11 @@ function renderReview(){
   $('revSign').innerHTML=A.tok?'Signed in as '+esc(A.profile?A.profile.email:'your account')+'. This order will appear in your history.':'<a class="lnk" data-signin>Sign in</a> to save your details and track this order.';
   const md=minDate(),f=$('fDate');f.min=ymd(md);
   if(f.value&&f.value<f.min)f.value='';
-  const cs=canSplit();if(!cs)S.split=false;
-  $('splitBox').style.display=cs?'block':'none';$('splitChk').checked=S.split;$('splitWrap').style.display=S.split?'block':'none';
-  $('dateLbl').textContent=S.split?'Cakes: date & time':'Date & time';
-  if(S.split){const m2=minDate2(),f2=$('fDate2');f2.min=ymd(m2);if(f2.value&&f2.value<f2.min)f2.value='';
-    $('dateHint2').textContent='Earliest date: '+m2.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+'. This is a separate '+(S.mode==='Delivery'?'delivery':'pickup')+'; '+(S.mode==='Delivery'?'delivery charges apply for each trip.':'you will visit twice.')}
+  const cs=canSplit();S.split=cs;
+  $('splitBox').style.display=cs?'block':'none';
+  $('dateLbl').textContent=cs?'Cakes: date & time':'Date & time';
+  if(cs){const m2=minDate2(),f2=$('fDate2');f2.min=ymd(m2);if(f2.value&&f2.value<f2.min)f2.value='';
+    $('dateHint2').textContent='Earliest date: '+m2.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+'. Choose the same date as your cake to get everything together. A different date is a separate '+(S.mode==='Delivery'?'delivery (charges apply for each trip).':'pickup.')}
   $('dateHint').textContent='Earliest date: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+(S.cakes.length?' (cakes need 2 days\' notice)':'');
 }
 function openReview(){$('review').classList.add('on');document.body.style.overflow='hidden';renderReview();prefill();$('review').scrollTop=0;if(A.tok&&!A.profile)loadMe().then(prefill)}
@@ -396,7 +396,6 @@ $('revLines').addEventListener('click',e=>{
   renderAll(true);renderReview();
 });
 $('fTime2').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
-$('splitChk').onchange=()=>{S.split=$('splitChk').checked;renderReview()};
 $('fTime').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
 $('modeSeg').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;S.mode=b.dataset.m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));$('addrBox').style.display=S.mode==='Delivery'?'block':'none';renderReview()});
 
@@ -442,11 +441,11 @@ $('submit').onclick=async()=>{
   if(!date)return fail('Please choose a date.','fDate');
   if(date<ymd(minDate()))return fail('That date is too soon for your items. Please pick a later date.','fDate');
   if(!time)return fail('Please choose a preferred time.','fTime');
-  const sp=S.split&&canSplit()?{date:$('fDate2').value,time:$('fTime2').value}:null;
-  if(sp){if(!sp.date)return fail('Please choose a date for the other bakes.','fDate2');
-    if(sp.date<ymd(minDate2()))return fail('That date is too soon for the other bakes. Please pick a later date.','fDate2');
-    if(sp.date===date)return fail('The other bakes date is the same as the cake date. Untick the separate date option instead.','fDate2');
-    if(!sp.time)return fail('Please choose a time for the other bakes.','fTime2')}
+  const sp0=canSplit()?{date:$('fDate2').value,time:$('fTime2').value}:null;
+  if(sp0){if(!sp0.date)return fail('Please choose a date for your cupcakes / other bakes.','fDate2');
+    if(sp0.date<ymd(minDate2()))return fail('That date is too soon for the other bakes. Please pick a later date.','fDate2');
+    if(!sp0.time)return fail('Please choose a time for the other bakes.','fTime2')}
+  const sp=sp0&&!(sp0.date===date&&sp0.time===time)?sp0:null;
   if(S.mode==='Delivery'&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
   function fail(m,id){err.textContent=m;const el=$(id);document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));el.classList.add('bad');if(el.tagName==='INPUT'&&el.type!=='date'||el.tagName==='TEXTAREA')el.focus({preventScroll:true});err.scrollIntoView({block:'center',behavior:'smooth'})}
   const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes,photos:S.photos,
