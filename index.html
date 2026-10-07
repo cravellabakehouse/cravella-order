@@ -20,6 +20,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Cravella">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1129,9 +1131,10 @@ $('dInstall').onclick=async()=>{if(deferred){deferred.prompt();await deferred.us
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 try{const p=JSON.parse(sessionStorage.getItem('cb_contact')||'null');if(p){$('fName').value=p.n||'';$('fPhone').value=p.p||''}}catch(_){}
 ['fName','fPhone'].forEach(i=>$(i).addEventListener('change',()=>{try{sessionStorage.setItem('cb_contact',JSON.stringify({n:$('fName').value,p:$('fPhone').value}))}catch(_){}}));
+try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;$('banner').textContent=CFG.banner||''}}catch(_){}
 renderAll();accBtn();if(A.tok)loadMe();
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
-  if(!r||!r.ok||!r.settings)return;CFG=r.settings;
+  if(!r||!r.ok||!r.settings)return;CFG=r.settings;try{localStorage.setItem('cb_cfg',JSON.stringify(CFG))}catch(_){}
   $('banner').textContent=CFG.banner||'';
   const n=purgeOff();renderAll();if(n)toast('Some items in your order are sold out and were removed.')
 }).catch(()=>{});

@@ -472,11 +472,15 @@ const MENU = {
 
 function doGet(){ return out_({ok:true, service:'cravella-order-requests'}); }
 
+// read-only requests never wait in the queue behind an order being saved
+const READ_ONLY = ['settings','me','admin_me','admin_orders','admin_bake','admin_settings_get','admin_email_draft','coupon_check'];
 function doPost(e){
-  const lock = LockService.getScriptLock();
+  let lock = null;
   try{
-    lock.waitLock(20000);
     const r = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (r.action && READ_ONLY.indexOf(String(r.action)) >= 0) return out_(accountApi_(r));
+    lock = LockService.getScriptLock();
+    lock.waitLock(20000);
     if (r.action) return out_(accountApi_(r));
     if (r.hp) return out_({ok:true, id:'CB-0000', total:0});          // honeypot: pretend success
     const v = validate_(r);
@@ -493,10 +497,8 @@ function doPost(e){
       JSON.stringify({items:r.items, mode:v.mode, date:v.date, time:v.time, coupon:v.couponUsed || '', split:v.split}), mk_(v.date), email,
       v.subtotal, v.discount, v.discNote, v.split ? v.split.date : '', v.split ? v.split.time : ''];
     sh.appendRow(row);
-    const last = sh.getLastRow();
-    sh.getRange(last,5).setNumberFormat('@').setValue(v.phone);
-    sh.getRange(last,2).setNumberFormat('dd mmm yyyy hh:mm');
-    CacheService.getScriptCache().remove('load');
+    dropLoad_();
+    if (email) dropMe_(email);
     if (v.couponUsed) bumpCoupon_(v.couponUsed);
     if (email) touchCustomer_(email, {name:v.name, phone:v.phone, address:v.address});
     notify_(id, v, photos);
@@ -504,7 +506,7 @@ function doPost(e){
   }catch(err){
     return out_({ok:false, error:'Something went wrong. Please WhatsApp us on 98459-04310.'});
   }finally{
-    try{lock.releaseLock();}catch(_){}
+    try{ if (lock) lock.releaseLock(); }catch(_){}
   }
 }
 
@@ -675,15 +677,19 @@ function couponCheck_(r){
 }
 
 /* ---------- storage ---------- */
+let _bk = null;   // the Sheet is opened once per request, not once per helper
 function book_(){
-  if (SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
+  if (_bk) return _bk;
+  if (SHEET_ID) return (_bk = SpreadsheetApp.openById(SHEET_ID));
   const p = PropertiesService.getScriptProperties();
   const id = p.getProperty('sheetId');
-  if (id) return SpreadsheetApp.openById(id);
+  if (id) return (_bk = SpreadsheetApp.openById(id));
   const ss = SpreadsheetApp.create('Cravella Orders');
   p.setProperty('sheetId', ss.getId());
-  return ss;
+  return (_bk = ss);
 }
+function dropLoad_(){ try{ CacheService.getScriptCache().removeAll(['load','ps']); }catch(_){} }
+function dropMe_(email){ try{ CacheService.getScriptCache().remove('me:' + h_(email)); }catch(_){} }
 function sheet_(){
   const ss = book_();
   let sh = ss.getSheetByName(TAB);
@@ -692,6 +698,7 @@ function sheet_(){
     const d = ss.getSheetByName('Sheet1'); if (d && ss.getSheets().length > 1) ss.deleteSheet(d);
     sh.getRange(1,1,1,HEAD.length).setValues([HEAD]).setFontWeight('bold').setBackground('#fffbbe');
     sh.setFrozenRows(1);
+    sh.getRange('B:B').setNumberFormat('dd mmm yyyy hh:mm');
     sh.getRange('E:E').setNumberFormat('@');
     sh.getRange('F:F').setNumberFormat('@');
     sh.getRange('G:G').setNumberFormat('@');
@@ -699,8 +706,12 @@ function sheet_(){
     sh.getRange('C2:C').setDataValidation(SpreadsheetApp.newDataValidation()
       .requireValueInList(['New','Confirmed','Advance received','Ready','Delivered','Cancelled'], true).build());
   }
-  if (!sh.getRange(1,18).getValue()) sh.getRange(1,18,1,3).setValues([['Subtotal (₹)','Discount (₹)','Discount note']]).setFontWeight('bold').setBackground('#fffbbe');
-  if (!sh.getRange(1,21).getValue()) sh.getRange(1,21,1,2).setValues([['Bakes date (split)','Bakes time (split)']]).setFontWeight('bold').setBackground('#fffbbe');
+  const cc = CacheService.getScriptCache();
+  if (!cc.get('hdr')){   // header check only once in a while, it costs two Sheet reads
+    if (!sh.getRange(1,18).getValue()) sh.getRange(1,18,1,3).setValues([['Subtotal (₹)','Discount (₹)','Discount note']]).setFontWeight('bold').setBackground('#fffbbe');
+    if (!sh.getRange(1,21).getValue()) sh.getRange(1,21,1,2).setValues([['Bakes date (split)','Bakes time (split)']]).setFontWeight('bold').setBackground('#fffbbe');
+    cc.put('hdr', '1', 21600);
+  }
   return sh;
 }
 function nextId_(){
@@ -813,11 +824,15 @@ function bump_(key, limit, ttl){
 function authEmail_(token){
   token = String(token || '');
   if (token.length < 32 || token.length > 128) return '';
-  const sh = tab_('Sessions', SESS_HEAD), row = findRow_(sh, 1, h_(token));
+  const cc = CacheService.getScriptCache(), th = h_(token), hit = cc.get('at:' + th);
+  if (hit) return hit;
+  const sh = tab_('Sessions', SESS_HEAD), row = findRow_(sh, 1, th);
   if (!row) return '';
   const v = sh.getRange(row, 1, 1, 3).getValues()[0];
   if (Number(v[2]) < Date.now()){ sh.deleteRow(row); return ''; }
-  return String(v[1]).toLowerCase();
+  const em = String(v[1]).toLowerCase();
+  cc.put('at:' + th, em, 600);
+  return em;
 }
 function profileOf_(email){
   const sh = tab_('Customers', CUST_HEAD), row = findRow_(sh, 1, email);
@@ -901,7 +916,13 @@ function accountApi_(r){
     if (!isAdmin_(email)) return {ok:false, error:'This account is not an admin.'};
     return adminApi_(a, r, email);
   }
-  if (a === 'me') return {ok:true, profile:profileOf_(email), orders:ordersOf_(email)};
+  if (a === 'me'){
+    const cc = CacheService.getScriptCache(), k = 'me:' + h_(email), hit = cc.get(k);
+    if (hit){ try{ return JSON.parse(hit); }catch(_){} }
+    const out = {ok:true, profile:profileOf_(email), orders:ordersOf_(email)};
+    try{ cc.put(k, JSON.stringify(out), 300); }catch(_){}
+    return out;
+  }
   if (a === 'save_profile'){
     const clean = function(s){ return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim(); };
     const name = clean(r.name).slice(0, 80), address = clean(r.address).slice(0, 300);
@@ -913,9 +934,11 @@ function accountApi_(r){
     const sh = tab_('Customers', CUST_HEAD); let row = findRow_(sh, 1, email);
     if (!row){ touchCustomer_(email, {}); row = findRow_(sh, 1, email); }
     sh.getRange(row, 2).setValue(name); sh.getRange(row, 3).setNumberFormat('@').setValue(phone); sh.getRange(row, 4).setValue(address);
+    dropMe_(email);
     return {ok:true, profile:profileOf_(email)};
   }
   if (a === 'logout'){
+    try{ CacheService.getScriptCache().remove('at:' + h_(String(r.token))); }catch(_){}
     const sh = tab_('Sessions', SESS_HEAD), row = findRow_(sh, 1, h_(String(r.token)));
     if (row) sh.deleteRow(row);
     return {ok:true};
@@ -934,6 +957,7 @@ function upgrade(){
   sh.getRange('P:Q').setNumberFormat('@');
   sh.getRange('R1:V1').setValues([['Subtotal (₹)','Discount (₹)','Discount note','Bakes date (split)','Bakes time (split)']]).setFontWeight('bold').setBackground('#fffbbe');
   discSheet_();
+  sh.getRange('B:B').setNumberFormat('dd mmm yyyy hh:mm'); sh.getRange('E:E').setNumberFormat('@');
   sh.getRange('C2:C').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).setAllowInvalid(true).build());
   const n = sh.getLastRow();
   for (let r = 2; r <= n; r++){
@@ -1002,6 +1026,13 @@ function dayLoad_(){
   return load;
 }
 function publicSettings_(){
+  const cc = CacheService.getScriptCache(), hit = cc.get('ps');
+  if (hit){ try{ return JSON.parse(hit); }catch(_){} }
+  const out = publicSettingsBuild_();
+  try{ cc.put('ps', JSON.stringify(out), 120); }catch(_){}
+  return out;
+}
+function publicSettingsBuild_(){
   const s = getSettings_(), load = dayLoad_(), today = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd');
   const full = {cake:[], other:[]};
   if (s.capCake) Object.keys(load.cake).forEach(function(d){ if (d >= today && load.cake[d] >= s.capCake) full.cake.push(d); });
@@ -1131,7 +1162,8 @@ function adminApi_(a, r, email){
     const row = findRow_(sh, 1, id.toLowerCase());
     if (!row) return {ok:false, error:'Order not found.'};
     sh.getRange(row, 3).setValue(st);
-    CacheService.getScriptCache().remove('load');
+    dropLoad_();
+    try{ const em = String(sh.getRange(row, 17).getValue() || '').toLowerCase(); if (em) dropMe_(em); }catch(_){}
     let mailed = false;
     if (r.notify) { try { mailed = statusMail_(adminOrder_(sh.getRange(row, 1, 1, 22).getValues()[0]), st); } catch (_) {} }
     return {ok:true, status:st, mailed:mailed};
@@ -1180,7 +1212,7 @@ function adminApi_(a, r, email){
     const cap = function(x){ x = Math.floor(Number(x) || 0); return x < 0 ? 0 : x > 500 ? 500 : x; };
     const banner = String(r.banner || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 200);
     PropertiesService.getScriptProperties().setProperty('settings', JSON.stringify({unavailable:un, closed:cl, capCake:cap(r.capCake), capOther:cap(r.capOther), banner:banner}));
-    CacheService.getScriptCache().remove('load');
+    dropLoad_();
     return {ok:true, settings:getSettings_()};
   }
   return {ok:false, error:'Unknown request.'};
