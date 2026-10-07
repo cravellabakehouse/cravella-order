@@ -165,6 +165,7 @@ body.acct-open .bar{z-index:25}
   <div class="line" id="revDelRow" style="color:var(--mut)"><span>Delivery</span><span>fee confirmed by us</span></div>
   <div class="line"><span class="tot">Estimated total</span><span class="tot" id="revTot"></span></div>
   <div class="hint" id="revHint" style="display:none;color:var(--ok);font-weight:600"></div>
+  <div class="hint" id="revAdv" style="display:none;font-weight:600"></div>
   <div id="cpnBox" style="display:none"><div class="cpn"><input class="i" id="cpnIn" placeholder="Coupon code" maxlength="30" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="add sm" id="cpnGo" type="button">Apply</button></div><div class="cmsg" id="cpnMsg"></div></div>
   <div class="note" id="revNote" style="display:none"></div>
 
@@ -202,7 +203,7 @@ body.acct-open .bar{z-index:25}
   <div class="ok">✓</div>
   <h2 style="text-align:center;font-size:23px">Request received!</h2>
   <p class="d" style="text-align:center;margin:8px 10px 18px;font-size:14px">Thank you, <span id="dName"></span>. We'll confirm your order and the final price on WhatsApp shortly. Advance is paid by UPI after confirmation.</p>
-  <div class="card"><div class="sec" style="margin-top:0" id="dId"></div><div id="dLines"></div><div class="hr"></div><div class="line"><span>Pickup / delivery</span><b id="dWhen" style="text-align:right"></b></div><div class="line dsc" id="dDiscRow" style="display:none"><span id="dDiscL"></span><b id="dDisc"></b></div><div class="line"><span>Estimated total</span><b id="dTot"></b></div></div>
+  <div class="card"><div class="sec" style="margin-top:0" id="dId"></div><div id="dLines"></div><div class="hr"></div><div class="line"><span>Pickup / delivery</span><b id="dWhen" style="text-align:right"></b></div><div class="line dsc" id="dDiscRow" style="display:none"><span id="dDiscL"></span><b id="dDisc"></b></div><div class="line"><span>Estimated total</span><b id="dTot"></b></div><div class="hint" id="dAdv" style="display:none;margin-top:10px;font-weight:600"></div></div>
   <button class="btn wa" id="dImg">💬 Send order picture on WhatsApp</button>
   <div class="hint" id="dImgNote" style="text-align:center;margin:-4px 0 8px">Choose WhatsApp, then our chat "Cravella", and press send.</div>
   <a class="btn ol" id="dWa" target="_blank" rel="noopener">Or send as a text message</a>
@@ -220,7 +221,444 @@ body.acct-open .bar{z-index:25}
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycby9cbU5BitbWeEFyYj2jAESAmIIvtLnEs85GHcKa_yxMGtX0k044V-Bp2dnLC0r6BP9Kg/exec';
 const WA='919845904310';
-const MENU={"weights":[0.5,1,1.5,2],"cakes":[{"id":"truffle","name":"Truffle Cake","group":"Chocolate cakes","desc":"Rich dark chocolate ganache","creams":[{"id":"","label":"","prices":[700,1250,1750,2300]}]},{"id":"orange","name":"Orange Chocolate Cake","group":"Chocolate cakes","desc":"Chocolate with a zesty orange note","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"blackforest","name":"Black Forest","group":"Chocolate cakes","desc":"Chocolate, cream and cherries","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"whiteforest","name":"White Forest","group":"Chocolate cakes","desc":"White chocolate and cream","creams":[{"id":"","label":"","prices":[800,1400,2000,2600]}]},{"id":"strawberry","name":"Strawberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"blueberry","name":"Blueberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"raspberry","name":"Raspberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"mango","name":"Mango Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]},{"id":"pineapple","name":"Pineapple Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]}],"cupcakes":[{"id":"cup0","name":"Chocolate","rate":85,"box":500,"size":6},{"id":"cup1","name":"Strawberry","rate":75,"box":450,"size":6},{"id":"cup2","name":"Blueberry","rate":80,"box":480,"size":6},{"id":"cup3","name":"Raspberry","rate":80,"box":480,"size":6},{"id":"cup4","name":"Mango","rate":80,"box":480,"size":6}],"muffins":[{"id":"muf0","name":"Banana Chocochip","rate":80,"box":480,"size":6},{"id":"muf1","name":"Mocha Almond","rate":80,"box":480,"size":6},{"id":"muf2","name":"Chocolate Cranberry","rate":95,"box":570,"size":6},{"id":"muf3","name":"Vanilla Chocochip","rate":80,"box":480,"size":6},{"id":"muf4","name":"Carrot","rate":80,"box":480,"size":6},{"id":"muf5","name":"Pista Mawa Cake","rate":100,"box":600,"size":6}],"brownies":[{"id":"brn0","name":"Crinkle Top","rate":90,"box":350,"size":4},{"id":"brn1","name":"Walnut","rate":100,"box":380,"size":4},{"id":"brn2","name":"Red Velvet Cream Cheese","rate":130,"box":500,"size":4},{"id":"brn3","name":"Triple Chocolate","rate":140,"box":530,"size":4},{"id":"brn4","name":"Fudgy Cookie & Cream","rate":130,"box":500,"size":4},{"id":"brn5","name":"Lotus Biscoff","rate":160,"box":600,"size":4},{"id":"brn6","name":"Tiramisu","rate":160,"box":600,"size":4}],"blondies":[{"id":"bld0","name":"Pista & Rose","rate":160,"box":620,"size":4},{"id":"bld1","name":"Coconut","rate":150,"box":580,"size":4}],"cookies":[{"id":"cok0","name":"Coffee Bean","rate":350},{"id":"cok1","name":"Center-filled Chocochip","rate":425},{"id":"cok2","name":"Checker Board","rate":400},{"id":"cok3","name":"Digestive (Atta & Jaggery)","rate":350},{"id":"cok4","name":"Gluten Free Vegan","rate":450},{"id":"cok5","name":"Butter","rate":350}],"discount":{"tiers":[[10001,8],[5001,5]],"coupons":false}};
+const MENU={
+ "weights": [
+  0.5,
+  1,
+  1.5,
+  2
+ ],
+ "cakes": [
+  {
+   "id": "truffle",
+   "name": "Truffle Cake",
+   "group": "Chocolate cakes",
+   "desc": "Rich dark chocolate ganache",
+   "creams": [
+    {
+     "id": "",
+     "label": "",
+     "prices": [
+      700,
+      1250,
+      1750,
+      2300
+     ]
+    }
+   ]
+  },
+  {
+   "id": "orange",
+   "name": "Orange Chocolate Cake",
+   "group": "Chocolate cakes",
+   "desc": "Chocolate with a zesty orange note",
+   "creams": [
+    {
+     "id": "",
+     "label": "",
+     "prices": [
+      750,
+      1300,
+      1850,
+      2400
+     ]
+    }
+   ]
+  },
+  {
+   "id": "blackforest",
+   "name": "Black Forest",
+   "group": "Chocolate cakes",
+   "desc": "Chocolate, cream and cherries",
+   "creams": [
+    {
+     "id": "",
+     "label": "",
+     "prices": [
+      750,
+      1300,
+      1850,
+      2400
+     ]
+    }
+   ]
+  },
+  {
+   "id": "whiteforest",
+   "name": "White Forest",
+   "group": "Chocolate cakes",
+   "desc": "White chocolate and cream",
+   "creams": [
+    {
+     "id": "",
+     "label": "",
+     "prices": [
+      800,
+      1400,
+      2000,
+      2600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "strawberry",
+   "name": "Strawberry Cake",
+   "group": "Berry cakes",
+   "desc": "Fresh fruit flavour",
+   "creams": [
+    {
+     "id": "w",
+     "label": "Whipped cream",
+     "prices": [
+      650,
+      1200,
+      1750,
+      2200
+     ]
+    },
+    {
+     "id": "b",
+     "label": "Butter cream",
+     "prices": [
+      750,
+      1350,
+      2000,
+      2500
+     ]
+    }
+   ]
+  },
+  {
+   "id": "blueberry",
+   "name": "Blueberry Cake",
+   "group": "Berry cakes",
+   "desc": "Fresh fruit flavour",
+   "creams": [
+    {
+     "id": "w",
+     "label": "Whipped cream",
+     "prices": [
+      650,
+      1200,
+      1750,
+      2200
+     ]
+    },
+    {
+     "id": "b",
+     "label": "Butter cream",
+     "prices": [
+      750,
+      1350,
+      2000,
+      2500
+     ]
+    }
+   ]
+  },
+  {
+   "id": "raspberry",
+   "name": "Raspberry Cake",
+   "group": "Berry cakes",
+   "desc": "Fresh fruit flavour",
+   "creams": [
+    {
+     "id": "w",
+     "label": "Whipped cream",
+     "prices": [
+      650,
+      1200,
+      1750,
+      2200
+     ]
+    },
+    {
+     "id": "b",
+     "label": "Butter cream",
+     "prices": [
+      750,
+      1350,
+      2000,
+      2500
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mango",
+   "name": "Mango Cake",
+   "group": "Fruit cakes",
+   "desc": "Light, fruity and fresh",
+   "creams": [
+    {
+     "id": "w",
+     "label": "Whipped cream",
+     "prices": [
+      600,
+      1150,
+      1600,
+      2000
+     ]
+    },
+    {
+     "id": "b",
+     "label": "Butter cream",
+     "prices": [
+      700,
+      1300,
+      1900,
+      2500
+     ]
+    }
+   ]
+  },
+  {
+   "id": "pineapple",
+   "name": "Pineapple Cake",
+   "group": "Fruit cakes",
+   "desc": "Light, fruity and fresh",
+   "creams": [
+    {
+     "id": "w",
+     "label": "Whipped cream",
+     "prices": [
+      600,
+      1150,
+      1600,
+      2000
+     ]
+    },
+    {
+     "id": "b",
+     "label": "Butter cream",
+     "prices": [
+      700,
+      1300,
+      1900,
+      2500
+     ]
+    }
+   ]
+  },
+  {
+   "id": "custom",
+   "name": "Custom / Theme Cake",
+   "group": "Custom cakes",
+   "custom": true,
+   "desc": "Design or theme of your choice, starting from ₹2,000 per kg. Share your idea or a reference photo at checkout. 50% advance to book, 50% on delivery.",
+   "creams": [
+    {
+     "id": "",
+     "label": "",
+     "prices": [
+      2000,
+      3000,
+      4000
+     ]
+    }
+   ],
+   "weights": [
+    1,
+    1.5,
+    2
+   ]
+  }
+ ],
+ "cupcakes": [
+  {
+   "id": "cup0",
+   "name": "Chocolate",
+   "rate": 85,
+   "box": 500,
+   "size": 6
+  },
+  {
+   "id": "cup1",
+   "name": "Strawberry",
+   "rate": 75,
+   "box": 450,
+   "size": 6
+  },
+  {
+   "id": "cup2",
+   "name": "Blueberry",
+   "rate": 80,
+   "box": 480,
+   "size": 6
+  },
+  {
+   "id": "cup3",
+   "name": "Raspberry",
+   "rate": 80,
+   "box": 480,
+   "size": 6
+  },
+  {
+   "id": "cup4",
+   "name": "Mango",
+   "rate": 80,
+   "box": 480,
+   "size": 6
+  }
+ ],
+ "muffins": [
+  {
+   "id": "muf0",
+   "name": "Banana Chocochip",
+   "rate": 80,
+   "box": 480,
+   "size": 6
+  },
+  {
+   "id": "muf1",
+   "name": "Mocha Almond",
+   "rate": 80,
+   "box": 480,
+   "size": 6
+  },
+  {
+   "id": "muf2",
+   "name": "Chocolate Cranberry",
+   "rate": 95,
+   "box": 570,
+   "size": 6
+  },
+  {
+   "id": "muf3",
+   "name": "Vanilla Chocochip",
+   "rate": 80,
+   "box": 480,
+   "size": 6
+  },
+  {
+   "id": "muf4",
+   "name": "Carrot",
+   "rate": 80,
+   "box": 480,
+   "size": 6
+  },
+  {
+   "id": "muf5",
+   "name": "Pista Mawa Cake",
+   "rate": 100,
+   "box": 600,
+   "size": 6
+  }
+ ],
+ "brownies": [
+  {
+   "id": "brn0",
+   "name": "Crinkle Top",
+   "rate": 90,
+   "box": 350,
+   "size": 4
+  },
+  {
+   "id": "brn1",
+   "name": "Walnut",
+   "rate": 100,
+   "box": 380,
+   "size": 4
+  },
+  {
+   "id": "brn2",
+   "name": "Red Velvet Cream Cheese",
+   "rate": 130,
+   "box": 500,
+   "size": 4
+  },
+  {
+   "id": "brn3",
+   "name": "Triple Chocolate",
+   "rate": 140,
+   "box": 530,
+   "size": 4
+  },
+  {
+   "id": "brn4",
+   "name": "Fudgy Cookie & Cream",
+   "rate": 130,
+   "box": 500,
+   "size": 4
+  },
+  {
+   "id": "brn5",
+   "name": "Lotus Biscoff",
+   "rate": 160,
+   "box": 600,
+   "size": 4
+  },
+  {
+   "id": "brn6",
+   "name": "Tiramisu",
+   "rate": 160,
+   "box": 600,
+   "size": 4
+  }
+ ],
+ "blondies": [
+  {
+   "id": "bld0",
+   "name": "Pista & Rose",
+   "rate": 160,
+   "box": 620,
+   "size": 4
+  },
+  {
+   "id": "bld1",
+   "name": "Coconut",
+   "rate": 150,
+   "box": 580,
+   "size": 4
+  }
+ ],
+ "cookies": [
+  {
+   "id": "cok0",
+   "name": "Coffee Bean",
+   "rate": 350
+  },
+  {
+   "id": "cok1",
+   "name": "Center-filled Chocochip",
+   "rate": 425
+  },
+  {
+   "id": "cok2",
+   "name": "Checker Board",
+   "rate": 400
+  },
+  {
+   "id": "cok3",
+   "name": "Digestive (Atta & Jaggery)",
+   "rate": 350
+  },
+  {
+   "id": "cok4",
+   "name": "Gluten Free Vegan",
+   "rate": 450
+  },
+  {
+   "id": "cok5",
+   "name": "Butter",
+   "rate": 350
+  }
+ ],
+ "discount": {
+  "tiers": [
+   [
+    10001,
+    8
+   ],
+   [
+    5001,
+    5
+   ]
+  ],
+  "coupons": false
+ }
+};
 const LEAD={cake:48,other:24}; // notice in hours from the moment of ordering
 const TIMES=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
 const TABS=[['cakes','Cakes'],['cupcakes','Cupcakes'],['muffins','Muffins'],['cookies','Cookies'],['brownies','Brownies']];
@@ -232,8 +670,8 @@ const kgLabel=k=>k<1?(k*1000)+' g':(k%1?k.toFixed(1):k)+' kg';
 
 /* ---------- pricing (the server recalculates all of this) ---------- */
 function cakePrice(c,cream,kg){
-  const cr=c.creams.find(x=>x.id===cream)||c.creams[0],ws=MENU.weights,ex=ws.indexOf(kg);
-  if(ex>=0)return{amount:cr.prices[ex],exact:true};
+  const cr=c.creams.find(x=>x.id===cream)||c.creams[0],ws=c.weights||MENU.weights,ex=ws.indexOf(kg);
+  if(ex>=0)return{amount:cr.prices[ex],exact:!c.custom};
   let i=ws.findIndex(w=>w>=kg);if(i<0)i=ws.length-1;
   return{amount:Math.round(cr.prices[i]/ws[i]*kg),exact:false};
 }
@@ -250,7 +688,7 @@ function selOf(id){if(!S.sel[id]){const cs=findCake(id).creams;S.sel[id]={cream:
 function lines(){
   const out=[];
   S.cakes.forEach((l,i)=>{const c=findCake(l.id),p=cakePrice(c,l.cream,l.kg),cr=c.creams.find(x=>x.id===l.cream);
-    out.push({ref:['cake',i],name:c.name,sub:[cr&&cr.label,kgLabel(l.kg)+(l.q>1?' × '+l.q:''),p.exact?'':'estimate – we\'ll confirm'].filter(Boolean).join(' · '),q:l.q,qLabel:'×'+l.q,amount:p.amount*l.q,flag:!p.exact,kind:'cake'})});
+    out.push({ref:['cake',i],name:c.name,sub:[cr&&cr.label,kgLabel(l.kg)+(l.q>1?' × '+l.q:''),p.exact?'':(c.custom?'custom design – final price confirmed':'estimate – we\'ll confirm')].filter(Boolean).join(' · '),q:l.q,qLabel:'×'+l.q,amount:p.amount*l.q,flag:!p.exact,kind:'cake'})});
   for(const id in S.pc){const q=S.pc[id];if(!q)continue;const d=findPc(id);
     out.push({ref:['pc',id],name:d.name+' '+kindName(id),sub:q+' pcs · '+(q/d.size)+(q/d.size>1?' boxes':' box')+' of '+d.size,q,amount:pcAmount(d,q),kind:'other'})}
   for(const id in S.cookie){const g=S.cookie[id];if(!g)continue;const d=findCookie(id);
@@ -268,6 +706,8 @@ function calcDisc(sub){
   return{amt,note,used}
 }
 const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),d=calcDisc(sub);return{L,sub,disc:d.amt,dnote:d.note,dused:d.used,tot:sub-d.amt,count:L.length,flag:L.some(l=>l.flag)}};
+const hasCustom=()=>S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom});
+function advText(t){if(!hasCustom())return '';const a=Math.round(t.tot/2);return 'Custom / theme cake: 50% advance ('+inr(a)+') to book your order, and the balance 50% on '+(S.mode==='Delivery'?'delivery':'pickup')+'. Final amount after we confirm the price.'}
 function itemsPayload(){return[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.cream,kg:l.kg,q:l.q})),...Object.entries(S.pc).map(([id,q])=>({t:'pc',id,q})),...Object.entries(S.cookie).map(([id,g])=>({t:'cookie',id,q:g}))]}
 
 /* ---------- menu rendering ---------- */
@@ -280,15 +720,15 @@ function renderTabs(){
 function cakeCard(c){
   const s=selOf(c.id),cr=c.creams.find(x=>x.id===s.cream),other=s.wi==='o';
   const needCream=c.creams.length>1&&s.cream===null,needSize=s.wi===null,ready=!needCream&&!needSize;
-  const kg=other?s.kg:MENU.weights[s.wi],p=ready?cakePrice(c,s.cream,kg):null;
+  const WS=c.weights||MENU.weights,kg=other?s.kg:WS[s.wi],p=ready?cakePrice(c,s.cream,kg):null;
   const pv=i=>cr?cr.prices[i]:Math.min(...c.creams.map(x=>x.prices[i]));
   const miss=needCream&&needSize?'cream and size':needCream?'a cream type':'a size';
   return `<div class="card" data-cake="${c.id}"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div>
   ${c.creams.length>1?`<div class="chips">${c.creams.map(x=>`<button class="chip cr ${x.id===s.cream?'on':''}" data-cream="${x.id}">${x.label}</button>`).join('')}</div>`:''}
-  <div class="chips">${MENU.weights.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${cr?'':'from '}${inr(pv(i))}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
+  <div class="chips">${WS.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${cr&&!c.custom?'':'from '}${inr(pv(i))}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
   ${other?`<div class="kg"><span>Weight</span><div class="step"><button data-kgm>−</button><span>${kgLabel(s.kg)}</span><button class="p" data-kgp>+</button></div></div>`:''}
   <div class="hint" style="margin-top:8px">${cr||s.wi!==null?'Tap a selected option again to unselect it.':''}</div>
-  <div class="row"><div class="pr">${ready?inr(p.amount):'Choose '+miss}<small>${ready?(p.exact?'as per menu':'estimate · we\'ll confirm'):'to see the price'}</small></div><button class="add${ready?'':' off'}" data-add>Add</button></div></div>`;
+  <div class="row"><div class="pr">${ready?inr(p.amount):'Choose '+miss}<small>${ready?(p.exact?'as per menu':(c.custom?'starting price · final after design':'estimate · we\'ll confirm')):'to see the price'}</small></div><button class="add${ready?'':' off'}" data-add>Add</button></div></div>`;
 }
 function pcCard(d,unit){
   const q=S.pc[d.id]||0,bx=q/d.size;
@@ -305,8 +745,8 @@ function cookieCard(d){
 function renderPanel(){
   let h='';
   if(S.tab==='cakes'){
-    let g='';MENU.cakes.forEach(c=>{if(c.group!==g){g=c.group;h+=`<div class="sec">${g}</div>`}h+=cakeCard(c)});
-    h+=`<div class="note">Cakes need 2 days' notice. Custom or theme cake? Add a reference photo when you review your order.</div>`;
+    let g='';[...MENU.cakes.filter(c=>c.custom),...MENU.cakes.filter(c=>!c.custom)].forEach(c=>{if(c.group!==g){g=c.group;h+=`<div class="sec">${g}</div>`}h+=cakeCard(c)});
+    h+=`<div class="note">Cakes need 2 days' notice. Custom or theme cake? Choose Custom / Theme Cake at the top and share your idea at checkout.</div>`;
   }else if(S.tab==='cupcakes'){h+=`<div class="sec">Cupcakes</div>`+MENU.cupcakes.map(d=>pcCard(d,'cupcakes')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
   else if(S.tab==='muffins'){h+=`<div class="sec">Muffins</div>`+MENU.muffins.map(d=>pcCard(d,'muffins')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
   else if(S.tab==='cookies'){h+=`<div class="sec">Cookies · per 250 g</div>`+MENU.cookies.map(cookieCard).join('')+`<div class="note">Minimum 250 g per flavour. Bakes need 1 day's notice.</div>`}
@@ -331,12 +771,12 @@ $('panel').addEventListener('click',e=>{
     const cr=e.target.closest('[data-cream]'),wi=e.target.closest('[data-wi]');
     if(cr){s.cream=s.cream===cr.dataset.cream?null:cr.dataset.cream}
     else if(wi){const v=wi.dataset.wi==='o'?'o':+wi.dataset.wi;s.wi=s.wi===v?null:v}
-    else if(e.target.closest('[data-kgm]')){s.kg=Math.max(0.5,s.kg-0.5)}
+    else if(e.target.closest('[data-kgm]')){s.kg=Math.max(c.custom?1:0.5,s.kg-0.5)}
     else if(e.target.closest('[data-kgp]')){s.kg=Math.min(15,s.kg+0.5)}
     else if(e.target.closest('[data-add]')){
       if(c.creams.length>1&&s.cream===null){toast('Please choose a cream type first');return}
       if(s.wi===null){toast('Please choose a size first');return}
-      const kg=s.wi==='o'?s.kg:MENU.weights[s.wi];
+      const kg=s.wi==='o'?s.kg:(c.weights||MENU.weights)[s.wi];
       const ex=S.cakes.find(l=>l.id===c.id&&l.cream===s.cream&&l.kg===kg);
       if(ex)ex.q=Math.min(20,ex.q+1);else S.cakes.push({id:c.id,cream:s.cream,kg,q:1});
       toast('Added: '+c.name+' · '+kgLabel(kg));renderAll(true);return;
@@ -372,13 +812,15 @@ function renderReview(){
   if(S.coupon&&t.sub<S.coupon.min){setCpn('Coupon '+S.coupon.code+' needs an order of at least '+inr(S.coupon.min)+'.','bad');S.coupon=null;const t2=totals();Object.assign(t,t2)}
   $('revSub').textContent=inr(t.sub);$('revTot').textContent=inr(t.tot);
   $('revDiscRow').style.display=t.disc?'flex':'none';$('revDiscL').textContent='Discount · '+t.dnote;$('revDisc').textContent='−'+inr(t.disc);
+  const ad=advText(t);$('revAdv').style.display=ad?'block':'none';$('revAdv').textContent=ad;
   const nx=nextTier(t.sub),hn=$('revHint');hn.style.display=nx?'block':'none';if(nx)hn.textContent='Add '+inr(nx.from-t.sub)+' more to get '+nx.pct+'% off your order.';
   $('cpnBox').style.display=DC.coupons?'block':'none';
   if(S.coupon&&!t.dused&&t.disc)setCpn('Coupon '+S.coupon.code+' is saved, but your automatic discount is better.','ok');
   $('revDelRow').style.display=S.mode==='Delivery'?'flex':'none';
   const n=$('revNote'),msgs=[];
-  if(t.flag)msgs.push('Some cake weights are estimates; we\'ll confirm the final price.');
-  if(S.photos.length)msgs.push('Custom designs may cost extra; we\'ll confirm after seeing your photo.');
+  if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom}))msgs.push('Custom cake: the price shown is the starting price. We\'ll confirm the final price after seeing your design.');
+  else if(t.flag)msgs.push('Some cake weights are estimates; we\'ll confirm the final price.');
+  if(S.photos.length&&!S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom}))msgs.push('Custom designs may cost extra; we\'ll confirm after seeing your photo.');
   n.style.display=msgs.length?'block':'none';n.textContent=msgs.join(' ');
   $('revSign').innerHTML=A.tok?'Signed in as '+esc(A.profile?A.profile.email:'your account')+'. This order will appear in your history.':'<a class="lnk" data-signin>Sign in</a> to save your details and track this order.';
   const md=minDate(),f=$('fDate');f.min=ymd(md);
@@ -455,6 +897,7 @@ $('submit').onclick=async()=>{
     if(!sp0.time)return fail('Please choose a time for the other bakes.','fTime2');
     if(!slotOk(sp0.date,sp0.time,LEAD.other))return fail('That time is too soon for the other bakes. Please pick a later time.','fTime2')}
   const sp=sp0&&!(sp0.date===date&&sp0.time===time)?sp0:null;
+  if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom})&&notes.length<5&&!S.photos.length)return fail('For your custom cake, please describe the design or theme in the message box, or add a reference photo.','fNotes');
   if(S.mode==='Delivery'&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
   function fail(m,id){err.textContent=m;const el=$(id);document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));el.classList.add('bad');if(el.tagName==='INPUT'&&el.type!=='date'||el.tagName==='TEXTAREA')el.focus({preventScroll:true});err.scrollIntoView({block:'center',behavior:'smooth'})}
   const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes,photos:S.photos,
@@ -482,6 +925,7 @@ function showDone(id,t,when,name,total,disc,dnote,subt){
   $('dDiscRow').style.display=disc?'flex':'none';$('dDiscL').textContent='Discount · '+dnote;$('dDisc').textContent='−'+inr(disc);
   $('dWhen').textContent=when;$('dWhen').style.whiteSpace='pre-line';$('dTot').textContent=inr(total!=null?total:t.tot);
   $('dWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText(id,t,when,name));
+  const adv=advText(t);$('dAdv').style.display=adv?'block':'none';$('dAdv').textContent=adv;
   lastOrder={id,t,when,name,total:total!=null?total:t.tot,disc,dnote,subt};
   const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches;
   $('dIos').style.display=ios?'block':'none';$('dInstall').style.display=deferred?'block':'none';
