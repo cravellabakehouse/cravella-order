@@ -795,6 +795,26 @@ const SESSION_DAYS = 60;
 
 function hex_(b){ return b.map(function(x){ return ('0' + (x & 0xff).toString(16)).slice(-2); }).join(''); }
 function h_(s){ return hex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s))); }
+function pwHash_(pw, salt){
+  let x = salt + '|' + pw;
+  for (let i = 0; i < 300; i++) x = h_(x + salt);
+  return x;
+}
+function pwGet_(email){ return PropertiesService.getScriptProperties().getProperty('pw_' + h_(email)) || ''; }
+function pwSet_(email, pw){
+  const salt = Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty('pw_' + h_(email), salt + '$' + pwHash_(pw, salt));
+}
+function pwOk_(email, pw){
+  const v = pwGet_(email); if (!v) return false;
+  const i = v.indexOf('$');
+  return pwHash_(String(pw), v.slice(0, i)) === v.slice(i + 1);
+}
+function newSession_(email){
+  const token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
+  tab_('Sessions', SESS_HEAD).appendRow([h_(token), email, Date.now() + SESSION_DAYS * 86400000]);
+  return token;
+}
 function tab_(name, head){
   const ss = book_(); let sh = ss.getSheetByName(name);
   if (!sh){
@@ -902,11 +922,25 @@ function accountApi_(r){
       return {ok:false, error: o.t >= 5 ? 'Too many wrong tries. Please request a new code.' : 'That code is not right. Please try again.'};
     }
     cache.remove(key);
-    const token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
-    tab_('Sessions', SESS_HEAD).appendRow([h_(token), email, Date.now() + SESSION_DAYS * 86400000]);
+    const token = newSession_(email);
+    CacheService.getScriptCache().put('pwfresh:' + h_(email), '1', 900);
     const cs = tab_('Customers', CUST_HEAD), row = findRow_(cs, 1, email);
     if (row) cs.getRange(row, 6).setValue(new Date()); else touchCustomer_(email, {});
     return {ok:true, token:token, profile:profileOf_(email)};
+  }
+  if (a === 'admin_pw_login'){
+    const email = emailOk_(r.email), pw = String(r.password || '');
+    const bad = {ok:false, error:'Wrong email or password.'};
+    if (!email || !pw || pw.length > 200) return bad;
+    const cc = CacheService.getScriptCache(), fk = 'pwf:' + h_(email);
+    if (Number(cc.get(fk) || 0) >= 6 || !bump_('pwg', 150, 3600))
+      return {ok:false, error:'Too many attempts. Please wait 15 minutes, or use "Email me a code" below.'};
+    if (!isAdmin_(email) || !pwOk_(email, pw)){
+      cc.put(fk, String(Number(cc.get(fk) || 0) + 1), 900);
+      return bad;
+    }
+    cc.remove(fk);
+    return {ok:true, token:newSession_(email)};
   }
   if (a === 'coupon_check') return couponCheck_(r);
   if (a === 'settings') return {ok:true, settings:publicSettings_()};
@@ -1126,9 +1160,130 @@ function mailLog_(){
   });
   return out;
 }
+
+/* ---- kitchen: stock and recipes (admin only) ---- */
+const STOCK_HEAD = ['Id','Item','Unit','In stock','Low-stock alert','Updated'];
+const REC_HEAD = ['Id','Name','Makes (qty)','Makes (unit)','Ingredients (JSON)','Method','Notes','Updated'];
+const KUNITS = ['g','ml','pcs','tsp','tbsp'];
+const STOCK_SEED = [['flour','All purpose flour','g'],['butter','Butter','g'],['sugar','Caster sugar','g'],['milk','Milk','ml'],['chips','Chocolate chips','g'],['bpowder','Baking powder','tsp'],['bsoda','Baking soda','tsp'],['vinegar','Vinegar','tsp'],['vanilla','Vanilla essence','tsp'],['banana','Banana','pcs']];
+const REC_SEED = {id:'muffin', name:'Banana Chocolate Chip Muffin', base:3, unit:'muffins', ing:[
+  {n:'All purpose flour',q:100,u:'g',s:'flour'},{n:'Butter',q:50,u:'g',s:'butter'},{n:'Caster sugar',q:60,u:'g',s:'sugar'},{n:'Milk',q:60,u:'ml',s:'milk'},
+  {n:'Chocolate chips',q:25,u:'g',s:'chips'},{n:'Baking powder',q:1,u:'tsp',s:'bpowder'},{n:'Baking soda',q:0.25,u:'tsp',s:'bsoda'},
+  {n:'Vinegar',q:0.5,u:'tsp',s:'vinegar'},{n:'Vanilla essence',q:0.5,u:'tsp',s:'vanilla'},{n:'Banana',q:1,u:'pcs',s:'banana'}],
+  steps:'Sieve the flour, baking soda and baking powder and set aside.\nIn a separate bowl beat the caster sugar and softened butter until creamy.\nBlend in the mashed banana, adding the milk bit by bit.\nStir in the vanilla until well combined.\nGently fold in the dry flour mixture a little at a time.\nAdd the chocolate chips and vinegar and mix.',
+  notes:'Bake at 170°C for 15 to 20 minutes. Yield: 2 or 3 big liners.'};
+function kClean_(s, n){ return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n); }
+function kNum_(v){ const x = Number(v); return isFinite(x) && x >= 0 ? Math.round(x * 100) / 100 : NaN; }
+function kId_(){ return 'k' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36); }
+function stockSeed_(){
+  const p = PropertiesService.getScriptProperties();
+  if (p.getProperty('kitchen_seeded')) return;
+  const ss = tab_('Stock', STOCK_HEAD), rs = tab_('Recipes', REC_HEAD);
+  if (ss.getLastRow() < 2) ss.getRange(2, 1, STOCK_SEED.length, 6).setValues(STOCK_SEED.map(function(x){ return [x[0], x[1], x[2], 0, 0, new Date()]; }));
+  if (rs.getLastRow() < 2) rs.appendRow([REC_SEED.id, REC_SEED.name, REC_SEED.base, REC_SEED.unit, JSON.stringify(REC_SEED.ing), REC_SEED.steps, REC_SEED.notes, new Date()]);
+  p.setProperty('kitchen_seeded', '1');
+}
+function stockRead_(){
+  const sh = tab_('Stock', STOCK_HEAD), n = sh.getLastRow(); if (n < 2) return [];
+  return sh.getRange(2, 1, n - 1, 5).getValues().map(function(r){ return {id:String(r[0]), name:String(r[1]), unit:String(r[2]), qty:Number(r[3]) || 0, low:Number(r[4]) || 0}; });
+}
+function recipesRead_(){
+  const sh = tab_('Recipes', REC_HEAD), n = sh.getLastRow(); if (n < 2) return [];
+  return sh.getRange(2, 1, n - 1, 7).getValues().map(function(r){
+    let ing = []; try { ing = JSON.parse(r[4]) || []; } catch(_){}
+    return {id:String(r[0]), name:String(r[1]), base:Number(r[2]) || 1, unit:String(r[3]), ing:ing, steps:String(r[5]), notes:String(r[6])};
+  });
+}
+function stockApi_(a, r){
+  stockSeed_();
+  const ss = tab_('Stock', STOCK_HEAD), rs = tab_('Recipes', REC_HEAD);
+  if (a === 'admin_stock_get') return {ok:true, stock:stockRead_(), recipes:recipesRead_()};
+  if (a === 'admin_stock_save'){
+    const name = kClean_(r.name, 60), unit = String(r.unit), low = kNum_(r.low || 0);
+    if (name.length < 2) return {ok:false, error:'Please enter the item name.'};
+    if (KUNITS.indexOf(unit) < 0) return {ok:false, error:'Please choose a unit.'};
+    if (isNaN(low)) return {ok:false, error:'Low-stock level must be a number.'};
+    let id = String(r.id || ''), row = id ? findRow_(ss, 1, id.toLowerCase()) : 0;
+    if (row){
+      ss.getRange(row, 2, 1, 3).setValues([[name, unit, r.qty == null || r.qty === '' ? ss.getRange(row, 4).getValue() : kNum_(r.qty)]]);
+      ss.getRange(row, 5, 1, 2).setValues([[low, new Date()]]);
+    } else {
+      const q = kNum_(r.qty || 0); if (isNaN(q)) return {ok:false, error:'Quantity must be a number.'};
+      if (ss.getLastRow() > 300) return {ok:false, error:'Too many items.'};
+      ss.appendRow([kId_(), name, unit, q, low, new Date()]);
+    }
+    return {ok:true, stock:stockRead_()};
+  }
+  if (a === 'admin_stock_adjust'){
+    const row = findRow_(ss, 1, String(r.id || '').toLowerCase()), d = Number(r.delta);
+    if (!row || !isFinite(d)) return {ok:false, error:'Item not found.'};
+    const q = Math.max(0, Math.round((Number(ss.getRange(row, 4).getValue()) + d) * 100) / 100);
+    ss.getRange(row, 4).setValue(q); ss.getRange(row, 6).setValue(new Date());
+    return {ok:true, qty:q};
+  }
+  if (a === 'admin_stock_delete'){
+    const row = findRow_(ss, 1, String(r.id || '').toLowerCase()); if (row) ss.deleteRow(row);
+    return {ok:true, stock:stockRead_()};
+  }
+  if (a === 'admin_recipe_save'){
+    const name = kClean_(r.name, 80), base = Number(r.base), unit = kClean_(r.unit, 20) || 'pieces';
+    if (name.length < 2) return {ok:false, error:'Please name the recipe.'};
+    if (!(base > 0 && base <= 100000)) return {ok:false, error:'"Makes" must be a number above 0.'};
+    const ing = (Array.isArray(r.ing) ? r.ing : []).slice(0, 60).map(function(x){
+      return {n:kClean_(x && x.n, 60), q:kNum_(x && x.q), u:String(x && x.u), s:kClean_(x && x.s, 30)};
+    }).filter(function(x){ return x.n; });
+    if (!ing.length) return {ok:false, error:'Please add at least one ingredient.'};
+    for (let i = 0; i < ing.length; i++){
+      if (isNaN(ing[i].q)) return {ok:false, error:'Check the quantity for ' + ing[i].n + '.'};
+      if (KUNITS.indexOf(ing[i].u) < 0) return {ok:false, error:'Choose a unit for ' + ing[i].n + '.'};
+    }
+    const steps = String(r.steps || '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').slice(0, 4000);
+    const notes = String(r.notes || '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').slice(0, 1000);
+    const id = String(r.id || ''), row = id ? findRow_(rs, 1, id.toLowerCase()) : 0, vals = [name, base, unit, JSON.stringify(ing), steps, notes, new Date()];
+    if (row) rs.getRange(row, 2, 1, 7).setValues([vals]);
+    else { if (rs.getLastRow() > 200) return {ok:false, error:'Too many recipes.'}; rs.appendRow([kId_()].concat(vals)); }
+    return {ok:true, recipes:recipesRead_()};
+  }
+  if (a === 'admin_recipe_delete'){
+    const row = findRow_(rs, 1, String(r.id || '').toLowerCase()); if (row) rs.deleteRow(row);
+    return {ok:true, recipes:recipesRead_()};
+  }
+  if (a === 'admin_recipe_bake'){
+    const rec = recipesRead_().filter(function(x){ return x.id.toLowerCase() === String(r.id || '').toLowerCase(); })[0], qty = Number(r.qty);
+    if (!rec) return {ok:false, error:'Recipe not found.'};
+    if (!(qty > 0 && qty <= 100000)) return {ok:false, error:'Please enter how many.'};
+    const f = qty / rec.base, short = [], skipped = [];
+    rec.ing.forEach(function(g){
+      if (!g.s) { skipped.push(g.n); return; }
+      const row = findRow_(ss, 1, String(g.s).toLowerCase());
+      if (!row){ skipped.push(g.n); return; }
+      const unit = String(ss.getRange(row, 3).getValue());
+      if (unit !== g.u){ skipped.push(g.n); return; }
+      const have = Number(ss.getRange(row, 4).getValue()) || 0, need = g.q * f;
+      if (need > have + 0.0001) short.push(g.n);
+      ss.getRange(row, 4).setValue(Math.max(0, Math.round((have - need) * 100) / 100)); ss.getRange(row, 6).setValue(new Date());
+    });
+    return {ok:true, stock:stockRead_(), short:short, skipped:skipped};
+  }
+  return {ok:false, error:'Unknown action'};
+}
+
 function adminApi_(a, r, email){
+  if (/^admin_(stock|recipe)_/.test(a)) return stockApi_(a, r);
   const sh = sheet_();
-  if (a === 'admin_me') return {ok:true, admin:true, email:email};
+  if (a === 'admin_me') return {ok:true, admin:true, email:email, hasPw:!!pwGet_(email)};
+  if (a === 'admin_pw_set'){
+    const np = String(r.password || '');
+    if (np.length < 8) return {ok:false, error:'Please use at least 8 characters.'};
+    if (np.length > 200) return {ok:false, error:'That password is too long.'};
+    const cc = CacheService.getScriptCache(), fresh = cc.get('pwfresh:' + h_(email));
+    if (pwGet_(email) && !fresh){
+      if (!bump_('pwc:' + h_(email), 6, 900)) return {ok:false, error:'Too many tries. Please wait a few minutes.'};
+      if (!pwOk_(email, String(r.old || ''))) return {ok:false, error:'Your current password is not right.'};
+    }
+    pwSet_(email, np); cc.remove('pwfresh:' + h_(email));
+    return {ok:true};
+  }
   if (a === 'admin_orders'){
     const n = sh.getLastRow(), out = [];
     if (n >= 2){
@@ -1204,7 +1359,7 @@ function adminApi_(a, r, email){
     const rows = Object.keys(tally).sort().map(function(k){ return {name:k, qty:tally[k]}; });
     return {ok:true, date:date, rows:rows, orders:orders};
   }
-  if (a === 'admin_settings_get') return {ok:true, settings:getSettings_(), items:menuItems_()};
+  if (a === 'admin_settings_get') return {ok:true, settings:getSettings_(), items:menuItems_(), hasPw:!!pwGet_(email)};
   if (a === 'admin_settings_save'){
     const known = menuItems_().map(function(x){ return x.id; });
     const un = (Array.isArray(r.unavailable) ? r.unavailable : []).map(String).filter(function(x){ return known.indexOf(x) >= 0; });
