@@ -1132,7 +1132,7 @@ function adminApi_(a, r, email){
   if (a === 'admin_orders'){
     const n = sh.getLastRow(), out = [];
     if (n >= 2){
-      const v = sh.getRange(Math.max(2, n - 999), 1, Math.min(1000, n - 1), 22).getValues();
+      const v = sh.getRange(Math.max(2, n - 499), 1, Math.min(500, n - 1), 22).getValues();
       for (let i = v.length - 1; i >= 0; i--) out.push(adminOrder_(v[i]));
     }
     return {ok:true, orders:out, statuses:STATUSES, mails:mailLog_(), now:Date.now()};

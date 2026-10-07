@@ -7,6 +7,8 @@
 <title>Cravella Admin</title>
 <meta name="theme-color" content="#fffbbe">
 <link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -141,19 +143,26 @@ $('lGo').onclick=async()=>{
     }
   }catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false}
 };
-$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);step='email';$('codeBox').classList.add('hide');$('aCode').value='';$('lGo').textContent='Send code';showLogin()};
+$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);step='email';$('codeBox').classList.add('hide');$('aCode').value='';$('lGo').textContent='Send code';showLogin()};
 
+function showApp(){$('login').classList.add('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');$('who').textContent=me||'Signed in';bakeDate=bakeDate||ymd(new Date(Date.now()+86400000))}
+function saveCache(){SS('cb_admin_cache',JSON.stringify({orders:D.orders,statuses:D.statuses,mails:D.mails,me}))}
+function applyOrders(r){D.orders=r.orders;D.statuses=r.statuses;D.mails=r.mails||{};if(r.now)skew=r.now-Date.now();saveCache()}
+const lazySettings=()=>loadSettings().then(()=>{if(tab==='menu'||tab==='settings')render()}).catch(()=>{});
 async function start(){
-  $('login').classList.add('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');$('who').textContent=me||'Signed in';
-  bakeDate=ymd(new Date(Date.now()+86400000));
-  await Promise.all([loadOrders(),loadSettings()]);render()
+  showApp();await loadOrders();render();lazySettings()
 }
 async function boot(){
   if(!tok){showLogin();return}
-  try{const m=await api({action:'admin_me'});if(!m.ok){tok='';SS('cb_admin_tok',null);showLogin(m.error==='auth'?'':m.error);return}me=m.email;start()}
-  catch(_){showLogin('No connection. Please reload.')}
+  let cached=false;
+  try{const c=JSON.parse(ST('cb_admin_cache')||'null');if(c&&Array.isArray(c.orders)){D.orders=c.orders;D.statuses=c.statuses||[];D.mails=c.mails||{};me=c.me||'';cached=true;showApp();render()}}catch(_){}
+  try{
+    const r=await api({action:'admin_orders'});
+    if(!r.ok){tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);showLogin(r.error==='auth'?'':r.error);return}
+    applyOrders(r);showApp();render();lazySettings()
+  }catch(_){if(!cached)showLogin('No connection. Please reload.');else toast('No connection. Showing your last saved orders.')}
 }
-async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok){D.orders=r.orders;D.statuses=r.statuses;D.mails=r.mails||{};if(r.now)skew=r.now-Date.now()}else if(r.error==='auth'){tok='';showLogin('Please sign in again.')}}
+async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok)applyOrders(r);else if(r.error==='auth'){tok='';showLogin('Please sign in again.')}}
 async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=r.items;dirty=false}}
 
 /* ---------- layout ---------- */
@@ -288,8 +297,11 @@ $('panel').addEventListener('click',async e=>{
     const card=sb.closest('.o'),id=card.dataset.id,st=sb.dataset.s,o=D.orders.find(x=>x.id===id);if(!o||o.status===st)return;
     if(st==='Cancelled'&&!confirm('Cancel order '+id+'?'))return;
     const notify=st!=='Confirmed'&&!!(card.querySelector('[data-notify]')&&card.querySelector('[data-notify]').checked);
-    sb.disabled=true;
-    try{const r=await api({action:'admin_status',id,status:st,notify});if(r.ok){o.status=st;toast(st+(r.mailed?' · customer emailed':''));const y=scrollY;render();scrollTo(0,y);if(st==='Confirmed')openMail(id,'confirm')}else toast(r.error||'Could not update')}catch(_){toast('No connection')}
+    const prev=o.status;o.status=st;let y=scrollY;render();scrollTo(0,y);   // show the change at once, save in the background
+    try{const r=await api({action:'admin_status',id,status:st,notify});
+      if(r.ok){toast(st+(r.mailed?' · customer emailed':''));saveCache();if(st==='Confirmed')openMail(id,'confirm')}
+      else{o.status=prev;y=scrollY;render();scrollTo(0,y);toast(r.error||'Could not update')}}
+    catch(_){o.status=prev;y=scrollY;render();scrollTo(0,y);toast('No connection. Change not saved.')}
     return
   }
   const a=e.target.closest('[data-del]');if(a){const d=a.dataset.del;D.settings.closed=D.settings.closed.filter(x=>x!==d);dirty=true;render();return}
