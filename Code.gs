@@ -14,7 +14,7 @@ const MAX_PER_HOUR_PER_PHONE = 5;
 const MAX_PER_HOUR_TOTAL     = 80;
 const LEAD_CAKE = 2, LEAD_OTHER = 1;
 const TIMES = ['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
-const HEAD = ['Request ID','Received','Status','Name','Phone','Date','Time','Pickup / Delivery','Delivery address','Items','Estimated total (₹)','Needs confirming','Notes','Photos','Order JSON','Month','Email','Subtotal (₹)','Discount (₹)','Discount note'];
+const HEAD = ['Request ID','Received','Status','Name','Phone','Date','Time','Pickup / Delivery','Delivery address','Items','Estimated total (₹)','Needs confirming','Notes','Photos','Order JSON','Month','Email','Subtotal (₹)','Discount (₹)','Discount note','Bakes date (split)','Bakes time (split)'];
 
 const MENU = {"weights":[0.5,1,1.5,2],"cakes":[{"id":"truffle","name":"Truffle Cake","group":"Chocolate cakes","desc":"Rich dark chocolate ganache","creams":[{"id":"","label":"","prices":[700,1250,1750,2300]}]},{"id":"orange","name":"Orange Chocolate Cake","group":"Chocolate cakes","desc":"Chocolate with a zesty orange note","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"blackforest","name":"Black Forest","group":"Chocolate cakes","desc":"Chocolate, cream and cherries","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"whiteforest","name":"White Forest","group":"Chocolate cakes","desc":"White chocolate and cream","creams":[{"id":"","label":"","prices":[800,1400,2000,2600]}]},{"id":"strawberry","name":"Strawberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"blueberry","name":"Blueberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"raspberry","name":"Raspberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"mango","name":"Mango Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]},{"id":"pineapple","name":"Pineapple Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]}],"cupcakes":[{"id":"cup0","name":"Chocolate","rate":85,"box":500,"size":6},{"id":"cup1","name":"Strawberry","rate":75,"box":450,"size":6},{"id":"cup2","name":"Blueberry","rate":80,"box":480,"size":6},{"id":"cup3","name":"Raspberry","rate":80,"box":480,"size":6},{"id":"cup4","name":"Mango","rate":80,"box":480,"size":6}],"muffins":[{"id":"muf0","name":"Banana Chocochip","rate":80,"box":480,"size":6},{"id":"muf1","name":"Mocha Almond","rate":80,"box":480,"size":6},{"id":"muf2","name":"Chocolate Cranberry","rate":95,"box":570,"size":6},{"id":"muf3","name":"Vanilla Chocochip","rate":80,"box":480,"size":6},{"id":"muf4","name":"Carrot","rate":80,"box":480,"size":6},{"id":"muf5","name":"Pista Mawa Cake","rate":100,"box":600,"size":6}],"brownies":[{"id":"brn0","name":"Crinkle Top","rate":90,"box":350,"size":4},{"id":"brn1","name":"Walnut","rate":100,"box":380,"size":4},{"id":"brn2","name":"Red Velvet Cream Cheese","rate":130,"box":500,"size":4},{"id":"brn3","name":"Triple Chocolate","rate":140,"box":530,"size":4},{"id":"brn4","name":"Fudgy Cookie & Cream","rate":130,"box":500,"size":4},{"id":"brn5","name":"Lotus Biscoff","rate":160,"box":600,"size":4},{"id":"brn6","name":"Tiramisu","rate":160,"box":600,"size":4}],"blondies":[{"id":"bld0","name":"Pista & Rose","rate":160,"box":620,"size":4},{"id":"bld1","name":"Coconut","rate":150,"box":580,"size":4}],"cookies":[{"id":"cok0","name":"Coffee Bean","rate":350},{"id":"cok1","name":"Center-filled Chocochip","rate":425},{"id":"cok2","name":"Checker Board","rate":400},{"id":"cok3","name":"Digestive (Atta & Jaggery)","rate":350},{"id":"cok4","name":"Gluten Free Vegan","rate":450},{"id":"cok5","name":"Butter","rate":350}],"discount":{"tiers":[[10001,8],[5001,5]],"coupons":false}};
 
@@ -37,9 +37,9 @@ function doPost(e){
     const sh = sheet_();
     const row = [id, new Date(), 'New', v.name, v.phone, v.date, v.time, v.mode, v.address,
       v.lines.map(l => l.desc + ' – ₹' + l.amount).join('\n'), v.total,
-      v.toConfirm ? 'Yes' : '', v.notes, photos.map(p => p.url).join('\n'),
-      JSON.stringify({items:r.items, mode:v.mode, date:v.date, time:v.time, coupon:v.couponUsed || ''}), mk_(v.date), email,
-      v.subtotal, v.discount, v.discNote];
+      v.toConfirm ? 'Yes' : '', (v.split ? 'SPLIT ORDER: cakes on ' + v.date + ', ' + v.time + '; other bakes on ' + v.split.date + ', ' + v.split.time + '. ' : '') + v.notes, photos.map(p => p.url).join('\n'),
+      JSON.stringify({items:r.items, mode:v.mode, date:v.date, time:v.time, coupon:v.couponUsed || '', split:v.split}), mk_(v.date), email,
+      v.subtotal, v.discount, v.discNote, v.split ? v.split.date : '', v.split ? v.split.time : ''];
     sh.appendRow(row);
     const last = sh.getLastRow();
     sh.getRange(last,5).setNumberFormat('@').setValue(v.phone);
@@ -120,11 +120,24 @@ function validate_(r){
   if (r.date < minS) return {error:'That date is too soon for your items. Please pick a later date.'};
   if (r.date > Utilities.formatDate(new Date(min.getTime() + 365*86400000), 'UTC', 'yyyy-MM-dd')) return {error:'Please choose a nearer date.'};
   if (Array.isArray(r.photos) && r.photos.length > 3) return {error:'Maximum 3 photos.'};
+  let split = null;
+  if (r.split && typeof r.split === 'object'){
+    const hasOther = items.some(i => i && i.t !== 'cake');
+    if (hasCake && hasOther){
+      const sd = String(r.split.date || ''), st = String(r.split.time || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(sd)) return {error:'Please choose a date for the other bakes.'};
+      if (TIMES.indexOf(st) < 0) return {error:'Please choose a time for the other bakes.'};
+      const min1 = Utilities.formatDate(new Date(Date.UTC(today[0], today[1]-1, today[2] + LEAD_OTHER)), 'UTC', 'yyyy-MM-dd');
+      if (sd < min1) return {error:'That date is too soon for the other bakes. Please pick a later date.'};
+      if (sd === r.date) return {error:'The other bakes date is the same as the cake date. Untick the separate date option instead.'};
+      split = {date:sd, time:st};
+    }
+  }
   const subtotal = Math.round(pr.total);
   const dc = discount_(subtotal, r.coupon);
   if (dc.error) return {error:dc.error};
   return {name:name, phone:phone, mode:mode, address:address, notes:notes, date:r.date, time:r.time, lines:lines,
-    subtotal:subtotal, discount:dc.amount, discNote:dc.note, couponUsed:dc.couponUsed, total:subtotal - dc.amount, toConfirm:toConfirm};
+    subtotal:subtotal, discount:dc.amount, discNote:dc.note, couponUsed:dc.couponUsed, total:subtotal - dc.amount, toConfirm:toConfirm, split:split};
 }
 
 
@@ -235,6 +248,7 @@ function sheet_(){
       .requireValueInList(['New','Confirmed','Advance received','Delivered','Cancelled'], true).build());
   }
   if (!sh.getRange(1,18).getValue()) sh.getRange(1,18,1,3).setValues([['Subtotal (₹)','Discount (₹)','Discount note']]).setFontWeight('bold').setBackground('#fffbbe');
+  if (!sh.getRange(1,21).getValue()) sh.getRange(1,21,1,2).setValues([['Bakes date (split)','Bakes time (split)']]).setFontWeight('bold').setBackground('#fffbbe');
   return sh;
 }
 function nextId_(){
@@ -271,7 +285,10 @@ function notify_(id, v, photos){
   const rows = v.lines.map(l => '<tr><td style="padding:3px 12px 3px 0">'+esc(l.desc)+'</td><td align="right"><b>₹'+l.amount+'</b></td></tr>').join('');
   const wa = txt => 'https://wa.me/91' + v.phone + '?text=' + encodeURIComponent(txt);
   const dp = String(v.date).split('-'), MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const when = (v.mode === 'Delivery' ? 'delivery' : 'pickup') + ' on ' + (dp.length === 3 ? Number(dp[2]) + ' ' + MON[Number(dp[1]) - 1] : v.date) + ', ' + v.time;
+  let when = (v.mode === 'Delivery' ? 'delivery' : 'pickup') + ' on ' + (dp.length === 3 ? Number(dp[2]) + ' ' + MON[Number(dp[1]) - 1] : v.date) + ', ' + v.time;
+  const fd = d => { const q = String(d).split('-'); return q.length === 3 ? Number(q[2]) + ' ' + MON[Number(q[1]) - 1] : d; };
+  const trip = v.mode === 'Delivery' ? 'delivery' : 'pickup';
+  if (v.split) when = 'cakes on ' + fd(v.date) + ', ' + v.time + ' (' + trip + ') and the other bakes on ' + fd(v.split.date) + ', ' + v.split.time + ' (separate ' + trip + ')';
   const first = String(v.name).split(' ')[0];
   const items = v.lines.map(l => '• ' + l.desc + ' – ₹' + l.amount).join('\n');
   const pay = UPI_ID ? 'To book it, please pay the advance by UPI to ' + UPI_ID + ' and send us the screenshot.' : 'To book it, please pay the advance by UPI. We will share the details here.';
@@ -285,7 +302,7 @@ function notify_(id, v, photos){
   const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#3b2416">'
     + '<h2 style="margin:0 0 6px">New order request '+id+'</h2>'
     + '<p style="margin:0 0 10px"><b>'+esc(v.name)+'</b> · <a href="https://wa.me/91'+v.phone+'">'+v.phone+' (WhatsApp)</a></p>'
-    + '<p style="margin:0 0 10px">'+esc(v.mode)+': <b>'+esc(v.date)+', '+esc(v.time)+'</b>'+(v.address?'<br>Address: '+esc(v.address):'')+'</p>'
+    + '<p style="margin:0 0 10px">'+esc(v.mode)+': '+(v.split ? '<b>SPLIT ORDER</b><br>Cakes: <b>'+esc(v.date)+', '+esc(v.time)+'</b><br>Other bakes: <b>'+esc(v.split.date)+', '+esc(v.split.time)+'</b> (separate '+trip+', fee applies each time)' : '<b>'+esc(v.date)+', '+esc(v.time)+'</b>')+(v.address?'<br>Address: '+esc(v.address):'')+'</p>'
     + '<table style="border-collapse:collapse">'+rows+(v.discount ? '<tr><td style="padding-top:6px;color:#1f7a4d">Subtotal ₹'+v.subtotal+' · Discount: '+esc(v.discNote)+'</td><td align="right" style="padding-top:6px;color:#1f7a4d"><b>−₹'+v.discount+'</b></td></tr>' : '')+'<tr><td style="padding-top:8px"><b>Estimated total</b></td><td align="right" style="padding-top:8px"><b>₹'+v.total+'</b></td></tr></table>'
     + (v.toConfirm ? '<p style="color:#b4532a"><b>Some cake weights are estimates – please confirm the price.</b></p>' : '')
     + (v.notes ? '<p><b>Notes:</b> '+esc(v.notes)+'</p>' : '')
@@ -376,7 +393,7 @@ function ordersOf_(email){
       id: String(v[i][0]),
       placed: (rec instanceof Date) ? Utilities.formatDate(rec, 'Asia/Kolkata', 'dd MMM yyyy') : String(rec),
       status: String(v[i][2] || 'New'),
-      mode: j.mode || String(v[i][7]), date: j.date || '', time: j.time || '',
+      mode: j.mode || String(v[i][7]), date: j.date || '', time: j.time || '', split: j.split || null,
       lines: String(v[i][9] || '').split('\n'),
       total: Number(v[i][10]) || 0,
       items: Array.isArray(j.items) ? j.items : []
@@ -455,7 +472,7 @@ function upgrade(){
   const ss = book_(), sh = sheet_();
   sh.getRange('P1:Q1').setValues([['Month','Email']]).setFontWeight('bold').setBackground('#fffbbe');
   sh.getRange('P:Q').setNumberFormat('@');
-  sh.getRange('R1:T1').setValues([['Subtotal (₹)','Discount (₹)','Discount note']]).setFontWeight('bold').setBackground('#fffbbe');
+  sh.getRange('R1:V1').setValues([['Subtotal (₹)','Discount (₹)','Discount note','Bakes date (split)','Bakes time (split)']]).setFontWeight('bold').setBackground('#fffbbe');
   discSheet_();
   const n = sh.getLastRow();
   for (let r = 2; r <= n; r++){
