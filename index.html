@@ -221,7 +221,7 @@ body.acct-open .bar{z-index:25}
 const API_URL='https://script.google.com/macros/s/AKfycby9cbU5BitbWeEFyYj2jAESAmIIvtLnEs85GHcKa_yxMGtX0k044V-Bp2dnLC0r6BP9Kg/exec';
 const WA='919845904310';
 const MENU={"weights":[0.5,1,1.5,2],"cakes":[{"id":"truffle","name":"Truffle Cake","group":"Chocolate cakes","desc":"Rich dark chocolate ganache","creams":[{"id":"","label":"","prices":[700,1250,1750,2300]}]},{"id":"orange","name":"Orange Chocolate Cake","group":"Chocolate cakes","desc":"Chocolate with a zesty orange note","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"blackforest","name":"Black Forest","group":"Chocolate cakes","desc":"Chocolate, cream and cherries","creams":[{"id":"","label":"","prices":[750,1300,1850,2400]}]},{"id":"whiteforest","name":"White Forest","group":"Chocolate cakes","desc":"White chocolate and cream","creams":[{"id":"","label":"","prices":[800,1400,2000,2600]}]},{"id":"strawberry","name":"Strawberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"blueberry","name":"Blueberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"raspberry","name":"Raspberry Cake","group":"Berry cakes","desc":"Fresh fruit flavour","creams":[{"id":"w","label":"Whipped cream","prices":[650,1200,1750,2200]},{"id":"b","label":"Butter cream","prices":[750,1350,2000,2500]}]},{"id":"mango","name":"Mango Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]},{"id":"pineapple","name":"Pineapple Cake","group":"Fruit cakes","desc":"Light, fruity and fresh","creams":[{"id":"w","label":"Whipped cream","prices":[600,1150,1600,2000]},{"id":"b","label":"Butter cream","prices":[700,1300,1900,2500]}]}],"cupcakes":[{"id":"cup0","name":"Chocolate","rate":85,"box":500,"size":6},{"id":"cup1","name":"Strawberry","rate":75,"box":450,"size":6},{"id":"cup2","name":"Blueberry","rate":80,"box":480,"size":6},{"id":"cup3","name":"Raspberry","rate":80,"box":480,"size":6},{"id":"cup4","name":"Mango","rate":80,"box":480,"size":6}],"muffins":[{"id":"muf0","name":"Banana Chocochip","rate":80,"box":480,"size":6},{"id":"muf1","name":"Mocha Almond","rate":80,"box":480,"size":6},{"id":"muf2","name":"Chocolate Cranberry","rate":95,"box":570,"size":6},{"id":"muf3","name":"Vanilla Chocochip","rate":80,"box":480,"size":6},{"id":"muf4","name":"Carrot","rate":80,"box":480,"size":6},{"id":"muf5","name":"Pista Mawa Cake","rate":100,"box":600,"size":6}],"brownies":[{"id":"brn0","name":"Crinkle Top","rate":90,"box":350,"size":4},{"id":"brn1","name":"Walnut","rate":100,"box":380,"size":4},{"id":"brn2","name":"Red Velvet Cream Cheese","rate":130,"box":500,"size":4},{"id":"brn3","name":"Triple Chocolate","rate":140,"box":530,"size":4},{"id":"brn4","name":"Fudgy Cookie & Cream","rate":130,"box":500,"size":4},{"id":"brn5","name":"Lotus Biscoff","rate":160,"box":600,"size":4},{"id":"brn6","name":"Tiramisu","rate":160,"box":600,"size":4}],"blondies":[{"id":"bld0","name":"Pista & Rose","rate":160,"box":620,"size":4},{"id":"bld1","name":"Coconut","rate":150,"box":580,"size":4}],"cookies":[{"id":"cok0","name":"Coffee Bean","rate":350},{"id":"cok1","name":"Center-filled Chocochip","rate":425},{"id":"cok2","name":"Checker Board","rate":400},{"id":"cok3","name":"Digestive (Atta & Jaggery)","rate":350},{"id":"cok4","name":"Gluten Free Vegan","rate":450},{"id":"cok5","name":"Butter","rate":350}],"discount":{"tiers":[[10001,8],[5001,5]],"coupons":false}};
-const LEAD={cake:2,other:1};
+const LEAD={cake:48,other:24}; // notice in hours from the moment of ordering
 const TIMES=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
 const TABS=[['cakes','Cakes'],['cupcakes','Cupcakes'],['muffins','Muffins'],['cookies','Cookies'],['brownies','Brownies']];
 const $=id=>document.getElementById(id);
@@ -353,9 +353,15 @@ $('panel').addEventListener('click',e=>{
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 function hasOther(){return Object.values(S.pc).some(q=>q>0)||Object.values(S.cookie).some(g=>g>0)}
 function canSplit(){return S.cakes.length>0&&hasOther()}
-function minDate2(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+LEAD.other);return d}
-function leadDays(){return S.cakes.length?LEAD.cake:LEAD.other}
-function minDate(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+leadDays());return d}
+function tmin(t){const m=String(t).match(/^(\d+):(\d+) (AM|PM)$/);return m?((+m[1]%12)+(m[3]==='PM'?12:0))*60+ +m[2]:-1}
+function leadSlot(h){const d=new Date(Date.now()+19800000+h*3600000),mins=d.getUTCHours()*60+d.getUTCMinutes();
+  if(!TIMES.some(t=>tmin(t)>=mins))return{date:new Date(d.getTime()+86400000).toISOString().slice(0,10),mins:0};return{date:d.toISOString().slice(0,10),mins}}
+function slotOk(date,time,h){const e=leadSlot(h);return date>e.date||(date===e.date&&tmin(time)>=e.mins)}
+function dateOf(h){const e=leadSlot(h).date.split('-');return new Date(+e[0],e[1]-1,+e[2])}
+function leadHours(){return S.cakes.length?LEAD.cake:LEAD.other}
+function minDate(){return dateOf(leadHours())}
+function minDate2(){return dateOf(LEAD.other)}
+function limitTimes(dEl,tEl,h){const e=leadSlot(h);[...tEl.options].forEach(o=>{if(!o.value)return;o.disabled=dEl.value===e.date&&tmin(o.value)<e.mins});if(tEl.selectedOptions[0]&&tEl.selectedOptions[0].disabled)tEl.value=''}
 function fmtDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
 function setCpn(m,k){const e=$('cpnMsg');e.textContent=m;e.className='cmsg'+(k?' '+k:'')}
 function renderReview(){
@@ -376,11 +382,11 @@ function renderReview(){
   n.style.display=msgs.length?'block':'none';n.textContent=msgs.join(' ');
   $('revSign').innerHTML=A.tok?'Signed in as '+esc(A.profile?A.profile.email:'your account')+'. This order will appear in your history.':'<a class="lnk" data-signin>Sign in</a> to save your details and track this order.';
   const md=minDate(),f=$('fDate');f.min=ymd(md);
-  if(f.value&&f.value<f.min)f.value='';
+  if(f.value&&f.value<f.min)f.value='';limitTimes(f,$('fTime'),leadHours());
   const cs=canSplit();S.split=cs;
   $('splitBox').style.display=cs?'block':'none';
   $('dateLbl').textContent=cs?'Cakes: date & time':'Date & time';
-  if(cs){const m2=minDate2(),f2=$('fDate2');f2.min=ymd(m2);if(f2.value&&f2.value<f2.min)f2.value='';
+  if(cs){const m2=minDate2(),f2=$('fDate2');f2.min=ymd(m2);if(f2.value&&f2.value<f2.min)f2.value='';limitTimes(f2,$('fTime2'),LEAD.other);
     $('dateHint2').textContent='Earliest date: '+m2.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+'. Choose the same date as your cake to get everything together. A different date is a separate '+(S.mode==='Delivery'?'delivery (charges apply for each trip).':'pickup.')}
   $('dateHint').textContent='Earliest date: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+(S.cakes.length?' (cakes need 2 days\' notice)':'');
 }
@@ -396,6 +402,7 @@ $('revLines').addEventListener('click',e=>{
   renderAll(true);renderReview();
 });
 $('fTime2').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
+$('fDate').addEventListener('change',()=>limitTimes($('fDate'),$('fTime'),leadHours()));$('fDate2').addEventListener('change',()=>limitTimes($('fDate2'),$('fTime2'),LEAD.other));
 $('fTime').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
 $('modeSeg').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;S.mode=b.dataset.m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));$('addrBox').style.display=S.mode==='Delivery'?'block':'none';renderReview()});
 
@@ -441,10 +448,12 @@ $('submit').onclick=async()=>{
   if(!date)return fail('Please choose a date.','fDate');
   if(date<ymd(minDate()))return fail('That date is too soon for your items. Please pick a later date.','fDate');
   if(!time)return fail('Please choose a preferred time.','fTime');
+  if(!slotOk(date,time,leadHours()))return fail('That time is too soon for your items. Please pick a later time.','fTime');
   const sp0=canSplit()?{date:$('fDate2').value,time:$('fTime2').value}:null;
   if(sp0){if(!sp0.date)return fail('Please choose a date for your cupcakes / other bakes.','fDate2');
     if(sp0.date<ymd(minDate2()))return fail('That date is too soon for the other bakes. Please pick a later date.','fDate2');
-    if(!sp0.time)return fail('Please choose a time for the other bakes.','fTime2')}
+    if(!sp0.time)return fail('Please choose a time for the other bakes.','fTime2');
+    if(!slotOk(sp0.date,sp0.time,LEAD.other))return fail('That time is too soon for the other bakes. Please pick a later time.','fTime2')}
   const sp=sp0&&!(sp0.date===date&&sp0.time===time)?sp0:null;
   if(S.mode==='Delivery'&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
   function fail(m,id){err.textContent=m;const el=$(id);document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));el.classList.add('bad');if(el.tagName==='INPUT'&&el.type!=='date'||el.tagName==='TEXTAREA')el.focus({preventScroll:true});err.scrollIntoView({block:'center',behavior:'smooth'})}

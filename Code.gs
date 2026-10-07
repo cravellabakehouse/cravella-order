@@ -12,7 +12,19 @@ const PHOTO_FOLDER = 'Cravella order photos';
 const TAB          = 'Requests';
 const MAX_PER_HOUR_PER_PHONE = 5;
 const MAX_PER_HOUR_TOTAL     = 80;
-const LEAD_CAKE = 2, LEAD_OTHER = 1;
+const LEAD_CAKE_H = 48, LEAD_OTHER_H = 24;   // notice in hours, counted from the moment the order is placed
+function tmin_(t){ const m = String(t).match(/^(\d+):(\d+) (AM|PM)$/); return m ? ((Number(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)) * 60 + Number(m[2]) : -1; }
+// earliest allowed slot in IST: now + hours. Returns {date:'yyyy-MM-dd', mins}
+function earliest_(hours, nowMs){
+  const d = new Date((nowMs || Date.now()) + 19800000 + hours * 3600000);
+  const date = d.toISOString().slice(0,10), mins = d.getUTCHours() * 60 + d.getUTCMinutes();
+  if (!TIMES.some(t => tmin_(t) >= mins)){ const n = new Date(d.getTime() + 86400000); return {date:n.toISOString().slice(0,10), mins:0}; }
+  return {date:date, mins:mins};
+}
+function slotOk_(date, time, hours, nowMs){
+  const e = earliest_(hours, nowMs);
+  return date > e.date || (date === e.date && tmin_(time) >= e.mins);
+}
 const TIMES = ['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
 const HEAD = ['Request ID','Received','Status','Name','Phone','Date','Time','Pickup / Delivery','Delivery address','Items','Estimated total (₹)','Needs confirming','Notes','Photos','Order JSON','Month','Email','Subtotal (₹)','Discount (₹)','Discount note','Bakes date (split)','Bakes time (split)'];
 
@@ -113,12 +125,10 @@ function validate_(r){
   const pr = priceItems_(items);
   if (pr.error) return {error:pr.error};
   const lines = pr.lines, toConfirm = pr.toConfirm, hasCake = pr.hasCake;
-  // date rule (IST): cakes 2 days, other bakes 1 day
+  // notice rule (IST, from the moment of ordering): cakes 48 hours, other bakes 24 hours
   const today = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd').split('-').map(Number);
-  const min = new Date(Date.UTC(today[0], today[1]-1, today[2] + (hasCake ? LEAD_CAKE : LEAD_OTHER)));
-  const minS = Utilities.formatDate(min, 'UTC', 'yyyy-MM-dd');
-  if (r.date < minS) return {error:'That date is too soon for your items. Please pick a later date.'};
-  if (r.date > Utilities.formatDate(new Date(min.getTime() + 365*86400000), 'UTC', 'yyyy-MM-dd')) return {error:'Please choose a nearer date.'};
+  if (!slotOk_(r.date, r.time, hasCake ? LEAD_CAKE_H : LEAD_OTHER_H)) return {error:'That date and time is too soon for your items. Please pick a later slot.'};
+  if (r.date > Utilities.formatDate(new Date(Date.UTC(today[0], today[1]-1, today[2] + 365)), 'UTC', 'yyyy-MM-dd')) return {error:'Please choose a nearer date.'};
   if (Array.isArray(r.photos) && r.photos.length > 3) return {error:'Maximum 3 photos.'};
   let split = null;
   if (r.split && typeof r.split === 'object'){
@@ -127,8 +137,7 @@ function validate_(r){
       const sd = String(r.split.date || ''), st = String(r.split.time || '');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(sd)) return {error:'Please choose a date for the other bakes.'};
       if (TIMES.indexOf(st) < 0) return {error:'Please choose a time for the other bakes.'};
-      const min1 = Utilities.formatDate(new Date(Date.UTC(today[0], today[1]-1, today[2] + LEAD_OTHER)), 'UTC', 'yyyy-MM-dd');
-      if (sd < min1) return {error:'That date is too soon for the other bakes. Please pick a later date.'};
+      if (!slotOk_(sd, st, LEAD_OTHER_H)) return {error:'That date and time is too soon for the other bakes. Please pick a later slot.'};
       if (!(sd === r.date && st === r.time)) split = {date:sd, time:st};
     }
   }
