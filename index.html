@@ -454,6 +454,12 @@ $('dImg').onclick=async()=>{
   }catch(_){$('dImgNote').textContent='Could not make the picture. Please use the text message option below.'}
   b.disabled=false;b.textContent=txt;
 };
+function clearOrder(){S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};S.mode='Pickup';
+  ['fNotes','fAddr','fDate','fTime','fName','fPhone'].forEach(i=>{const e=$(i);if(e)e.value=''});
+  document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));
+  try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Pickup'));$('addrBox').style.display='none'}catch(_){}
+  try{renderThumbs()}catch(_){}
+  $('review').classList.remove('on');$('done').classList.remove('on');document.body.style.overflow='';renderAll()}
 $('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};['fNotes','fAddr','fDate','fTime'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
   $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
 
@@ -533,7 +539,7 @@ $('acBody').addEventListener('click',e=>{
   if(a==='save')return acDo(x,async()=>{
     const r=await api({action:'save_profile',token:A.tok,name:$('pName').value,phone:$('pPhone').value,address:$('pAddr').value});
     if(r.ok){A.profile=r.profile;accBtn();toast('Details saved')}else if(r.error==='auth'){setTok('');A.view='in';A.msg='Please sign in again.'}else A.msg=r.error});
-  if(a==='out')return acDo(x,async()=>{const t=A.tok;setTok('');A.profile=null;A.orders=null;A.view='in';A.email='';accBtn();try{await api({action:'logout',token:t})}catch(_){}});
+  if(a==='out')return acDo(x,async()=>{const t=A.tok;setTok('');A.profile=null;A.orders=null;A.view='in';A.email='';accBtn();clearOrder();try{sessionStorage.removeItem('cb_contact')}catch(_){}try{await api({action:'logout',token:t})}catch(_){}});
   if(a==='re'){const o=A.orders[+x.dataset.i];if(!o)return;
     S.cakes=[];S.pc={};S.cookie={};
     o.items.forEach(it=>{
