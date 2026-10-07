@@ -107,6 +107,7 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .hint{font-size:13px;color:var(--mut);margin-top:6px}
 .spl{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-size:14px;line-height:1.35;cursor:pointer}.spl input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:var(--brown,#3b2416)}
+.how{margin:10px 0 8px;padding-left:20px;font-size:14px;line-height:1.45}.how li{margin:3px 0}
 .offer{background:#1f6b3f;color:#fff;text-align:center;font-size:13.5px;font-weight:700;padding:9px 14px;line-height:1.35}
 .offer:empty{display:none}
 .dsc,.dsc b{color:var(--ok)}
@@ -183,10 +184,11 @@ body.acct-open .bar{z-index:25}
   <input class="i" id="fName" placeholder="Your name" autocomplete="name" maxlength="80">
   <input class="i" id="fPhone" placeholder="WhatsApp / mobile number" inputmode="numeric" autocomplete="tel" maxlength="16" style="margin-top:8px">
   <div class="hint" id="revSign"></div>
+  <div id="budgetBox" style="display:none"><label class="f">Your budget for the custom cake (optional)</label><input class="i" id="fBudget" placeholder="e.g. ₹3,500" maxlength="30"></div>
   <label class="f">Message on cake / notes</label>
   <textarea class="i" id="fNotes" placeholder="e.g. “Happy Birthday Aarav”, allergies, theme, colours" maxlength="500"></textarea>
 
-  <label class="f">Reference photo (optional)</label>
+  <label class="f" id="photoLbl">Reference photo (optional)</label>
   <label class="up"><span style="font-size:24px">📷</span><span>Tap to add a design you like<br><small>Up to 3 photos · helps us quote custom cakes</small></span><input type="file" id="fPhoto" accept="image/*" multiple hidden></label>
   <div class="th" id="thumbs"></div>
 
@@ -446,7 +448,7 @@ const MENU={
    "name": "Custom / Theme Cake",
    "group": "Custom cakes",
    "custom": true,
-   "desc": "Design or theme of your choice, starting from ₹2,000 per kg. Share your idea or a reference photo at checkout. 50% advance to book, 50% on delivery.",
+   "desc": "Starts from ₹2,000 per kg. Choose a size, then share your reference at checkout.",
    "creams": [
     {
      "id": "",
@@ -661,7 +663,7 @@ const MENU={
 };
 const LEAD={cake:48,other:24}; // notice in hours from the moment of ordering
 const TIMES=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
-const TABS=[['cakes','Cakes'],['cupcakes','Cupcakes'],['muffins','Muffins'],['cookies','Cookies'],['brownies','Brownies']];
+const TABS=[['cakes','Cakes'],['cupcakes','Cupcakes'],['muffins','Muffins'],['cookies','Cookies'],['brownies','Brownies'],['custom','Custom cake']];
 const $=id=>document.getElementById(id);
 const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -707,12 +709,12 @@ function calcDisc(sub){
 }
 const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),d=calcDisc(sub);return{L,sub,disc:d.amt,dnote:d.note,dused:d.used,tot:sub-d.amt,count:L.length,flag:L.some(l=>l.flag)}};
 const hasCustom=()=>S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom});
-function advText(t){if(!hasCustom())return '';const a=Math.round(t.tot/2);return 'Custom / theme cake: 50% advance ('+inr(a)+') to book your order, and the balance 50% on '+(S.mode==='Delivery'?'delivery':'pickup')+'. Final amount after we confirm the price.'}
+function advText(t){if(!hasCustom())return '';const a=Math.round(t.tot/2);return 'Custom / theme cake: we\'ll check your reference against your budget and discuss it with you on WhatsApp. 50% advance ('+inr(a)+') to book, and the balance 50% on '+(S.mode==='Delivery'?'delivery':'pickup')+'. The final amount is confirmed after we agree the design.'}
 function itemsPayload(){return[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.cream,kg:l.kg,q:l.q})),...Object.entries(S.pc).map(([id,q])=>({t:'pc',id,q})),...Object.entries(S.cookie).map(([id,g])=>({t:'cookie',id,q:g}))]}
 
 /* ---------- menu rendering ---------- */
 function renderTabs(){
-  const cnt={cakes:S.cakes.length,cupcakes:0,muffins:0,cookies:0,brownies:0};
+  const nC=S.cakes.filter(l=>{const c=findCake(l.id);return c&&c.custom}).length,cnt={cakes:S.cakes.length-nC,custom:nC,cupcakes:0,muffins:0,cookies:0,brownies:0};
   for(const id in S.pc)if(S.pc[id]){const k=id.startsWith('cup')?'cupcakes':id.startsWith('muf')?'muffins':'brownies';cnt[k]++}
   for(const id in S.cookie)if(S.cookie[id])cnt.cookies++;
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${n}${cnt[k]?`<span class="n">${cnt[k]}</span>`:''}</button>`).join('');
@@ -745,8 +747,13 @@ function cookieCard(d){
 function renderPanel(){
   let h='';
   if(S.tab==='cakes'){
-    let g='';[...MENU.cakes.filter(c=>c.custom),...MENU.cakes.filter(c=>!c.custom)].forEach(c=>{if(c.group!==g){g=c.group;h+=`<div class="sec">${g}</div>`}h+=cakeCard(c)});
-    h+=`<div class="note">Cakes need 2 days' notice. Custom or theme cake? Choose Custom / Theme Cake at the top and share your idea at checkout.</div>`;
+    let g='';MENU.cakes.filter(c=>!c.custom).forEach(c=>{if(c.group!==g){g=c.group;h+=`<div class="sec">${g}</div>`}h+=cakeCard(c)});
+    h+=`<div class="note">Cakes need 2 days' notice. Want a custom or theme cake? See the Custom cake tab.</div>`;
+  }else if(S.tab==='custom'){
+    const c=MENU.cakes.find(x=>x.custom);
+    h+=`<div class="sec">Custom / theme cake</div><div class="card"><div class="t">Designed just for you</div><div class="d">Starts from ${inr(c.creams[0].prices[0])} per kg. Share a reference of your choice and we'll check if it's possible within your budget.</div>
+    <ol class="how"><li>Choose a size and tap Add.</li><li>At checkout, upload a sample reference photo of the cake you like and tell us your budget.</li><li>We'll check if it's possible within your budget and discuss the design with you on WhatsApp.</li><li>50% advance to book, and the remaining 50% on delivery.</li></ol>
+    <div class="d"><b>2 days' notice</b> needed for custom cakes.</div></div>`+cakeCard(c);
   }else if(S.tab==='cupcakes'){h+=`<div class="sec">Cupcakes</div>`+MENU.cupcakes.map(d=>pcCard(d,'cupcakes')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
   else if(S.tab==='muffins'){h+=`<div class="sec">Muffins</div>`+MENU.muffins.map(d=>pcCard(d,'muffins')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
   else if(S.tab==='cookies'){h+=`<div class="sec">Cookies · per 250 g</div>`+MENU.cookies.map(cookieCard).join('')+`<div class="note">Minimum 250 g per flavour. Bakes need 1 day's notice.</div>`}
@@ -813,12 +820,13 @@ function renderReview(){
   $('revSub').textContent=inr(t.sub);$('revTot').textContent=inr(t.tot);
   $('revDiscRow').style.display=t.disc?'flex':'none';$('revDiscL').textContent='Discount · '+t.dnote;$('revDisc').textContent='−'+inr(t.disc);
   const ad=advText(t);$('revAdv').style.display=ad?'block':'none';$('revAdv').textContent=ad;
+  $('budgetBox').style.display=hasCustom()?'block':'none';$('photoLbl').textContent=hasCustom()?'Reference photo (required for custom cake)':'Reference photo (optional)';
   const nx=nextTier(t.sub),hn=$('revHint');hn.style.display=nx?'block':'none';if(nx)hn.textContent='Add '+inr(nx.from-t.sub)+' more to get '+nx.pct+'% off your order.';
   $('cpnBox').style.display=DC.coupons?'block':'none';
   if(S.coupon&&!t.dused&&t.disc)setCpn('Coupon '+S.coupon.code+' is saved, but your automatic discount is better.','ok');
   $('revDelRow').style.display=S.mode==='Delivery'?'flex':'none';
   const n=$('revNote'),msgs=[];
-  if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom}))msgs.push('Custom cake: the price shown is the starting price. We\'ll confirm the final price after seeing your design.');
+  if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom}))msgs.push('Custom cake: the price shown is the starting price. We\'ll check your reference photo, discuss the design and confirm the final price with you.');
   else if(t.flag)msgs.push('Some cake weights are estimates; we\'ll confirm the final price.');
   if(S.photos.length&&!S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom}))msgs.push('Custom designs may cost extra; we\'ll confirm after seeing your photo.');
   n.style.display=msgs.length?'block':'none';n.textContent=msgs.join(' ');
@@ -897,10 +905,10 @@ $('submit').onclick=async()=>{
     if(!sp0.time)return fail('Please choose a time for the other bakes.','fTime2');
     if(!slotOk(sp0.date,sp0.time,LEAD.other))return fail('That time is too soon for the other bakes. Please pick a later time.','fTime2')}
   const sp=sp0&&!(sp0.date===date&&sp0.time===time)?sp0:null;
-  if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom})&&notes.length<5&&!S.photos.length)return fail('For your custom cake, please describe the design or theme in the message box, or add a reference photo.','fNotes');
+  if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom})&&!S.photos.length)return fail('For your custom cake, please upload a sample reference photo of the design you like.','photoLbl');
   if(S.mode==='Delivery'&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
   function fail(m,id){err.textContent=m;const el=$(id);document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));el.classList.add('bad');if(el.tagName==='INPUT'&&el.type!=='date'||el.tagName==='TEXTAREA')el.focus({preventScroll:true});err.scrollIntoView({block:'center',behavior:'smooth'})}
-  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes,photos:S.photos,
+  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes:(hasCustom()&&$('fBudget').value.trim()?'Budget: '+$('fBudget').value.trim().slice(0,30)+'. ':'')+notes,photos:S.photos,
     items:itemsPayload(),split:sp,coupon:S.coupon?S.coupon.code:'',clientTotal:Math.round(t.tot)};
   const btn=$('submit');btn.disabled=true;btn.textContent='Sending…';
   const trip=S.mode==='Delivery'?'Delivery: ':'Pickup: ';
@@ -969,12 +977,12 @@ $('dImg').onclick=async()=>{
   b.disabled=false;b.textContent=txt;
 };
 function clearOrder(){S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};S.mode='Pickup';S.coupon=null;S.split=false;try{$('cpnIn').value='';setCpn('')}catch(_){}
-  ['fNotes','fAddr','fDate','fTime','fName','fPhone','fDate2','fTime2'].forEach(i=>{const e=$(i);if(e)e.value=''});
+  ['fNotes','fAddr','fDate','fTime','fName','fPhone','fDate2','fTime2','fBudget'].forEach(i=>{const e=$(i);if(e)e.value=''});
   document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));
   try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Pickup'));$('addrBox').style.display='none'}catch(_){}
   try{renderThumbs()}catch(_){}
   $('review').classList.remove('on');$('done').classList.remove('on');document.body.style.overflow='';renderAll()}
-$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};S.coupon=null;S.split=false;$('cpnIn').value='';setCpn('');['fNotes','fAddr','fDate','fTime','fDate2','fTime2'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
+$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};S.coupon=null;S.split=false;$('cpnIn').value='';setCpn('');['fNotes','fAddr','fDate','fTime','fDate2','fTime2','fBudget'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
   $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
 
 /* ---------- account: sign in with an emailed code, saved details, order history ---------- */

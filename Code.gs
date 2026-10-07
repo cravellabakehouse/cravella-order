@@ -253,7 +253,7 @@ const MENU = {
    "name": "Custom / Theme Cake",
    "group": "Custom cakes",
    "custom": true,
-   "desc": "Design or theme of your choice, starting from ₹2,000 per kg. Share your idea or a reference photo at checkout. 50% advance to book, 50% on delivery.",
+   "desc": "Starts from ₹2,000 per kg. Choose a size, then share your reference at checkout.",
    "creams": [
     {
      "id": "",
@@ -561,7 +561,7 @@ function validate_(r){
 
   const pr = priceItems_(items);
   if (pr.error) return {error:pr.error};
-  if (pr.hasCustom && notes.length < 5 && !(Array.isArray(r.photos) && r.photos.length)) return {error:'For your custom cake, please describe the design or theme, or add a reference photo.'};
+  if (pr.hasCustom && !(Array.isArray(r.photos) && r.photos.length)) return {error:'For your custom cake, please upload a sample reference photo of the design you like.'};
   const lines = pr.lines, toConfirm = pr.toConfirm, hasCake = pr.hasCake;
   // notice rule (IST, from the moment of ordering): cakes 48 hours, other bakes 24 hours
   const today = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd').split('-').map(Number);
