@@ -188,9 +188,11 @@ body.acct-open .bar{z-index:25}
   <label class="f">Message on cake / notes</label>
   <textarea class="i" id="fNotes" placeholder="e.g. “Happy Birthday Aarav”, allergies, theme, colours" maxlength="500"></textarea>
 
+  <div id="photoBox" style="display:none">
   <label class="f" id="photoLbl">Reference photo (optional)</label>
-  <label class="up"><span style="font-size:24px">📷</span><span>Tap to add a design you like<br><small>Up to 3 photos · helps us quote custom cakes</small></span><input type="file" id="fPhoto" accept="image/*" multiple hidden></label>
+  <label class="up"><span style="font-size:24px">📷</span><span>Tap to add a design you like<br><small>Up to 3 photos · helps us with your cake design</small></span><input type="file" id="fPhoto" accept="image/*" multiple hidden></label>
   <div class="th" id="thumbs"></div>
+  </div>
 
   <input class="hp" id="fHp" tabindex="-1" autocomplete="off" aria-hidden="true">
   <div class="err" id="err"></div>
@@ -820,6 +822,7 @@ function renderReview(){
   $('revSub').textContent=inr(t.sub);$('revTot').textContent=inr(t.tot);
   $('revDiscRow').style.display=t.disc?'flex':'none';$('revDiscL').textContent='Discount · '+t.dnote;$('revDisc').textContent='−'+inr(t.disc);
   const ad=advText(t);$('revAdv').style.display=ad?'block':'none';$('revAdv').textContent=ad;
+  $('photoBox').style.display=S.cakes.length?'block':'none';
   $('budgetBox').style.display=hasCustom()?'block':'none';$('photoLbl').textContent=hasCustom()?'Reference photo (required for custom cake)':'Reference photo (optional)';
   const nx=nextTier(t.sub),hn=$('revHint');hn.style.display=nx?'block':'none';if(nx)hn.textContent='Add '+inr(nx.from-t.sub)+' more to get '+nx.pct+'% off your order.';
   $('cpnBox').style.display=DC.coupons?'block':'none';
@@ -908,7 +911,7 @@ $('submit').onclick=async()=>{
   if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom})&&!S.photos.length)return fail('For your custom cake, please upload a sample reference photo of the design you like.','photoLbl');
   if(S.mode==='Delivery'&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
   function fail(m,id){err.textContent=m;const el=$(id);document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));el.classList.add('bad');if(el.tagName==='INPUT'&&el.type!=='date'||el.tagName==='TEXTAREA')el.focus({preventScroll:true});err.scrollIntoView({block:'center',behavior:'smooth'})}
-  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes:(hasCustom()&&$('fBudget').value.trim()?'Budget: '+$('fBudget').value.trim().slice(0,30)+'. ':'')+notes,photos:S.photos,
+  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes:(hasCustom()&&$('fBudget').value.trim()?'Budget: '+$('fBudget').value.trim().slice(0,30)+'. ':'')+notes,photos:S.cakes.length?S.photos:[],
     items:itemsPayload(),split:sp,coupon:S.coupon?S.coupon.code:'',clientTotal:Math.round(t.tot)};
   const btn=$('submit');btn.disabled=true;btn.textContent='Sending…';
   const trip=S.mode==='Delivery'?'Delivery: ':'Pickup: ';
