@@ -82,6 +82,14 @@ table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px sol
 textarea.i{min-height:230px;resize:vertical;line-height:1.45}
 .hide{display:none!important}
 @media print{.top,.tabs,.save,.noprint{display:none!important}body{padding:0;background:#fff;color:#000}.card{box-shadow:none;border-color:#999}}
+
+.kt{width:100%;border-collapse:collapse;margin-top:12px;font-size:14.5px}.kt th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:6px 4px;border-bottom:1px solid var(--line)}
+.kt td{padding:9px 4px;border-bottom:1px solid var(--line);vertical-align:top}.kt td:nth-child(2){font-weight:700;white-space:nowrap}
+.kt .ok{color:var(--ok);font-size:13px}.kt .no{color:var(--bad);font-weight:700;font-size:13px}.kt .na{color:var(--mut);font-size:13px}
+.lowc{border-color:var(--bad)}.lw{color:var(--bad)}
+.ir{border-top:1px dashed var(--line);margin-top:12px;padding-top:10px;display:grid;gap:8px}
+ol.ms{padding-left:20px;margin:8px 0}ol.ms li{margin:5px 0}
+select.i{appearance:auto}.row .btn.sm{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -107,6 +115,7 @@ textarea.i{min-height:230px;resize:vertical;line-height:1.45}
   <div class="wrap" id="panel"></div>
 </div>
 <div class="save hide" id="saveBar"><button class="btn" id="saveBtn">Save changes</button></div>
+<div class="sheet hide" id="edSheet"><div class="in" id="edIn"></div></div>
 <div class="sheet hide" id="pwSheet"><div class="in" id="pwIn"></div></div>
 <div class="sheet hide" id="mailSheet"><div class="in" id="mailIn"></div></div>
 <div class="toast" id="toast"></div>
@@ -118,7 +127,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 const ST=(k=>{try{return localStorage.getItem(k)}catch(_){return null}});
 const SS=((k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}});
-let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[],mails:{}},tab='orders',filt='active',q='',bakeDate='',bake=null,dirty=false,CM={},cq='',skew=0;
+let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[],mails:{},stock:null,recipes:null},tab='orders',filt='active',q='',bakeDate='',bake=null,dirty=false,CM={},cq='',skew=0;
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
 async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -158,6 +167,166 @@ $('lGo').onclick=async()=>{
   }catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false}
 };
 ['aPw','aCode','aEmail'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')$('lGo').click()}));
+
+
+/* ---------- kitchen: stock and recipes ---------- */
+const KU=['g','ml','pcs','tsp','tbsp'];
+let KS={rid:'',qty:''},kBusy=false,ES=null;
+const trim=(x,d)=>String(+(+x).toFixed(d));
+const FR=[[0,''],[.125,'⅛'],[.25,'¼'],[.375,'⅜'],[.5,'½'],[.625,'⅝'],[.75,'¾'],[.875,'⅞']];
+function fr(q){let w=Math.floor(q),f=q-w,best=0,bd=9;FR.forEach(([v],i)=>{const d=Math.abs(f-v);if(d<bd){bd=d;best=i}});if(Math.abs(f-1)<bd){w++;best=0}return(w||!FR[best][1]?w:'')+FR[best][1]}
+function fmtAmt(q,u){
+  q=+q||0;
+  if(u==='g')return q>=1000?trim(q/1000,2)+' kg':trim(q,q<10?1:0)+' g';
+  if(u==='ml')return q>=1000?trim(q/1000,2)+' l':trim(q,q<10?1:0)+' ml';
+  if(u==='tsp'){if(q<.0625)return 'a pinch';return fr(q)+' tsp'+(q>=3&&Math.abs(q/1.5-Math.round(q/1.5))<1e-6?' ('+fr(q/3)+' tbsp)':'')}
+  if(u==='tbsp'){if(q<.0625)return 'a pinch';return fr(q)+' tbsp'}
+  return fr(q)+(q<=1?' pc':' pcs')
+}
+async function loadKit(){
+  kBusy=true;
+  try{const r=await api({action:'admin_stock_get'});if(r.ok){D.stock=r.stock;D.recipes=r.recipes}else toast(r.error||'Could not load')}
+  catch(_){toast('No connection')}
+  kBusy=false;if(tab==='stock'||tab==='recipes')render()
+}
+const unitOpts=sel=>KU.map(u=>`<option ${u===sel?'selected':''}>${u}</option>`).join('');
+function stockHtml(){
+  if(!D.stock)return '<div class="hint">Loading…</div>';
+  const isLow=x=>x.low>0&&x.qty<=x.low,low=D.stock.filter(isLow);
+  const L=D.stock.slice().sort((x,y)=>(isLow(y)-isLow(x))||x.name.localeCompare(y.name));
+  let h=`<div class="stat"><div><b>${D.stock.length}</b><span>Items</span></div><div><b>${low.length}</b><span>Running low</span></div></div>
+  <div class="card"><div class="t" style="font-size:17px">Add an item</div>
+  <label class="f">Name</label><input class="i" id="sName" maxlength="60" placeholder="e.g. Cocoa powder">
+  <div class="row" style="gap:8px;align-items:flex-end"><div style="flex:1"><label class="f">Unit</label><select class="i" id="sUnit">${unitOpts('g')}</select></div><div style="flex:1"><label class="f">In stock now</label><input class="i" id="sQty" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div></div>
+  <label class="f">Warn me when below (optional)</label><input class="i" id="sLow" type="number" min="0" step="any" inputmode="decimal" placeholder="0 = no warning">
+  <button class="btn" id="sAdd" style="width:100%;margin-top:12px">Add item</button></div>`;
+  h+=L.map(x=>`<div class="card ${isLow(x)?'lowc':''}"><div class="row"><b>${esc(x.name)}</b><span class="${isLow(x)?'lw':''}" style="font-weight:700">${esc(fmtAmt(x.qty,x.unit))}</span></div>
+  ${isLow(x)?`<div class="hint" style="color:var(--bad)">Running low (warning at ${esc(fmtAmt(x.low,x.unit))})</div>`:''}
+  <div class="row" style="gap:8px;margin-top:10px"><input class="i" data-adj="${esc(x.id)}" type="number" min="0" step="any" inputmode="decimal" placeholder="Amount in ${esc(x.unit)}"><button class="btn sm" data-add="${esc(x.id)}">+ Add</button><button class="btn ol sm" data-use="${esc(x.id)}">− Use</button></div>
+  <div class="acts"><button class="btn ol sm" data-sedit="${esc(x.id)}">Edit</button></div></div>`).join('');
+  return h
+}
+function recTbl(){
+  const r=(D.recipes||[]).find(x=>x.id===KS.rid);if(!r)return '';
+  const n=parseFloat(KS.qty);if(!(n>0))return `<div class="hint">Enter how many ${esc(r.unit)} you want to make.</div>`;
+  const f=n/r.base;
+  return `<table class="kt"><tr><th>Ingredient</th><th>Amount</th><th>Stock</th></tr>${r.ing.map(g=>{
+    const need=g.q*f,st=g.s&&(D.stock||[]).find(x=>x.id===g.s);let c='<span class="na">not tracked</span>';
+    if(st&&st.unit===g.u)c=st.qty>=need-1e-6?`<span class="ok">✓ have ${esc(fmtAmt(st.qty,st.unit))}</span>`:`<span class="no">short ${esc(fmtAmt(need-st.qty,g.u))}</span>`;
+    return `<tr><td>${esc(g.n)}</td><td>${esc(fmtAmt(need,g.u))}</td><td>${c}</td></tr>`}).join('')}</table>`
+}
+function recipesHtml(){
+  if(!D.recipes)return '<div class="hint">Loading…</div>';
+  if(!D.recipes.some(x=>x.id===KS.rid)){const f=D.recipes[0];KS.rid=f?f.id:'';KS.qty=f?String(f.base):''}
+  const r=D.recipes.find(x=>x.id===KS.rid);
+  let h=`<div class="chips">${D.recipes.map(x=>`<button class="chip ${x.id===KS.rid?'on':''}" data-rec="${esc(x.id)}">${esc(x.name)}</button>`).join('')}<button class="chip" data-recnew="1">+ New recipe</button></div>`;
+  if(!r)return h+'<div class="card"><div class="hint">No recipes yet. Tap "+ New recipe".</div></div>';
+  const steps=String(r.steps||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  h+=`<div class="card"><div class="t" style="font-size:19px">${esc(r.name)}</div><div class="hint">Written for ${trim(r.base,2)} ${esc(r.unit)}. Change the number below and everything scales.</div>
+  <label class="f">How many ${esc(r.unit)} do you want to make?</label>
+  <input class="i" id="kQty" type="number" min="0" step="any" inputmode="decimal" value="${esc(KS.qty)}">
+  <div class="chips">${[1,2,4,8].map(m=>`<button class="chip" data-kq="${r.base*m}">${trim(r.base*m,2)}</button>`).join('')}</div>
+  <div id="recTbl">${recTbl()}</div>
+  ${steps.length?`<div class="sec">Method</div><ol class="ms">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`:''}
+  ${r.notes?`<div class="hint" style="white-space:pre-wrap">${esc(r.notes)}</div>`:''}
+  <div class="acts"><button class="btn" id="kBake">Baked it: use from stock</button><button class="btn ol sm" id="kEditRec">Edit recipe</button></div></div>`;
+  return h
+}
+function closeEd(){ES=null;$('edSheet').classList.add('hide')}
+function openStockEdit(id){
+  const x=D.stock.find(s=>s.id===id);if(!x)return;ES={k:'stock',id};
+  $('edIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">Edit item</div><button class="btn ol sm" id="eClose">Close</button></div>
+  <label class="f">Name</label><input class="i" id="eName" maxlength="60" value="${esc(x.name)}">
+  <label class="f">Unit</label><select class="i" id="eUnit">${unitOpts(x.unit)}</select>
+  <label class="f">In stock (set exact amount)</label><input class="i" id="eQty" type="number" min="0" step="any" inputmode="decimal" value="${x.qty}">
+  <label class="f">Warn me when below</label><input class="i" id="eLow" type="number" min="0" step="any" inputmode="decimal" value="${x.low}">
+  <div class="err" id="eErr"></div><button class="btn" id="eSave" style="width:100%;margin-top:12px">Save</button>
+  <button class="btn ol" id="eDel" style="width:100%;margin-top:10px">Delete this item</button>`;
+  $('edSheet').classList.remove('hide')
+}
+function irow(g){
+  g=g||{n:'',q:'',u:'g',s:''};
+  return `<div class="ir"><input class="i" data-f="n" maxlength="60" placeholder="Ingredient, e.g. Cocoa powder" value="${esc(g.n)}">
+  <div class="row" style="gap:6px"><input class="i" data-f="q" type="number" min="0" step="any" inputmode="decimal" placeholder="Quantity" value="${g.q}"><select class="i" data-f="u">${unitOpts(g.u)}</select></div>
+  <select class="i" data-f="s"><option value="">Not tracked in stock</option>${(D.stock||[]).map(s=>`<option value="${esc(s.id)}" ${s.id===g.s?'selected':''}>Stock: ${esc(s.name)} (${esc(s.unit)})</option>`).join('')}</select>
+  <button class="btn ol sm" data-irdel="1" style="justify-self:start">Remove</button></div>`
+}
+function openRecipeEdit(id){
+  const r=id?D.recipes.find(x=>x.id===id):null;if(id&&!r)return;ES={k:'rec',id:id||''};
+  const g=r||{name:'',base:1,unit:'pieces',ing:[{n:'',q:'',u:'g',s:''}],steps:'',notes:''};
+  $('edIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">${r?'Edit recipe':'New recipe'}</div><button class="btn ol sm" id="eClose">Close</button></div>
+  <label class="f">Recipe name</label><input class="i" id="rName" maxlength="80" value="${esc(g.name)}" placeholder="e.g. Chocolate Truffle Cake">
+  <div class="row" style="gap:8px;align-items:flex-end"><div style="flex:1"><label class="f">This recipe makes</label><input class="i" id="rBase" type="number" min="0" step="any" inputmode="decimal" value="${g.base}"></div><div style="flex:1"><label class="f">of (name)</label><input class="i" id="rUnit" maxlength="20" value="${esc(g.unit)}" placeholder="muffins, kg cake"></div></div>
+  <div class="sec">Ingredients for that amount</div><div id="rIng">${g.ing.map(irow).join('')}</div>
+  <button class="btn ol sm" id="rAddIng" style="margin-top:12px">+ Add ingredient</button>
+  <label class="f">Method (one step per line)</label><textarea class="i" id="rSteps" style="min-height:140px">${esc(g.steps)}</textarea>
+  <label class="f">Notes (oven, time, tips)</label><textarea class="i" id="rNotes" style="min-height:70px">${esc(g.notes)}</textarea>
+  <div class="err" id="eErr"></div><button class="btn" id="eSave" style="width:100%;margin-top:12px">Save recipe</button>
+  ${r?'<button class="btn ol" id="eDel" style="width:100%;margin-top:10px">Delete this recipe</button>':''}`;
+  $('edSheet').classList.remove('hide')
+}
+async function kAdjust(id,sign){
+  const inp=document.querySelector(`[data-adj="${id}"]`),v=parseFloat(inp&&inp.value);
+  if(!(v>0)){toast('Type an amount first');return}
+  const x=D.stock.find(s=>s.id===id);if(!x)return;const prev=x.qty;x.qty=Math.max(0,Math.round((x.qty+sign*v)*100)/100);
+  const y=scrollY;render();scrollTo(0,y);
+  try{const r=await api({action:'admin_stock_adjust',id,delta:sign*v});if(r.ok){x.qty=r.qty;toast((sign>0?'Added to ':'Used from ')+x.name)}else{x.qty=prev;toast(r.error||'Could not update')}}
+  catch(_){x.qty=prev;toast('No connection. Not saved.')}
+  const y2=scrollY;render();scrollTo(0,y2)
+}
+$('panel').addEventListener('click',async e=>{
+  const t=e.target;
+  const rc=t.closest('[data-rec]');if(rc){KS.rid=rc.dataset.rec;const r=D.recipes.find(x=>x.id===KS.rid);KS.qty=r?String(r.base):'';render();return}
+  if(t.closest('[data-recnew]')){openRecipeEdit('');return}
+  const kq=t.closest('[data-kq]');if(kq){KS.qty=kq.dataset.kq;$('kQty').value=KS.qty;$('recTbl').innerHTML=recTbl();return}
+  if(t.closest('#kEditRec')){openRecipeEdit(KS.rid);return}
+  if(t.closest('#kBake')){
+    const r=D.recipes.find(x=>x.id===KS.rid),n=parseFloat(KS.qty);if(!r)return;if(!(n>0)){toast('Enter how many first');return}
+    if(!confirm('Use the ingredients for '+trim(n,2)+' '+r.unit+' from your stock?'))return;
+    const b=$('kBake');b.disabled=true;b.textContent='Saving…';
+    try{const x=await api({action:'admin_recipe_bake',id:r.id,qty:n});
+      if(x.ok){D.stock=x.stock;toast(x.short.length?'Stock updated. Short of: '+x.short.join(', '):'Stock updated')}else toast(x.error||'Could not update')}
+    catch(_){toast('No connection. Stock not changed.')}
+    render();return
+  }
+  const ad=t.closest('[data-add]');if(ad){kAdjust(ad.dataset.add,1);return}
+  const us=t.closest('[data-use]');if(us){kAdjust(us.dataset.use,-1);return}
+  const se=t.closest('[data-sedit]');if(se){openStockEdit(se.dataset.sedit);return}
+  if(t.closest('#sAdd')){
+    const b=$('sAdd'),name=$('sName').value.trim();if(name.length<2){toast('Enter the item name');return}
+    b.disabled=true;
+    try{const r=await api({action:'admin_stock_save',name,unit:$('sUnit').value,qty:$('sQty').value||0,low:$('sLow').value||0});
+      if(r.ok){D.stock=r.stock;toast('Item added');render()}else{toast(r.error||'Could not add');b.disabled=false}}
+    catch(_){toast('No connection');b.disabled=false}
+  }
+});
+$('panel').addEventListener('input',e=>{if(e.target.id==='kQty'){KS.qty=e.target.value;$('recTbl').innerHTML=recTbl()}});
+$('edSheet').addEventListener('click',async e=>{
+  const t=e.target;if(!ES)return;
+  if(t===$('edSheet')||t.closest('#eClose')){closeEd();return}
+  if(t.closest('#rAddIng')){$('rIng').insertAdjacentHTML('beforeend',irow());return}
+  const ir=t.closest('[data-irdel]');if(ir){const row=ir.closest('.ir');if(document.querySelectorAll('#rIng .ir').length>1)row.remove();else row.querySelectorAll('input').forEach(i=>i.value='');return}
+  const err=$('eErr');
+  if(t.closest('#eDel')){
+    if(!confirm(ES.k==='stock'?'Delete this item?':'Delete this recipe?'))return;
+    try{const r=await api({action:ES.k==='stock'?'admin_stock_delete':'admin_recipe_delete',id:ES.id});
+      if(r.ok){if(r.stock)D.stock=r.stock;if(r.recipes)D.recipes=r.recipes;closeEd();render()}else err.textContent=r.error||'Could not delete'}
+    catch(_){err.textContent='No connection.'}
+    return
+  }
+  if(!t.closest('#eSave'))return;
+  err.textContent='';const b=$('eSave');b.disabled=true;b.textContent='Saving…';
+  try{
+    if(ES.k==='stock'){
+      const r=await api({action:'admin_stock_save',id:ES.id,name:$('eName').value,unit:$('eUnit').value,qty:$('eQty').value,low:$('eLow').value||0});
+      if(r.ok){D.stock=r.stock;closeEd();toast('Saved');render()}else err.textContent=r.error||'Could not save'
+    }else{
+      const ing=[...document.querySelectorAll('#rIng .ir')].map(row=>{const f=k=>row.querySelector(`[data-f="${k}"]`).value;return{n:f('n'),q:f('q'),u:f('u'),s:f('s')}}).filter(x=>x.n.trim());
+      const nm=$('rName').value,r=await api({action:'admin_recipe_save',id:ES.id,name:nm,base:$('rBase').value,unit:$('rUnit').value,ing,steps:$('rSteps').value,notes:$('rNotes').value});
+      if(r.ok){const was=ES.id;D.recipes=r.recipes;if(!was){const last=r.recipes[r.recipes.length-1];KS.rid=last.id;KS.qty=String(last.base)}else{const x=r.recipes.find(z=>z.id===was);if(x)KS.qty=String(x.base)}closeEd();toast('Recipe saved');render()}else err.textContent=r.error||'Could not save'
+    }
+  }catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false;b.textContent=ES&&ES.k==='stock'?'Save':'Save recipe'}
+});
 
 /* ---------- password ---------- */
 let hasPw=true;
@@ -205,14 +374,14 @@ async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok)a
 async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=r.items;hasPw=r.hasPw!==false;dirty=false}}
 
 /* ---------- layout ---------- */
-const TABS=[['orders','Orders'],['bake','Bake list'],['menu','Menu'],['cust','Customers'],['settings','Settings']];
+const TABS=[['orders','Orders'],['bake','Bake list'],['recipes','Recipes'],['stock','Stock'],['menu','Menu'],['cust','Customers'],['settings','Settings']];
 function renderTabs(){
   const nNew=D.orders.filter(o=>o.status==='New').length;
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}">${n}${k==='orders'&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('');
   $('saveBar').classList.toggle('hide',!(tab==='menu'||tab==='settings'));
 }
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():settingsHtml();if(tab==='bake'&&!bake)loadBake()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='bake'&&!bake)loadBake()}
 
 /* ---------- orders ---------- */
 const ACTIVE=['New','Confirmed','Advance received','Ready'];
