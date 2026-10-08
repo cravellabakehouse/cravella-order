@@ -7,10 +7,10 @@
 <title>Cravella Admin</title>
 <meta name="theme-color" content="#fffbbe">
 <link rel="icon" href="icon-192.png">
-<link rel="preconnect" href="https://script.google.com">
-<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cravella-api.connect-679.workers.dev" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"></noscript>
 <style>
 :root{--cream:#fffbbe;--bg:#fffdf6;--card:#ffffff;--ink:#3b2416;--mut:#7d6a58;--line:#eadfc9;--acc:#b4532a;--acc-ink:#fff;--ok:#2f7d4f;--bad:#b3261e;--shadow:0 1px 2px rgba(60,36,22,.06);--warn:#b06a00}
 @media (prefers-color-scheme:dark){:root{--bg:#1d1612;--card:#271e18;--ink:#f6ece0;--mut:#b5a393;--line:#3c2f26;--acc:#e08a5e;--acc-ink:#2a160b;--ok:#5fc08a;--bad:#f2766e;--shadow:none;--warn:#e8b04b}}
@@ -360,18 +360,19 @@ $('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}
 function showApp(){$('login').classList.add('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');$('who').textContent=me||'Signed in';bakeDate=bakeDate||ymd(new Date(Date.now()+86400000))}
 function saveCache(){SS('cb_admin_cache',JSON.stringify({orders:D.orders,statuses:D.statuses,mails:D.mails,me}))}
 function applyOrders(r){D.orders=r.orders;D.statuses=r.statuses;D.mails=r.mails||{};if(r.now)skew=r.now-Date.now();saveCache()}
-const lazySettings=()=>loadSettings().then(()=>{if(tab==='menu'||tab==='settings')render()}).catch(()=>{});
+const lazySettings=p=>(p||api({action:'admin_settings_get'})).then(r=>{if(r&&r.ok){D.settings=r.settings;D.items=r.items;hasPw=r.hasPw!==false;dirty=false}if(tab==='menu'||tab==='settings')render()}).catch(()=>{});
 async function start(){
-  showApp();await loadOrders();render();lazySettings()
+  showApp();const sp=api({action:'admin_settings_get'});await loadOrders();render();lazySettings(sp)
 }
 async function boot(){
   if(!tok){showLogin();return}
   let cached=false;
   try{const c=JSON.parse(ST('cb_admin_cache')||'null');if(c&&Array.isArray(c.orders)){D.orders=c.orders;D.statuses=c.statuses||[];D.mails=c.mails||{};me=c.me||'';cached=true;showApp();render()}}catch(_){}
+  const sp0=api({action:'admin_settings_get'});
   try{
     const r=await api({action:'admin_orders'});
     if(!r.ok){tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);showLogin(r.error==='auth'?'':r.error);return}
-    applyOrders(r);showApp();render();lazySettings()
+    applyOrders(r);showApp();render();lazySettings(sp0)
   }catch(_){if(!cached)showLogin('No connection. Please reload.');else toast('No connection. Showing your last saved orders.')}
 }
 async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok)applyOrders(r);else if(r.error==='auth'){tok='';showLogin('Please sign in again.')}}
@@ -595,6 +596,7 @@ addEventListener('popstate',e=>{
 addEventListener('pageshow',e=>{if(e.persisted&&!tok)showLogin()});
 
 boot();
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
