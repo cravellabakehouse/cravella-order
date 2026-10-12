@@ -110,7 +110,7 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .hint{font-size:13px;color:var(--mut);margin-top:6px}
 .spl{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-size:14px;line-height:1.35;cursor:pointer}.spl input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:var(--brown,#3b2416)}
 .how{margin:10px 0 8px;padding-left:20px;font-size:14px;line-height:1.45}.how li{margin:3px 0}
-.incart{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line,#e6d6c2)}.incart .line{padding:6px 0}
+.inord{font-size:12px;font-weight:600;color:var(--ok);margin-top:3px}.incart{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line,#e6d6c2)}.incart .line{padding:6px 0}
 .banner{background:#fff4e4;color:#7a5a30;border-bottom:1px solid #f0dcb8;text-align:center;font-size:14px;font-weight:600;padding:9px 16px;line-height:1.35}.banner:empty{display:none}
 .soldout{color:var(--mut);font-weight:700;font-size:13px;padding:6px 10px;border:1px dashed var(--line);border-radius:10px}
 .offer{background:#1f6b3f;color:#fff;text-align:center;font-size:13.5px;font-weight:700;padding:9px 14px;line-height:1.35}
@@ -832,17 +832,15 @@ function inBlock(id,lab,amt,desc){
 }
 function pcCard(d,unit){
   const q=S.pc[d.id]||0,bx=q/d.size,pe=S.pend[d.id]||0,pb=pe/d.size;
-  return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div></div>
+  return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div>${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'pc',pe,pe)}</div>
-  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}
-  ${q?inBlock(d.id,q,pcAmount(d,q),`${bx} ${bx>1?'boxes':'box'} = ${q} ${unit}`):''}</div>`;
+  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}</div>`;
 }
 function cookieCard(d){
   const g=S.cookie[d.id]||0,pe=S.pend[d.id]||0;
-  return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div></div>
+  return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div>${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'ck',pe,pe?gLabel(pe):'0')}</div>
-  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}
-  ${g?inBlock(d.id,gLabel(g),cookieAmount(d,g),gLabel(g)):''}</div>`;
+  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}</div>`;
 }
 function renderPanel(){
   let h='';
