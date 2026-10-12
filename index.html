@@ -383,6 +383,8 @@ function renderTabs(){
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${n}${cnt[k]?`<span class="n">${cnt[k]}</span>`:''}</button>`).join('');
 }
 let CFG={unavailable:[],closed:[],full:{cake:[],other:[]},banner:''};
+let PHM={};try{PHM=JSON.parse(localStorage.getItem('cb_ph')||'{}')||{}}catch(_){}
+const phUrl=id=>{const m=PHM;return m[id]?API_URL+'?mp='+encodeURIComponent(id)+'&v='+m[id]:''};
 const isOff=id=>CFG.unavailable.includes(id);
 function dateIssue(date,forCake){
   if(!date)return '';
@@ -505,8 +507,8 @@ const EM=[[/choc|truffle|brown|mocha|cocoa/i,'🍫'],[/strawb/i,'🍓'],[/blue|r
 const GR=[['#7b4a2b','#3b2416'],['#d97a8a','#8c2f45'],['#f7c04d','#e2872b'],['#8f9be0','#4b56a8'],['#6fb98f','#2f7d4f'],['#f3a6bd','#d9648b'],['#c98a5a','#7a4a2a'],['#6aa6d9','#2d5d94']];
 function emo(n,f){for(const [r,e] of EM)if(r.test(n))return e;return f}
 function tile(d,price,sub,go,fb,i){
-  const off=isOff(d.id),g=GR[i%GR.length],ph=IMG[d.id],bg=ph?`background:url('${ph}') center 42%/62% no-repeat,linear-gradient(135deg,#fff6cf,#ffe3c6)`:d.img?`background:#fff url('${esc(d.img)}') center/cover`:`background:linear-gradient(135deg,${g[0]},${g[1]})`;
-  return `<button class="tl${off?' off':''}" data-go="${go}" data-jump="${esc(d.id)}"><span class="im" style="${bg}">${d.img||ph?'':emo(d.name,fb)}<s>${off?'Sold out':price}</s></span><b>${esc(d.name)}</b><span class="sb">${esc(sub)}</span></button>`}
+  const off=isOff(d.id),g=GR[i%GR.length],ph=IMG[d.id],rp=phUrl(d.id),bg=rp?`background:#fff url('${rp}') center/cover`:ph?`background:url('${ph}') center 42%/62% no-repeat,linear-gradient(135deg,#fff6cf,#ffe3c6)`:d.img?`background:#fff url('${esc(d.img)}') center/cover`:`background:linear-gradient(135deg,${g[0]},${g[1]})`;
+  return `<button class="tl${off?' off':''}" data-go="${go}" data-jump="${esc(d.id)}"><span class="im" style="${bg}">${d.img||ph||rp?'':emo(d.name,fb)}<s>${off?'Sold out':price}</s></span><b>${esc(d.name)}</b><span class="sb">${esc(sub)}</span></button>`}
 function cakeFrom(c){return 'from '+inr(Math.min(...c.creams.map(x=>x.prices[0])))}
 function car(title,go,tiles){return `<div class="hs"><span>${title}</span><button data-go="${go}">See all ›</button></div><div class="car">${tiles}</div>`}
 function homeHtml(){
@@ -844,6 +846,7 @@ try{const p=JSON.parse(sessionStorage.getItem('cb_contact')||'null');if(p){$('fN
 ['fName','fPhone'].forEach(i=>$(i).addEventListener('change',()=>{try{sessionStorage.setItem('cb_contact',JSON.stringify({n:$('fName').value,p:$('fPhone').value}))}catch(_){}}));
 try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;$('banner').textContent=CFG.banner||''}}catch(_){}
 renderAll();accBtn();if(A.tok)loadMe();
+if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
   if(!r||!r.ok||!r.settings)return;CFG=r.settings;try{localStorage.setItem('cb_cfg',JSON.stringify(CFG))}catch(_){}
   $('banner').textContent=CFG.banner||'';
