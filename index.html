@@ -205,6 +205,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .tl:active{transform:scale(.98)}
 @keyframes fl{0%,60%{box-shadow:0 0 0 2px var(--acc)}100%{box-shadow:0 0 0 0 transparent}}
 .flash{animation:fl 1.2s ease}
+.ctl{display:flex;align-items:center;gap:10px;flex:none}
 .dlvh{color:var(--acc);background:rgba(255,157,92,.14);padding:1px 7px;border-radius:6px;font-weight:800}
 .dlv{max-width:608px;margin:6px 16px 0;padding:8px 12px;text-align:center;border:1px solid var(--acc);background:rgba(255,157,92,.14);color:#ffd9bd;border-radius:12px;font-size:13.5px}.dlv b{color:var(--acc);font-weight:800}
 @media(min-width:672px){.dlv{margin:6px auto 0}}
@@ -826,13 +827,13 @@ function cakeCard(c){
 function pcCard(d,unit){
   const q=S.pc[d.id]||0,bx=q/d.size;
   return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div></div>
-  ${isOff(d.id)?'<span class="soldout">Sold out</span>':q?`<div class="step"><button data-m aria-label="Remove one box">−</button><span>${q}</span><button class="p" data-p aria-label="Add one box">+</button></div>`:`<button class="add" data-p>Add</button>`}</div>
+  ${isOff(d.id)?'<span class="soldout">Sold out</span>':`<div class="ctl"><div class="step"><button data-m aria-label="Remove one box">−</button><span>${q}</span><button class="p" data-p aria-label="Add one box">+</button></div><button class="add" data-p data-add>Add</button></div>`}</div>
   ${q?`<div class="row" style="margin-top:6px"><span class="d">${bx} ${bx>1?'boxes':'box'} = ${q} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,q))}</span></div>`:''}</div>`;
 }
 function cookieCard(d){
   const g=S.cookie[d.id]||0;
   return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div></div>
-  ${isOff(d.id)?'<span class="soldout">Sold out</span>':g?`<div class="step"><button data-m>−</button><span>${gLabel(g)}</span><button class="p" data-p>+</button></div>`:`<button class="add" data-p>Add</button>`}</div>
+  ${isOff(d.id)?'<span class="soldout">Sold out</span>':`<div class="ctl"><div class="step"><button data-m>−</button><span>${g?gLabel(g):'0'}</span><button class="p" data-p>+</button></div><button class="add" data-p data-add>Add</button></div>`}</div>
   ${g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(g)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,g))}</span></div>`:''}</div>`;
 }
 function renderPanel(){
@@ -889,6 +890,7 @@ $('panel').addEventListener('click',e=>{
   const m=e.target.closest('[data-m]'),p=e.target.closest('[data-p]');if(!m&&!p)return;
   if(card.dataset.pc){const id=card.dataset.pc,d=findPc(id);S.pc[id]=Math.max(0,Math.min(d.size*20,(S.pc[id]||0)+(p?d.size:-d.size)));if(!S.pc[id])delete S.pc[id]}
   else{const id=card.dataset.ck;S.cookie[id]=Math.max(0,Math.min(10000,(S.cookie[id]||0)+(p?250:-250)));if(!S.cookie[id])delete S.cookie[id]}
+  if(e.target.closest('[data-add]')){const nm=card.querySelector('.t');toast('Added: '+(nm?nm.textContent:'item'))}
   renderAll(true);
 });
 
