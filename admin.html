@@ -39,6 +39,7 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .chip{padding:7px 12px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;font-weight:600;background:var(--card)}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-top:12px}.rt{all:unset;cursor:pointer;display:block}.rt img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:block}.rt span{display:block;font-size:12px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#fff1c9;color:#7a5a00}
 .pill.Confirmed{background:#d9efe1;color:#1f6b3d}.pill.Advance{background:#d6e8f7;color:#1c4f7c}.pill.Ready{background:#ffe0cf;color:#9a3d12}.pill.Delivered{background:#2f7d4f;color:#fff}.pill.Cancelled{background:#eee;color:#666}
@@ -252,7 +253,8 @@ function recTbl(){
     if(st&&st.unit===g.u)c=st.qty>=need-1e-6?`<span class="ok">✓ have ${esc(fmtAmt(st.qty,st.unit))}</span>`:`<span class="no">short ${esc(fmtAmt(need-st.qty,g.u))}</span>`;
     return `<tr><td>${esc(g.n)}</td><td>${esc(fmtAmt(need,g.u))}</td><td>${c}</td></tr>`}).join('')}</table>`
 }
-function recipesHtml(){
+function recipesHtml(){return recipesHtml0()+rimgHtml()}
+function recipesHtml0(){
   if(!D.recipes)return '<div class="hint">Loading…</div>';
   if(!D.recipes.some(x=>x.id===KS.rid)){const f=D.recipes[0];KS.rid=f?f.id:'';KS.qty=f?String(f.base):''}
   const r=D.recipes.find(x=>x.id===KS.rid);
@@ -388,7 +390,7 @@ $('pwSheet').addEventListener('click',async e=>{
     if(r.ok){hasPw=true;closePw();toast('Password saved')}else err.textContent=r.error||'Could not save.'}
   catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false;b.textContent='Save password'}
 });
-$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);D.orders=[];D.mails={};D.settings=null;D.stock=null;D.recipes=null;$('panel').innerHTML='';$('aCode').value='';loginMode('pw');showLogin()};
+$('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);D.orders=[];D.mails={};D.settings=null;D.stock=null;D.recipes=null;D.ri=null;$('panel').innerHTML='';$('aCode').value='';loginMode('pw');showLogin()};
 
 function showApp(){$('login').classList.add('hide');$('nav').classList.remove('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');$('who').textContent=me||'Signed in';bakeDate=bakeDate||ymd(new Date(Date.now()+86400000))}
 function saveCache(){SS('cb_admin_cache',JSON.stringify({orders:D.orders,statuses:D.statuses,mails:D.mails,me}))}
@@ -430,7 +432,7 @@ $('moreSheet').addEventListener('click',e=>{
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
   try{if(history.state&&history.state.cb==='sheet')history.replaceState({cb:'tab',tab:k},'');else history.pushState({cb:'tab',tab:k},'')}catch(_){}
   tab=k;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='bake'&&!bake)loadBake()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake()}
 
 /* ---------- today (home) ---------- */
 const NEXT={New:['Confirmed','✓ Confirm order','c'],Confirmed:['Advance received','💰 Advance received','a'],'Advance received':['Ready','🍰 Mark ready','r'],Ready:['Delivered','✅ Mark delivered','r']};
@@ -658,6 +660,53 @@ const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Imag
 $('panel').addEventListener('change',async e=>{const t=e.target;if(!t.dataset||!t.dataset.ph||!t.files||!t.files[0])return;
   toast('Uploading photo…');try{const d=await shrink(t.files[0]),r=await api({action:'admin_photo_set',id:t.dataset.ph,data:d});if(r.ok){D.ph=r.photos;render();toast('Photo saved. It is live on the website.')}else toast(r.error||'Could not save the photo')}catch(_){toast('Could not read that photo')}});
 $('panel').addEventListener('click',async e=>{const b=e.target.closest('[data-phd]');if(!b)return;const r=await api({action:'admin_photo_del',id:b.dataset.phd});if(r.ok){D.ph=r.photos;render();toast('Photo removed')}else toast(r.error||'Could not remove')});
+/* ---------- recipe images (admin only) ---------- */
+function rimgHtml(){
+  const L=D.ri;
+  let h=`<div class="sec">Recipe images</div><div class="card"><div class="hint" style="margin-top:0">Upload photos of your recipes. Choose many at once from your computer or phone gallery. Only you can see these.</div><label class="btn" style="display:block;margin-top:10px;cursor:pointer">Add images<input type="file" id="riIn" accept="image/*" multiple hidden></label><div id="riProg" class="hint"></div>`;
+  if(!L)h+='<div class="hint">Loading…</div>';else if(!L.length)h+='<div class="hint">No images yet.</div>';else h+=`<div class="rg">${L.map(x=>`<button class="rt" data-ri="${esc(x.id)}"><img src="data:image/jpeg;base64,${x.thumb}" alt=""><span>${esc(x.title)}</span></button>`).join('')}</div>`;
+  return h+'</div>'
+}
+async function loadRi(){
+  D.riBusy=1;
+  try{const r=await api({action:'admin_rimg',op:'list'});if(r.ok)D.ri=r.items;else toast(r.error||'Could not load images')}catch(_){}
+  D.riBusy=0;if(tab==='recipes'){if(D.ri)render();else D.riBusy=1}
+}
+function rimgPrep(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{
+  const cv=(w,h,sx,sy,sw,sh,q)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(im,sx,sy,sw,sh,0,0,w,h);const d=c.toDataURL('image/jpeg',q);return d.slice(d.indexOf(',')+1)};
+  let data='',M=1600;for(const q of [.8,.65,.5]){const sc=Math.min(1,M/Math.max(im.width,im.height));data=cv(Math.round(im.width*sc),Math.round(im.height*sc),0,0,im.width,im.height,q);if(data.length<1400000)break;M=1200}
+  const m=Math.min(im.width,im.height),thumb=cv(240,240,(im.width-m)/2,(im.height-m)/2,m,m,.7);URL.revokeObjectURL(u);ok({data,thumb})};
+  im.onerror=()=>no(new Error('bad'));im.src=u})}
+$('panel').addEventListener('change',async e=>{
+  const t=e.target;if(t.id!=='riIn'||!t.files||!t.files.length)return;
+  const fs=[...t.files];t.value='';let done=0,bad=0;if(!D.ri)D.ri=[];
+  for(const f of fs){
+    const pg=$('riProg');if(pg)pg.textContent=`Uploading ${done+bad+1} of ${fs.length}…`;
+    try{const pp=await rimgPrep(f),title=f.name.replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').trim().slice(0,80)||'Recipe';
+      const r=await api({action:'admin_rimg',op:'add',title,data:pp.data,thumb:pp.thumb});
+      if(r.ok){D.ri.push({id:r.id,title:r.title,ts:Date.now(),thumb:pp.thumb});done++}else bad++}
+    catch(_){bad++}
+  }
+  render();toast(bad?`${done} saved, ${bad} could not be saved`:`${done} image${done===1?'':'s'} saved`)
+});
+$('panel').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-ri]');if(!b)return;
+  const x=(D.ri||[]).find(z=>z.id===b.dataset.ri);if(!x)return;ES={k:'ri',id:x.id};
+  $('edIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">Recipe image</div><button class="btn ol sm" id="riClose">Close</button></div>
+  <div id="riBig" class="hint" style="text-align:center;margin:12px 0">Loading…</div>
+  <label class="f">Title</label><input class="i" id="riTitle" maxlength="80" value="${esc(x.title)}">
+  <div class="err" id="riErr"></div><button class="btn" id="riSave" style="width:100%;margin-top:12px">Save title</button>
+  <button class="btn ol" id="riDel" style="width:100%;margin-top:10px">Delete this image</button>`;
+  showSheet('edSheet');
+  try{const r=await api({action:'admin_rimg',op:'get',id:x.id});const el=$('riBig');if(el&&ES&&ES.id===x.id){if(r.ok){el.innerHTML=`<img alt="" style="max-width:100%;max-height:60vh;border-radius:12px" src="data:image/jpeg;base64,${r.data}">`}else el.textContent=r.error||'Could not load'}}catch(_){const el=$('riBig');if(el)el.textContent='No connection'}
+});
+$('edSheet').addEventListener('click',async e=>{
+  const t=e.target;if(!ES||ES.k!=='ri')return;
+  if(t.closest('#riClose')){closeEd();return}
+  const x=(D.ri||[]).find(z=>z.id===ES.id),err=$('riErr');if(!x)return;
+  if(t.closest('#riSave')){const r=await api({action:'admin_rimg',op:'rename',id:x.id,title:$('riTitle').value}).catch(()=>({}));if(r.ok){x.title=r.title;closeEd();render();toast('Title saved')}else err.textContent=r.error||'Could not save'}
+  if(t.closest('#riDel')){if(!confirm('Delete this image?'))return;const r=await api({action:'admin_rimg',op:'del',id:x.id}).catch(()=>({}));if(r.ok){D.ri=D.ri.filter(z=>z.id!==x.id);closeEd();render();toast('Image deleted')}else err.textContent=r.error||'Could not delete'}
+});
 $('saveBtn').onclick=async()=>{
   const b=$('saveBtn');b.disabled=true;b.textContent='Saving…';
   try{const s=D.settings,r=await api({action:'admin_settings_save',unavailable:s.unavailable,closed:s.closed,capCake:s.capCake,capOther:s.capOther,banner:s.banner});
