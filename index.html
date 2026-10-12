@@ -825,22 +825,22 @@ function cakeCard(c){
   <div class="row"><div class="pr">${ready?inr(p.amount):'Choose '+miss}<small>${ready?(p.exact?'as per menu':(c.custom?'starting price · final after design':'estimate · we\'ll confirm')):'to see the price'}</small></div><button class="add${ready?'':' off'}" data-add>Add</button></div></div>`;
 }
 function ctlHtml(id,pn,q,lab){
-  return `<div class="ctl"><div class="step pend"><button data-pm aria-label="Less">−</button><span>${lab}</span><button class="p" data-pp aria-label="More">+</button></div><button class="add${q?'':' off'}" data-padd>Add</button></div>`;
+  return `<div class="ctl"><div class="step pend"><button data-pm aria-label="Less">−</button><span>${lab}</span><button class="p" data-pp aria-label="More">+</button></div><button class="add" data-padd>Add</button></div>`;
 }
 function inBlock(id,lab,amt,desc){
   return `<div class="incart"><div class="line"><div class="l">In your order<small>${desc}</small></div><div class="step"><button data-cm aria-label="Remove one">−</button><span>${lab}</span><button class="p" data-cp aria-label="Add one">+</button></div><b class="pr" style="font-size:15px;margin-left:8px">${inr(amt)}</b></div></div>`;
 }
 function pcCard(d,unit){
-  const q=S.pc[d.id]||0,bx=q/d.size,pe=S.pend[d.id]||0,pb=pe/d.size;
+  const q=S.pc[d.id]||0,bx=q/d.size,pe=S.pend[d.id]!==undefined?S.pend[d.id]:q,pb=pe/d.size;
   return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div>${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'pc',pe,pe)}</div>
-  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}</div>`;
+  ${pe&&pe!==q?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}</div>`;
 }
 function cookieCard(d){
-  const g=S.cookie[d.id]||0,pe=S.pend[d.id]||0;
+  const g=S.cookie[d.id]||0,pe=S.pend[d.id]!==undefined?S.pend[d.id]:g;
   return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div>${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'ck',pe,pe?gLabel(pe):'0')}</div>
-  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}</div>`;
+  ${pe&&pe!==g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}</div>`;
 }
 function renderPanel(){
   let h='';
@@ -897,11 +897,12 @@ $('panel').addEventListener('click',e=>{
   if(!pm&&!pp&&!pa&&!cm&&!cp)return;
   const isP=!!card.dataset.pc,id=isP?card.dataset.pc:card.dataset.ck,d=isP?findPc(id):null;
   const stp=isP?d.size:250,mx=isP?d.size*20:10000,store=isP?S.pc:S.cookie;
-  if(pm||pp){S.pend[id]=Math.max(0,Math.min(mx,(S.pend[id]||0)+(pp?stp:-stp)));if(!S.pend[id])delete S.pend[id]}
+  if(pm||pp){const cur=S.pend[id]!==undefined?S.pend[id]:(store[id]||0);S.pend[id]=Math.max(0,Math.min(mx,cur+(pp?stp:-stp)))}
   else if(pa){
-    const n=S.pend[id]||0;if(!n){toast('Choose how many first, then tap Add');return}
-    store[id]=Math.min(mx,(store[id]||0)+n);delete S.pend[id];
-    const nm=card.querySelector('.t');toast('Added: '+(nm?nm.textContent:'item'));
+    const n=S.pend[id]!==undefined?S.pend[id]:(store[id]||0);const nm=card.querySelector('.t'),nn=nm?nm.textContent:'item';
+    if(!n&&!store[id]){toast('Choose how many first, then tap Add');return}
+    if(n){store[id]=n;toast('Added: '+nn)}else{delete store[id];toast('Removed: '+nn)}
+    delete S.pend[id];
   }else{
     store[id]=Math.max(0,Math.min(mx,(store[id]||0)+(cp?stp:-stp)));if(!store[id])delete store[id];
   }
