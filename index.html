@@ -757,7 +757,7 @@ const findPc=id=>[...MENU.cupcakes,...MENU.muffins,...MENU.brownies,...MENU.blon
 const findCookie=id=>MENU.cookies.find(c=>c.id===id);
 
 /* ---------- state ---------- */
-const S={tab:'home',q:'',cakes:[],pc:{},cookie:{},sel:{},mode:'Pickup',photos:[],coupon:null,split:false};
+const S={tab:'home',q:'',cakes:[],pc:{},cookie:{},pend:{},sel:{},mode:'Pickup',photos:[],coupon:null,split:false};
 function selOf(id){if(!S.sel[id]){const cs=findCake(id).creams;S.sel[id]={cream:cs.length>1?null:cs[0].id,wi:null,kg:3}};return S.sel[id]}
 
 function lines(){
@@ -824,17 +824,25 @@ function cakeCard(c){
   ${inCart(c)}
   <div class="row"><div class="pr">${ready?inr(p.amount):'Choose '+miss}<small>${ready?(p.exact?'as per menu':(c.custom?'starting price · final after design':'estimate · we\'ll confirm')):'to see the price'}</small></div><button class="add${ready?'':' off'}" data-add>Add</button></div></div>`;
 }
+function ctlHtml(id,pn,q,lab){
+  return `<div class="ctl"><div class="step pend"><button data-pm aria-label="Less">−</button><span>${lab}</span><button class="p" data-pp aria-label="More">+</button></div><button class="add${q?'':' off'}" data-padd>Add</button></div>`;
+}
+function inBlock(id,lab,amt,desc){
+  return `<div class="incart"><div class="line"><div class="l">In your order<small>${desc}</small></div><div class="step"><button data-cm aria-label="Remove one">−</button><span>${lab}</span><button class="p" data-cp aria-label="Add one">+</button></div><b class="pr" style="font-size:15px;margin-left:8px">${inr(amt)}</b></div></div>`;
+}
 function pcCard(d,unit){
-  const q=S.pc[d.id]||0,bx=q/d.size;
+  const q=S.pc[d.id]||0,bx=q/d.size,pe=S.pend[d.id]||0,pb=pe/d.size;
   return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div></div>
-  ${isOff(d.id)?'<span class="soldout">Sold out</span>':`<div class="ctl"><div class="step"><button data-m aria-label="Remove one box">−</button><span>${q}</span><button class="p" data-p aria-label="Add one box">+</button></div><button class="add" data-p data-add>Add</button></div>`}</div>
-  ${q?`<div class="row" style="margin-top:6px"><span class="d">${bx} ${bx>1?'boxes':'box'} = ${q} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,q))}</span></div>`:''}</div>`;
+  ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'pc',pe,pe)}</div>
+  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}
+  ${q?inBlock(d.id,q,pcAmount(d,q),`${bx} ${bx>1?'boxes':'box'} = ${q} ${unit}`):''}</div>`;
 }
 function cookieCard(d){
-  const g=S.cookie[d.id]||0;
+  const g=S.cookie[d.id]||0,pe=S.pend[d.id]||0;
   return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div></div>
-  ${isOff(d.id)?'<span class="soldout">Sold out</span>':`<div class="ctl"><div class="step"><button data-m>−</button><span>${g?gLabel(g):'0'}</span><button class="p" data-p>+</button></div><button class="add" data-p data-add>Add</button></div>`}</div>
-  ${g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(g)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,g))}</span></div>`:''}</div>`;
+  ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'ck',pe,pe?gLabel(pe):'0')}</div>
+  ${pe?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}
+  ${g?inBlock(d.id,gLabel(g),cookieAmount(d,g),gLabel(g)):''}</div>`;
 }
 function renderPanel(){
   let h='';
@@ -887,10 +895,18 @@ $('panel').addEventListener('click',e=>{
     }else return;
     card.outerHTML=cakeCard(c);return;
   }
-  const m=e.target.closest('[data-m]'),p=e.target.closest('[data-p]');if(!m&&!p)return;
-  if(card.dataset.pc){const id=card.dataset.pc,d=findPc(id);S.pc[id]=Math.max(0,Math.min(d.size*20,(S.pc[id]||0)+(p?d.size:-d.size)));if(!S.pc[id])delete S.pc[id]}
-  else{const id=card.dataset.ck;S.cookie[id]=Math.max(0,Math.min(10000,(S.cookie[id]||0)+(p?250:-250)));if(!S.cookie[id])delete S.cookie[id]}
-  if(e.target.closest('[data-add]')){const nm=card.querySelector('.t');toast('Added: '+(nm?nm.textContent:'item'))}
+  const pm=e.target.closest('[data-pm]'),pp=e.target.closest('[data-pp]'),pa=e.target.closest('[data-padd]'),cm=e.target.closest('[data-cm]'),cp=e.target.closest('[data-cp]');
+  if(!pm&&!pp&&!pa&&!cm&&!cp)return;
+  const isP=!!card.dataset.pc,id=isP?card.dataset.pc:card.dataset.ck,d=isP?findPc(id):null;
+  const stp=isP?d.size:250,mx=isP?d.size*20:10000,store=isP?S.pc:S.cookie;
+  if(pm||pp){S.pend[id]=Math.max(0,Math.min(mx,(S.pend[id]||0)+(pp?stp:-stp)));if(!S.pend[id])delete S.pend[id]}
+  else if(pa){
+    const n=S.pend[id]||0;if(!n){toast('Choose how many first, then tap Add');return}
+    store[id]=Math.min(mx,(store[id]||0)+n);delete S.pend[id];
+    const nm=card.querySelector('.t');toast('Added: '+(nm?nm.textContent:'item'));
+  }else{
+    store[id]=Math.max(0,Math.min(mx,(store[id]||0)+(cp?stp:-stp)));if(!store[id])delete store[id];
+  }
   renderAll(true);
 });
 
@@ -1116,13 +1132,13 @@ $('dImg').onclick=async()=>{
   }catch(_){$('dImgNote').textContent='Could not make the picture. Please use the text message option below.'}
   b.disabled=false;b.textContent=txt;
 };
-function clearOrder(){S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};S.mode='Pickup';S.coupon=null;S.split=false;try{$('cpnIn').value='';setCpn('')}catch(_){}
+function clearOrder(){S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.mode='Pickup';S.coupon=null;S.split=false;try{$('cpnIn').value='';setCpn('')}catch(_){}
   ['fNotes','fAddr','fDate','fTime','fName','fPhone','fDate2','fTime2','fBudget'].forEach(i=>{const e=$(i);if(e)e.value=''});
   document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));
   try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Pickup'));$('addrBox').style.display='none'}catch(_){}
   try{renderThumbs()}catch(_){}
   $('review').classList.remove('on');$('done').classList.remove('on');document.body.style.overflow='';renderAll()}
-$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.photos=[];S.sel={};S.coupon=null;S.split=false;$('cpnIn').value='';setCpn('');['fNotes','fAddr','fDate','fTime','fDate2','fTime2','fBudget'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
+$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.coupon=null;S.split=false;$('cpnIn').value='';setCpn('');['fNotes','fAddr','fDate','fTime','fDate2','fTime2','fBudget'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
   $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
 
 /* ---------- account: sign in with an emailed code, saved details, order history ---------- */
@@ -1203,7 +1219,7 @@ $('acBody').addEventListener('click',e=>{
     if(r.ok){A.profile=r.profile;accBtn();toast('Details saved')}else if(r.error==='auth'){setTok('');A.view='in';A.msg='Please sign in again.'}else A.msg=r.error});
   if(a==='out')return acDo(x,async()=>{const t=A.tok;setTok('');A.profile=null;A.orders=null;A.view='in';A.email='';accBtn();clearOrder();try{sessionStorage.removeItem('cb_contact')}catch(_){}try{await api({action:'logout',token:t})}catch(_){}});
   if(a==='re'){const o=A.orders[+x.dataset.i];if(!o)return;
-    S.cakes=[];S.pc={};S.cookie={};
+    S.cakes=[];S.pc={};S.cookie={};S.pend={};
     o.items.forEach(it=>{
       if(it.t==='cake'&&findCake(it.id))S.cakes.push({id:it.id,cream:it.cream||'',kg:+it.kg,q:+it.q});
       else if(it.t==='pc'&&findPc(it.id))S.pc[it.id]=+it.q;
