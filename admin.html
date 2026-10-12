@@ -629,11 +629,13 @@ function bakeRes(){
 /* ---------- menu availability ---------- */
 function menuHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
+  if(!D.ph&&!D.phBusy){D.phBusy=1;fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{D.ph=m||{};if(tab==='menu')render()}).catch(()=>{D.ph={};D.phBusy=0})}
   let h=`<div class="hint" style="margin-top:12px">Switch an item off when it is sold out. Customers will see it as unavailable and cannot order it. Tap Save changes at the bottom.</div>`,g='';
   D.items.forEach(it=>{
     if(it.group!==g){if(g)h+='</div>';g=it.group;h+=`<div class="sec">${esc(g)}</div><div class="card" style="padding:4px 14px">`}
     const on=!s.unavailable.includes(it.id);
-    h+=`<div class="sw"><span>${esc(it.name)}</span><button class="tg ${on?'on':''}" data-tg="${esc(it.id)}" aria-label="Available"></button></div>`
+    const pv=(D.ph||{})[it.id],th=pv?`<img src="${API_URL}?mp=${encodeURIComponent(it.id)}&v=${pv}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none">`:'<span style="width:44px;height:44px;border-radius:10px;background:#eee3d3;flex:none;display:grid;place-items:center;font-size:18px">📷</span>';
+    h+=`<div class="sw"><span style="display:flex;align-items:center;gap:10px;min-width:0">${th}<span style="min-width:0">${esc(it.name)}<br><label class="phl" style="font-size:12px;color:#c0581f;font-weight:600;cursor:pointer">${pv?'Change photo':'Add photo'}<input type="file" accept="image/*" data-ph="${esc(it.id)}" hidden></label>${pv?` <button class="phx" data-phd="${esc(it.id)}" style="all:unset;font-size:12px;color:#999;cursor:pointer;margin-left:8px">Remove</button>`:''}</span></span><button class="tg ${on?'on':''}" data-tg="${esc(it.id)}" aria-label="Available"></button></div>`
   });
   return h+'</div>'
 }
@@ -652,6 +654,10 @@ function settingsHtml(){
   <input class="i" id="banner" maxlength="200" style="margin-top:10px" value="${esc(s.banner)}" placeholder="e.g. Closed 12–14 Oct for Diwali"></div>
   <div class="sec">Your login</div><div class="card"><div class="hint" style="margin-top:0">Signed in as ${esc(me)}. Your username is this email.</div><button class="btn ol sm" id="chgPw" style="margin-top:10px">${hasPw?'Change password':'Set a password'}</button></div>`
 }
+const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const S=640,sc=Math.min(1,S/Math.min(im.width,im.height)),w=Math.round(im.width*sc),h=Math.round(im.height*sc),m=Math.min(w,h),c=document.createElement('canvas');c.width=c.height=Math.min(S,m);c.getContext('2d').drawImage(im,(w-m)/2/sc,(h-m)/2/sc,m/sc,m/sc,0,0,c.width,c.height);URL.revokeObjectURL(u);const d=c.toDataURL('image/jpeg',.85);ok(d.slice(d.indexOf(',')+1))};im.onerror=()=>no(new Error('bad'));im.src=u});
+$('panel').addEventListener('change',async e=>{const t=e.target;if(!t.dataset||!t.dataset.ph||!t.files||!t.files[0])return;
+  toast('Uploading photo…');try{const d=await shrink(t.files[0]),r=await api({action:'admin_photo_set',id:t.dataset.ph,data:d});if(r.ok){D.ph=r.photos;render();toast('Photo saved. It is live on the website.')}else toast(r.error||'Could not save the photo')}catch(_){toast('Could not read that photo')}});
+$('panel').addEventListener('click',async e=>{const b=e.target.closest('[data-phd]');if(!b)return;const r=await api({action:'admin_photo_del',id:b.dataset.phd});if(r.ok){D.ph=r.photos;render();toast('Photo removed')}else toast(r.error||'Could not remove')});
 $('saveBtn').onclick=async()=>{
   const b=$('saveBtn');b.disabled=true;b.textContent='Saving…';
   try{const s=D.settings,r=await api({action:'admin_settings_save',unavailable:s.unavailable,closed:s.closed,capCake:s.capCake,capOther:s.capOther,banner:s.banner});
