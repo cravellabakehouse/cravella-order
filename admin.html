@@ -253,7 +253,7 @@ function recTbl(){
     if(st&&st.unit===g.u)c=st.qty>=need-1e-6?`<span class="ok">✓ have ${esc(fmtAmt(st.qty,st.unit))}</span>`:`<span class="no">short ${esc(fmtAmt(need-st.qty,g.u))}</span>`;
     return `<tr><td>${esc(g.n)}</td><td>${esc(fmtAmt(need,g.u))}</td><td>${c}</td></tr>`}).join('')}</table>`
 }
-function recipesHtml(){return recipesHtml0()+rimgHtml()}
+function recipesHtml(){return recipesHtml0()+scanHtml()+rimgHtml()}
 function recipesHtml0(){
   if(!D.recipes)return '<div class="hint">Loading…</div>';
   if(!D.recipes.some(x=>x.id===KS.rid)){const f=D.recipes[0];KS.rid=f?f.id:'';KS.qty=f?String(f.base):''}
@@ -271,7 +271,7 @@ function recipesHtml0(){
   <div class="acts"><button class="btn" id="kBake">Baked it: use from stock</button><button class="btn ol sm" id="kEditRec">Edit recipe</button></div></div>`;
   return h
 }
-function closeEd(){ES=null;$('edSheet').classList.add('hide');popSheet()}
+function closeEd(){if(ES&&ES.scan)D.scanQ=[];ES=null;$('edSheet').classList.add('hide');popSheet()}
 function openStockEdit(id){
   const x=D.stock.find(s=>s.id===id);if(!x)return;ES={k:'stock',id};
   $('edIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">Edit item</div><button class="btn ol sm" id="eClose">Close</button></div>
@@ -290,10 +290,10 @@ function irow(g){
   <select class="i" data-f="s"><option value="">Not tracked in stock</option>${(D.stock||[]).map(s=>`<option value="${esc(s.id)}" ${s.id===g.s?'selected':''}>Stock: ${esc(s.name)} (${esc(s.unit)})</option>`).join('')}</select>
   <button class="btn ol sm" data-irdel="1" style="justify-self:start">Remove</button></div>`
 }
-function openRecipeEdit(id){
-  const r=id?D.recipes.find(x=>x.id===id):null;if(id&&!r)return;ES={k:'rec',id:id||''};
-  const g=r||{name:'',base:1,unit:'pieces',ing:[{n:'',q:'',u:'g',s:''}],steps:'',notes:''};
-  $('edIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">${r?'Edit recipe':'New recipe'}</div><button class="btn ol sm" id="eClose">Close</button></div>
+function openRecipeEdit(id,draft,banner){
+  const r=id?D.recipes.find(x=>x.id===id):null;if(id&&!r)return;ES={k:'rec',id:id||'',scan:!!draft};
+  const g=draft||r||{name:'',base:1,unit:'pieces',ing:[{n:'',q:'',u:'g',s:''}],steps:'',notes:''};
+  $('edIn').innerHTML=`<div class="row"><div class="t" style="font-size:19px">${draft?'Check this recipe':r?'Edit recipe':'New recipe'}</div><button class="btn ol sm" id="eClose">Close</button></div>${banner||''}
   <label class="f">Recipe name</label><input class="i" id="rName" maxlength="80" value="${esc(g.name)}" placeholder="e.g. Chocolate Truffle Cake">
   <div class="row" style="gap:8px;align-items:flex-end"><div style="flex:1"><label class="f">This recipe makes</label><input class="i" id="rBase" type="number" min="0" step="any" inputmode="decimal" value="${g.base}"></div><div style="flex:1"><label class="f">of (name)</label><input class="i" id="rUnit" maxlength="20" value="${esc(g.unit)}" placeholder="muffins, kg cake"></div></div>
   <div class="sec">Ingredients for that amount</div><div id="rIng">${g.ing.map(irow).join('')}</div>
@@ -362,7 +362,7 @@ $('edSheet').addEventListener('click',async e=>{
     }else{
       const ing=[...document.querySelectorAll('#rIng .ir')].map(row=>{const f=k=>row.querySelector(`[data-f="${k}"]`).value;return{n:f('n'),q:f('q'),u:f('u'),s:f('s')}}).filter(x=>x.n.trim());
       const nm=$('rName').value,r=await api({action:'admin_recipe_save',id:ES.id,name:nm,base:$('rBase').value,unit:$('rUnit').value,ing,steps:$('rSteps').value,notes:$('rNotes').value});
-      if(r.ok){const was=ES.id;D.recipes=r.recipes;if(!was){const last=r.recipes[r.recipes.length-1];KS.rid=last.id;KS.qty=String(last.base)}else{const x=r.recipes.find(z=>z.id===was);if(x)KS.qty=String(x.base)}closeEd();toast('Recipe saved');render()}else err.textContent=r.error||'Could not save'
+      if(r.ok){const was=ES.id,sc=ES.scan,rest=(D.scanQ||[]).slice(1);D.recipes=r.recipes;if(!was){const last=r.recipes[r.recipes.length-1];KS.rid=last.id;KS.qty=String(last.base)}else{const x=r.recipes.find(z=>z.id===was);if(x)KS.qty=String(x.base)}closeEd();toast('Recipe saved');render();if(sc&&rest.length)setTimeout(()=>{D.scanQ=rest;openScan()},350)}else err.textContent=r.error||'Could not save'
     }
   }catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false;b.textContent=ES&&ES.k==='stock'?'Save':'Save recipe'}
 });
@@ -660,6 +660,65 @@ const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Imag
 $('panel').addEventListener('change',async e=>{const t=e.target;if(!t.dataset||!t.dataset.ph||!t.files||!t.files[0])return;
   toast('Uploading photo…');try{const d=await shrink(t.files[0]),r=await api({action:'admin_photo_set',id:t.dataset.ph,data:d});if(r.ok){D.ph=r.photos;render();toast('Photo saved. It is live on the website.')}else toast(r.error||'Could not save the photo')}catch(_){toast('Could not read that photo')}});
 $('panel').addEventListener('click',async e=>{const b=e.target.closest('[data-phd]');if(!b)return;const r=await api({action:'admin_photo_del',id:b.dataset.phd});if(r.ok){D.ph=r.photos;render();toast('Photo removed')}else toast(r.error||'Could not remove')});
+/* ---------- recipes from photos ---------- */
+const SCAN_P='You are reading a photo of a bakery recipe (handwritten or printed). Reply with ONLY one JSON object and no other text, in exactly this shape: {"name":"","makes":1,"unit":"pieces","ingredients":[{"name":"","qty":0,"unit":"g"}],"steps":["",""],"notes":""}. Rules: qty must be a number (write 1/2 as 0.5 and 1 1/2 as 1.5). unit must be one of g, ml, pcs, tsp, tbsp, cup, kg, l, oz, lb. makes and unit say how much the recipe yields (for example 12 and muffins); if the yield is not written use 1 and pieces. steps is one string per step, in order, without numbering. notes holds oven temperature, baking time and tips. Never invent anything that is not in the photo; leave it empty if you cannot read it.';
+const UFR={'½':.5,'¼':.25,'¾':.75,'⅓':1/3,'⅔':2/3,'⅛':.125};
+function scQty(v){
+  if(typeof v==='number')return isFinite(v)&&v>=0?v:NaN;
+  let t=String(v==null?'':v).trim();if(!t)return NaN;
+  for(const k in UFR)t=t.replace(k,' '+UFR[k]);
+  let tot=0,ok=false;for(const part of t.split(/\s+/)){if(!part)continue;const m=part.match(/^(\d+)\/(\d+)$/);if(m){tot+=+m[1]/(+m[2]||1);ok=true}else if(isFinite(part)){tot+=+part;ok=true}else break}
+  return ok?tot:NaN}
+const SCU={g:['g',1],gm:['g',1],gms:['g',1],gram:['g',1],grams:['g',1],kg:['g',1000],ml:['ml',1],l:['ml',1000],ltr:['ml',1000],litre:['ml',1000],liter:['ml',1000],cup:['ml',240],cups:['ml',240],tsp:['tsp',1],teaspoon:['tsp',1],tbsp:['tbsp',1],tablespoon:['tbsp',1],oz:['g',28.35],lb:['g',453.6],pcs:['pcs',1],pc:['pcs',1],piece:['pcs',1],pieces:['pcs',1],no:['pcs',1],nos:['pcs',1]};
+const SDEN={flour:120,sugar:200,butter:227,chips:170};
+const SGEN=['all','purpose','caster','essence','chocolate','white','plain','powdered'];
+function scStock(name){
+  const n=String(name||'').toLowerCase();
+  for(const s of (D.stock||[])){
+    const tk=String(s.name).toLowerCase().split(/[^a-z]+/).filter(w=>w&&!SGEN.includes(w));
+    if(tk.length&&tk.every(w=>n.includes(w.replace(/s$/,''))))return s.id
+  }return ''}
+function scDraft(j){
+  const ing=(Array.isArray(j.ingredients)?j.ingredients:[]).map(x=>{
+    let q=scQty(x&&x.qty),u=String(x&&x.unit||'').toLowerCase().replace(/\./g,'').trim(),m=SCU[u];
+    if(!m){m=['pcs',1]}if(!isNaN(q))q=Math.round(q*m[1]*100)/100;
+    const nm=String(x&&x.name||'').trim();let sid=scStock(nm),st=(D.stock||[]).find(z=>z.id===sid),u2=m[0];
+    if(st&&st.unit==='g'&&m[1]===240&&SDEN[sid]&&!isNaN(q)){q=Math.round(scQty(x.qty)*SDEN[sid]*100)/100;u2='g'}
+    if(st&&st.unit!==u2)sid='';
+    return{n:nm,q:isNaN(q)?'':q,u:u2,s:sid}}).filter(x=>x.n);
+  const mk=scQty(j.makes),st=Array.isArray(j.steps)?j.steps.map(z=>String(z).trim()).filter(Boolean).join('\n'):String(j.steps||'');
+  return{name:String(j.name||'').trim().slice(0,80),base:mk>0?mk:1,unit:String(j.unit||'pieces').trim().slice(0,20)||'pieces',ing:ing.length?ing:[{n:'',q:'',u:'g',s:''}],steps:st,notes:String(j.notes||'').trim().slice(0,1000)}}
+function scParse(raw){
+  let t=raw&&typeof raw.response==='string'?raw.response:raw&&raw.choices&&raw.choices[0]&&raw.choices[0].message?String(raw.choices[0].message.content||''):typeof raw==='string'?raw:'';
+  if(raw&&raw.response&&typeof raw.response==='object')return raw.response;
+  const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)return null;
+  t=t.slice(a,b+1);try{return JSON.parse(t)}catch(_){try{return JSON.parse(t.replace(/,\s*([}\]])/g,'$1'))}catch(_){return null}}}
+function scanHtml(){return `<div class="sec">Add recipes from photos</div><div class="card"><div class="hint" style="margin-top:0">Take or choose photos of your recipes. I read each one and fill in the recipe like the muffin above, so you only check it and save. Pick several at once.</div><label class="btn" style="display:block;margin-top:10px;cursor:pointer">Choose recipe photos<input type="file" id="rsIn" accept="image/*" multiple hidden></label><div id="rsProg" class="hint"></div></div>`}
+function openScan(){
+  const q=D.scanQ||[];if(!q.length)return;const it=q[0];
+  const bn=`<div class="hint" style="margin:10px 0 0">Photo ${it.i} of ${it.n}. Check every number against the photo, then save.</div><img alt="" src="${it.img}" style="width:100%;max-height:38vh;object-fit:contain;border-radius:12px;border:1px solid var(--line);margin-top:8px;background:#fff"><button class="btn ol sm" id="scSkip" style="margin-top:8px">Skip this photo</button>`;
+  const rest=q.slice();openRecipeEdit('',it.draft,bn);D.scanQ=rest;
+}
+$('panel').addEventListener('change',async e=>{
+  const t=e.target;if(t.id!=='rsIn'||!t.files||!t.files.length)return;
+  const fs=[...t.files];t.value='';const out=[];let bad=0,why='';
+  if(!D.stock)await loadKit();
+  for(let i=0;i<fs.length;i++){
+    const pg=$('rsProg');if(pg)pg.textContent=`Reading photo ${i+1} of ${fs.length}… this takes a few seconds each.`;
+    try{const pp=await rimgPrep(fs[i]);const r=await api({action:'admin_scan',data:pp.data,prompt:SCAN_P});
+      if(!r.ok){bad++;why=r.error||why;continue}
+      const j=scParse(r.raw);if(!j){bad++;why='I could not make sense of that photo.';continue}
+      out.push({draft:scDraft(j),img:'data:image/jpeg;base64,'+pp.data})}
+    catch(_){bad++;why='No connection or unreadable photo.'}
+  }
+  const pg=$('rsProg');if(pg)pg.textContent=bad?`${bad} photo${bad>1?'s':''} could not be read. ${why}`:'';
+  out.forEach((o,i)=>{o.i=i+1;o.n=out.length});
+  if(out.length){D.scanQ=out;openScan()}else toast(why||'Could not read the photos')
+});
+$('edSheet').addEventListener('click',e=>{
+  if(!e.target.closest('#scSkip')||!ES||!ES.scan)return;
+  const rest=(D.scanQ||[]).slice(1);closeEd();if(rest.length)setTimeout(()=>{D.scanQ=rest;openScan()},350)
+});
 /* ---------- recipe images (admin only) ---------- */
 function rimgHtml(){
   const L=D.ri;
