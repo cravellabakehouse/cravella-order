@@ -205,6 +205,9 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .tl:active{transform:scale(.98)}
 @keyframes fl{0%,60%{box-shadow:0 0 0 2px var(--acc)}100%{box-shadow:0 0 0 0 transparent}}
 .flash{animation:fl 1.2s ease}
+.dlvh{color:var(--acc);background:rgba(255,157,92,.14);padding:1px 7px;border-radius:6px;font-weight:800}
+.dlv{max-width:608px;margin:6px 16px 0;padding:8px 12px;text-align:center;border:1px solid var(--acc);background:rgba(255,157,92,.14);color:#ffd9bd;border-radius:12px;font-size:13.5px}.dlv b{color:var(--acc);font-weight:800}
+@media(min-width:672px){.dlv{margin:6px auto 0}}
 </style>
 </head>
 <body>
@@ -212,9 +215,10 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 <div class="offer" id="offer"></div>
 <div class="banner" id="banner"></div>
 <div class="sbox"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search cakes, cupcakes, brownies…" autocomplete="off" enterkeyhint="search" aria-label="Search the menu"></div>
+<div class="dlv">🚚 <b>Delivery charges extra</b></div>
 <div class="tabs" id="tabs"></div>
 <main id="panel"></main>
-<div class="foot"><a class="fph" href="tel:+919845904310">📞 98459-04310</a><br>Pre-orders &amp; enquiries · FSSAI Lic. No. 21225177003525<br>Prices are per item as listed. Delivery, if needed, is charged separately.
+<div class="foot"><a class="fph" href="tel:+919845904310">📞 98459-04310</a><br>Pre-orders &amp; enquiries · FSSAI Lic. No. 21225177003525<br>Prices are per item as listed. <b class="dlvh">Delivery charges extra.</b>
 <div class="soc"><a href="https://www.instagram.com/cravellabakehouse/" target="_blank" rel="noopener" aria-label="Cravella on Instagram"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg></a><a href="https://www.facebook.com/profile.php?id=61584029883237" target="_blank" rel="noopener" aria-label="Cravella on Facebook"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></a></div>
 <div class="credit">Website and app by <b>MEETUNOVA TECH (OPC) PVT. LTD.</b></div></div>
 
@@ -229,7 +233,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
   <div class="hr"></div>
   <div class="line"><span>Subtotal</span><b id="revSub"></b></div>
   <div class="line dsc" id="revDiscRow" style="display:none"><span id="revDiscL"></span><b id="revDisc"></b></div>
-  <div class="line" id="revDelRow" style="color:var(--mut)"><span>Delivery</span><span>fee confirmed by us</span></div>
+  <div class="line" id="revDelRow" style="color:var(--mut)"><span>Delivery</span><b class="dlvh">Charges extra · confirmed by us</b></div>
   <div class="line"><span class="tot">Estimated total</span><span class="tot" id="revTot"></span></div>
   <div class="hint" id="revHint" style="display:none;color:var(--ok);font-weight:600"></div>
   <div class="hint" id="revAdv" style="display:none;font-weight:600"></div>
@@ -238,7 +242,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 
   <label class="f">Pickup or delivery</label>
   <div class="seg" id="modeSeg"><button data-m="Pickup" class="on">Pickup</button><button data-m="Delivery">Delivery</button></div>
-  <div id="addrBox" style="display:none"><label class="f">Delivery address</label><textarea class="i" id="fAddr" placeholder="House / flat, street, area, landmark"></textarea><div class="hint">We'll confirm the delivery fee on WhatsApp.</div></div>
+  <div id="addrBox" style="display:none"><label class="f">Delivery address</label><textarea class="i" id="fAddr" placeholder="House / flat, street, area, landmark"></textarea><div class="hint"><b class="dlvh">Delivery charges extra.</b> We'll confirm the fee on WhatsApp.</div></div>
 
   <label class="f" id="dateLbl">Date &amp; time</label>
   <div class="two"><input class="i" type="date" id="fDate"><select class="i" id="fTime"></select></div>
