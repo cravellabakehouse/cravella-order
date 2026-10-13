@@ -61,6 +61,7 @@ main{padding:6px 16px 0;max-width:640px;margin:0 auto}
 .add:active,.go:active{transform:scale(.97)}
 .add.off{opacity:.45}
 .kg{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--mut)}
+.pol{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 10px;padding:0 14px}.pol summary{cursor:pointer;list-style:none;padding:14px 0;font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px}.pol summary::-webkit-details-marker{display:none}.pol summary::after{content:'›';margin-left:auto;font-size:20px;transition:transform .15s}.pol[open] summary::after{transform:rotate(90deg)}.pol p{margin:0 0 10px;font-size:14px;line-height:1.55;color:var(--mut)}.pol p:last-child{padding-bottom:6px}
 .note{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink);border-radius:12px;padding:10px 12px;font-size:13px;margin:12px 0}
 .bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:616px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:18px;padding:11px 12px 11px 18px;display:flex;justify-content:space-between;align-items:center;z-index:8;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .2s}
 .bar.hide{transform:translateY(140%)}
@@ -265,7 +266,7 @@ body{background:#fff}
 <div class="banner" id="banner"></div>
 <div class="tabs" id="tabs"></div>
 <main id="panel"></main>
-<div class="foot"><a class="fph" href="tel:+919845904310">📞 98459-04310</a><br>Pre-orders &amp; enquiries · FSSAI Lic. No. 21225177003525<br>Prices are per item as listed. <b class="dlvh">Delivery charges extra.</b>
+<div class="foot"><a class="fph" href="tel:+919845904310">📞 98459-04310</a><br>Pre-orders &amp; enquiries · FSSAI Lic. No. 21225177003525<br>Prices are per item as listed. <b class="dlvh">Delivery charges extra.</b><br><a href="#" id="polLink">Our policy</a> · About us · Refund · Return · Cancellation
 <div class="soc"><a href="https://www.instagram.com/cravellabakehouse/" target="_blank" rel="noopener" aria-label="Cravella on Instagram"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg></a><a href="https://www.facebook.com/profile.php?id=61584029883237" target="_blank" rel="noopener" aria-label="Cravella on Facebook"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></a></div>
 <div class="credit">Website and app by <b>MEETUNOVA TECH (OPC) PVT. LTD.</b></div></div>
 
@@ -347,7 +348,7 @@ const MENU={"weights":[0.5,1,1.5,2],"cakes":[{"id":"truffle","name":"Truffle Cak
 const IMG=window.CB_IMG||{};
 const LEAD={cake:48,other:24}; // notice in hours from the moment of ordering
 const TIMES=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
-const TABS=[['home','All'],['cakes','Cakes'],['cupcakes','Cupcakes'],['muffins','Muffins'],['cookies','Cookies'],['brownies','Brownies'],['custom','Custom cake']];
+const TABS=[['home','All'],['cakes','Cakes'],['cupcakes','Cupcakes'],['muffins','Muffins'],['cookies','Cookies'],['brownies','Brownies'],['custom','Custom cake'],['policy','Our policy']];
 const $=id=>document.getElementById(id);
 const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -460,6 +461,13 @@ function cookieCard(d){
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'ck',pe,pe?gLabel(pe):'0')}</div>
   ${pe&&pe!==g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}</div>`;
 }
+const POLICY=[
+['About us','🌱',['Cravella Bake House is an eggless home bakery in Bengaluru. Every cake, cupcake, muffin, cookie and brownie is made fresh to order, in small batches, with 100% eggless recipes.','We take pre-orders only, so nothing sits on a shelf. FSSAI Lic. No. 21225177003525.','Questions? Call or WhatsApp us on 98459-04310.']],
+['Refund policy','💰',['Every item is baked fresh for you, so we cannot offer a refund once baking has started.','If we are unable to make your order, we will refund the full amount you paid.','If there is a genuine quality problem, message us on WhatsApp with a photo within 2 hours of delivery or pickup. After checking, we will offer a replacement or a refund.','Approved refunds go back to the original mode of payment within 5 to 7 working days.']],
+['Return policy','↩️',['Because our products are perishable, we do not accept returns.','If you receive a wrong, damaged or incomplete order, tell us on WhatsApp with photos within 2 hours of delivery or pickup, and we will make it right.']],
+['Cancellation policy','🗓️',['Cakes (including custom and theme cakes): cancel more than 48 hours before your delivery or pickup date for a full refund of any advance paid. Between 24 and 48 hours, 50% of the advance is retained. Within 24 hours, the advance is not refundable.','Cupcakes, muffins, cookies and brownies: cancel at least 24 hours before your delivery or pickup date for a full refund. After that, we cannot refund.','To cancel, call or WhatsApp us on 98459-04310 with your order details.','If we have to cancel because of an emergency or supply issue, you get a full refund.']]];
+function policyHtml(){
+  return '<div class="sec">Our policy</div>'+POLICY.map(([t,ic,ps],i)=>'<details class="pol"'+(i===0?' open':'')+'><summary><span>'+ic+'</span>'+t+'</summary>'+ps.map(x=>'<p>'+esc(x)+'</p>').join('')+'</details>').join('')+'<div class="note">Delivery is within Bengaluru, Karnataka only. Delivery charges extra.</div>'}
 function renderPanel(){
   let h='';
   if(S.q.trim()){$('panel').innerHTML=searchHtml(S.q);return}
@@ -475,6 +483,7 @@ function renderPanel(){
   }else if(S.tab==='cupcakes'){h+=`<div class="sec">Cupcakes</div>`+MENU.cupcakes.map(d=>pcCard(d,'cupcakes')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
   else if(S.tab==='muffins'){h+=`<div class="sec">Muffins</div>`+MENU.muffins.map(d=>pcCard(d,'muffins')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
   else if(S.tab==='cookies'){h+=`<div class="sec">Cookies · per 250 g</div>`+MENU.cookies.map(cookieCard).join('')+`<div class="note">Minimum 250 g per flavour. Bakes need 1 day's notice.</div>`}
+  else if(S.tab==='policy'){h=policyHtml()}
   else{h+=`<div class="sec">Brownies</div>`+MENU.brownies.map(d=>pcCard(d,'brownies')).join('')+`<div class="sec">Blondies</div>`+MENU.blondies.map(d=>pcCard(d,'blondies')).join('')+`<div class="note">Sold by the box of 4. Each + adds one box (4 pieces). Bakes need 1 day's notice.</div>`}
   $('panel').innerHTML=h;
 }
@@ -573,6 +582,7 @@ const NAV=[];let lastTab='home';
 function syncBack(){const b=$('backRow');if(b)b.hidden=!(S.tab!=='home'||S.q.trim())}
 function goBack(){if(S.q.trim()){S.q='';$('q').value='';setSearch(false);renderPanel();syncBack();return}const t=NAV.pop();S.tab=t||'home';lastTab=S.tab;renderTabs();renderPanel();syncBack();scrollTo(0,0)}
 $('backBtn').onclick=goBack;
+$('polLink').onclick=e=>{e.preventDefault();S.q='';$('q').value='';setSearch(false);S.tab='policy';renderTabs();renderPanel();scrollTo(0,0)};
 $('logoHome').onclick=()=>goHome();$('logoHome').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goHome()}};
 $('q').addEventListener('input',()=>setTimeout(syncBack,0));
 function setSearch(o){$('sbox').hidden=!o;$('sBtn').setAttribute('aria-expanded',o?'true':'false');if(o)setTimeout(()=>$('q').focus(),30);hdrH()}
