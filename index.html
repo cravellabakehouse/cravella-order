@@ -209,6 +209,9 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .rv{flex:0 0 78%;max-width:300px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;scroll-snap-align:start}
 .rv p{margin:6px 0 8px;font-size:13.5px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .rv em{font-style:normal;font-weight:700;font-size:12.5px;color:var(--mut)}
+.ctl{flex:0 0 auto;gap:6px!important}.ctl .step{gap:4px}.ctl .step span{min-width:36px}.ctl .add{padding:9px 14px}.ph{flex:0 0 auto;width:50px;height:50px;border-radius:12px;border:1px solid var(--line);display:block;cursor:zoom-in}.ph.big{width:84px;height:84px}
+#zoomBox{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:10px;cursor:zoom-out}
+#zoomBox img{max-width:100%;max-height:78vh;border-radius:14px;background:#fff}#zoomBox b{color:#fff;font:700 15px 'Hanken Grotesk',sans-serif;text-align:center}
 .rv-btn{display:block;text-align:center;margin:12px 0 8px;padding:11px;border:1.5px solid var(--acc);border-radius:12px;color:var(--acc);font-weight:700;font-size:14px;text-decoration:none}
 .car{scroll-padding-left:16px;display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scroll-snap-type:x proximity;scrollbar-width:none}.car::-webkit-scrollbar{display:none}
 .tl{flex:none;width:158px;text-align:left;scroll-snap-align:start;display:block}
@@ -407,14 +410,18 @@ function inCart(c){
   const rows=S.cakes.map((l,i)=>({l,i})).filter(x=>x.l.id===c.id);if(!rows.length)return '';
   return `<div class="incart"><div class="d" style="font-weight:700;margin-bottom:4px">In your order</div>`+rows.map(({l,i})=>{const cr=c.creams.find(x=>x.id===l.cream),p=cakePrice(c,l.cream,l.kg);
     return `<div class="line" data-ci="${i}"><div class="l">${esc([cr&&cr.label,kgLabel(l.kg)].filter(Boolean).join(' · '))}<small>${inr(p.amount*l.q)}</small></div><div class="step"><button data-cm aria-label="Remove one">−</button><span>${l.q}</span><button class="p" data-cp aria-label="Add one">+</button></div></div>`}).join('')+`</div>`}
+function imgOf(d){const rp=phUrl(d.id),ph=IMG[d.id];return rp?{u:rp,c:1}:d.img?{u:d.img,c:1}:ph?{u:ph,c:0}:null}
+function thumbHtml(d,big){const o=imgOf(d);if(!o)return '';
+  const st=o.c?`background:#fff url('${esc(o.u)}') center/cover`:`background:url('${o.u}') center 42%/62% no-repeat,linear-gradient(135deg,#fff6cf,#ffe3c6)`;
+  return `<span class="ph${big?' big':''}" data-zoom="${esc(d.id)}" role="button" aria-label="View photo of ${esc(d.name)}" style="${st}"></span>`}
 function cakeCard(c){
   const s=selOf(c.id),cr=c.creams.find(x=>x.id===s.cream),other=s.wi==='o';
   const needCream=c.creams.length>1&&s.cream===null,needSize=s.wi===null,ready=!needCream&&!needSize;
   const WS=c.weights||MENU.weights,kg=other?s.kg:WS[s.wi],p=ready?cakePrice(c,s.cream,kg):null;
   const pv=i=>cr?cr.prices[i]:Math.min(...c.creams.map(x=>x.prices[i]));
   const miss=needCream&&needSize?'frosting and size':needCream?'a frosting':'a size';
-  if(isOff(c.id))return `<div class="card" data-cake="${c.id}" style="opacity:.7"><div class="row" style="align-items:center;justify-content:space-between;gap:10px"><div><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div></div><span class="soldout">Sold out</span></div></div>`;
-  return `<div class="card" data-cake="${c.id}"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div>
+  if(isOff(c.id))return `<div class="card" data-cake="${c.id}" style="opacity:.7"><div class="row" style="align-items:center;justify-content:space-between;gap:10px"><div style="display:flex;gap:12px;align-items:center">${thumbHtml(c,1)}<div><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div></div></div><span class="soldout">Sold out</span></div></div>`;
+  return `<div class="card" data-cake="${c.id}"><div style="display:flex;gap:12px;align-items:flex-start">${thumbHtml(c,1)}<div style="min-width:0"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div></div></div>
   ${c.creams.length>1?`<div class="d" style="font-weight:700;margin:10px 0 4px">Choice of Frosting</div><div class="chips fr">${c.creams.map(x=>`<button class="chip cr ${x.id===s.cream?'on':''}" data-cream="${x.id}">${x.label}</button>`).join('')}</div>`:''}
   <div class="chips">${WS.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${cr&&!c.custom?'':'from '}${inr(pv(i))}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
   ${other?`<div class="kg"><span>Weight</span><div class="step"><button data-kgm>−</button><span>${kgLabel(s.kg)}</span><button class="p" data-kgp>+</button></div></div>`:''}
@@ -430,13 +437,13 @@ function inBlock(id,lab,amt,desc){
 }
 function pcCard(d,unit){
   const q=S.pc[d.id]||0,bx=q/d.size,pe=S.pend[d.id]!==undefined?S.pend[d.id]:q,pb=pe/d.size;
-  return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div>${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div>
+  return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div style="display:flex;gap:10px;align-items:center;min-width:0;flex:1">${thumbHtml(d)}<div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div>${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div></div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'pc',pe,pe)}</div>
   ${pe&&pe!==q?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}</div>`;
 }
 function cookieCard(d){
   const g=S.cookie[d.id]||0,pe=S.pend[d.id]!==undefined?S.pend[d.id]:g;
-  return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div>${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div>
+  return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div style="display:flex;gap:10px;align-items:center;min-width:0;flex:1">${thumbHtml(d)}<div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div>${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div></div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'ck',pe,pe?gLabel(pe):'0')}</div>
   ${pe&&pe!==g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}</div>`;
 }
@@ -860,6 +867,9 @@ if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWor
 try{const p=JSON.parse(sessionStorage.getItem('cb_contact')||'null');if(p){$('fName').value=p.n||'';$('fPhone').value=p.p||''}}catch(_){}
 ['fName','fPhone'].forEach(i=>$(i).addEventListener('change',()=>{try{sessionStorage.setItem('cb_contact',JSON.stringify({n:$('fName').value,p:$('fPhone').value}))}catch(_){}}));
 try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;$('banner').textContent=CFG.banner||''}}catch(_){}
+document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;e.stopPropagation();e.preventDefault();
+  const id=z.dataset.zoom,all=[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies||[],MENU.cookies),d=all.find(x=>x.id===id),o=d&&imgOf(d);if(!o)return;
+  const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
 renderAll();accBtn();if(A.tok)loadMe();
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
