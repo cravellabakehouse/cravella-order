@@ -409,7 +409,7 @@ function renderTabs(){
 let CFG={unavailable:[],closed:[],full:{cake:[],other:[]},banner:''};
 let PHM={};try{PHM=JSON.parse(localStorage.getItem('cb_ph')||'{}')||{}}catch(_){}
 const phUrl=id=>{const m=PHM;return m[id]?API_URL+'?mp='+encodeURIComponent(id)+'&v='+m[id]:''};
-const isOff=id=>CFG.unavailable.includes(id);
+const isOff=id=>CFG.unavailable.includes(id)||(CFG.del||[]).includes(id);
 function dateIssue(date,forCake){
   if(!date)return '';
   if(CFG.closed.includes(date))return 'We are closed on that date. Please pick another date.';
@@ -563,6 +563,7 @@ function applyOrder(){const ord=(CFG&&CFG.order)||[],rk={};ord.forEach((id,i)=>r
   ['cakes','cupcakes','muffins','brownies','blondies','cookies'].forEach(k=>{if(!MENU[k])return;if(!MORIG[k])MORIG[k]=MENU[k].slice();
     let a=MORIG[k].map((d,i)=>[d,(d.id in rk)?rk[d.id]:1e6+i]).sort((x,y)=>x[1]-y[1]).map(x=>x[0]);
     if(k==='cakes'){const gs=[],by={};a.forEach(d=>{const g=d.group||'';if(!by[g]){by[g]=[];gs.push(g)}by[g].push(d)});a=[].concat(...gs.map(g=>by[g]))}
+    const dl=(CFG&&CFG.del)||[];a=a.filter(d=>d.custom||!dl.includes(d.id));
     MENU[k].length=0;MENU[k].push(...a)})}
 function homeHtml(){
   const cakes=MENU.cakes.filter(c=>!c.custom),bro=[...MENU.brownies,...(MENU.blondies||[])];
