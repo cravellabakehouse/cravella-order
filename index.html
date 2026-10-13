@@ -666,7 +666,7 @@ $('thumbs').addEventListener('click',e=>{const b=e.target.closest('[data-x]');if
 
 /* ---------- offer strip + coupon ---------- */
 (function(){const asc=[...DC.tiers].sort((a,b)=>a[0]-b[0]);const disc=asc.map(([from,pct],i)=>pct+'% off '+(i?'':'orders ')+'above '+inr(from-1)).join(' · ');
-  const items=['🌱 100% eggless','Freshly baked to order',disc,'🚚 Delivery charges extra'],one=items.map(t=>'<span>'+esc(t)+'</span>').join('');
+  const items=['🌱 100% eggless','Freshly baked to order',disc,'🚚 Delivery charges extra','📍 Delivery within Bengaluru, Karnataka only'],one=items.map(t=>'<span>'+esc(t)+'</span>').join('');
   $('offer').innerHTML='<div class="trk" aria-label="'+esc(items.join('. '))+'">'+one+one+'</div>'})();
 $('cpnGo').onclick=async()=>{
   const code=$('cpnIn').value.trim();if(!code)return setCpn('Please enter a coupon code.','bad');
