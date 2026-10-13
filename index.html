@@ -274,7 +274,7 @@ body.fest .bn{background:linear-gradient(180deg,#c1272d,#8f1319)!important;borde
 body.fest .bn>*{color:#fff!important}body.fest .bn .on{background:#ffd366!important;color:#5a0b10!important}
 body.fest #hdr{overflow:hidden}
 body.fest .band{padding-top:calc(30px + env(safe-area-inset-top))}
-.lights{position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:3}.lights svg{width:100%;height:34px;display:block}
+.lights{position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:3}.lights{overflow:hidden}.lights svg{height:34px;display:block}
 .lights g{animation:ftw 1.8s infinite}.lights g:nth-child(3n+1){animation-delay:.4s}.lights g:nth-child(3n+2){animation-delay:.9s}
 @keyframes ftw{0%,100%{opacity:1}50%{opacity:.5}}
 .fstar{position:absolute;color:#ffe9a8;animation:ftw 1.6s infinite;pointer-events:none;font-size:14px}
@@ -596,9 +596,14 @@ function heroFx(){if(!FEST)return '';
   const st=[['8%','12%','✦'],['30%','78%','✧'],['62%','86%','✦'],['90%','30%','✧'],['48%','8%','✦']].map(a=>'<span class="fstar" style="left:'+a[0]+';top:'+a[1]+'">'+a[2]+'</span>').join('');
   return '<svg class="ffw" viewBox="0 0 330 160" aria-hidden="true">'+festBurst(250,48,34,'#ffd23f')+festBurst(300,110,22,'#ff7ad9')+festBurst(205,115,18,'#4da3ff')+'</svg>'+st+'<span aria-hidden="true" style="position:absolute;right:14px;bottom:8px;font-size:34px;filter:drop-shadow(0 0 8px #ffb300)">🪔</span><span aria-hidden="true" style="position:absolute;right:62px;bottom:10px;font-size:26px">🎇</span>'}
 function festInit(){if(!FEST)return;document.body.classList.add('fest');
-  const cols=["#ff4d4d", "#ffd23f", "#3ddc97", "#4da3ff", "#ff7ad9", "#ffa94d"];let o='<svg viewBox="0 0 390 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 4 Q 15 20 30 4 T 60 4 T 90 4 T 120 4 T 150 4 T 180 4 T 210 4 T 240 4 T 270 4 T 300 4 T 330 4 T 360 4 T 390 4" fill="none" stroke="#7a5a2a" stroke-width="1.5"/>';
-  for(let i=0;i<14;i++){const x=i*30+15,c=cols[i%6];o+='<g><circle cx="'+x+'" cy="19" r="9" fill="'+c+'" opacity=".25"/><ellipse cx="'+x+'" cy="15" rx="3.6" ry="5.4" fill="'+c+'"/><rect x="'+(x-1.8)+'" y="8.5" width="3.6" height="3" fill="#7a5a2a"/></g>'}
-  $('hdr').insertAdjacentHTML('afterbegin','<div class="lights">'+o+'</svg></div>');hdrH()}
+  const cols=["#ff4d4d","#ffd23f","#3ddc97","#4da3ff","#ff7ad9","#ffa94d"];
+  $('hdr').insertAdjacentHTML('afterbegin','<div class="lights"></div>');
+  const draw=()=>{const L=document.querySelector('#hdr .lights');if(!L)return;const w=Math.max(320,Math.round(L.clientWidth||innerWidth)),n=Math.ceil(w/30)+1;
+    let d='M0 4';for(let i=0;i<n;i++)d+=' Q '+(i*30+15)+' 16 '+(i*30+30)+' 4';
+    let o='<svg width="'+w+'" height="34" viewBox="0 0 '+w+' 34" aria-hidden="true"><path d="'+d+'" fill="none" stroke="#7a5a2a" stroke-width="1.5"/>';
+    for(let i=0;i<n;i++){const x=i*30+15,c=cols[i%6];if(x>w)break;o+='<g><circle cx="'+x+'" cy="20" r="9" fill="'+c+'" opacity=".25"/><rect x="'+(x-2)+'" y="9" width="4" height="4" rx="1" fill="#7a5a2a"/><path d="M'+(x-3.6)+' 13 h7.2 q1 9 -3.6 11 q-4.6 -2 -3.6 -11z" fill="'+c+'"/></g>'}
+    L.innerHTML=o+'</svg>'};
+  draw();let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,120)});hdrH()}
 const festBanner=()=>{if(FEST){const b=$('banner');if(b&&!b.textContent.trim())b.textContent=FEST_MSG}};
 function homeHtml(){
   const cakes=MENU.cakes.filter(c=>!c.custom),bro=[...MENU.brownies,...(MENU.blondies||[])];
