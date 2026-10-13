@@ -150,6 +150,7 @@ body{background:var(--bg);padding-bottom:calc(88px + env(safe-area-inset-bottom)
 <div class="sheet hide" id="edSheet"><div class="in" id="edIn"></div></div>
 <div class="sheet hide" id="pwSheet"><div class="in" id="pwIn"></div></div>
 <div class="sheet hide" id="mailSheet"><div class="in" id="mailIn"></div></div>
+<div class="sheet hide" id="cropSheet" style="z-index:40;align-items:center"><div class="in" id="cropIn" style="border-radius:18px;max-width:380px;margin:0 12px"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -659,8 +660,30 @@ function settingsHtml(){
   <div class="sec">Your login</div><div class="card"><div class="hint" style="margin-top:0">Signed in as ${esc(me)}. Your username is this email.</div><button class="btn ol sm" id="chgPw" style="margin-top:10px">${hasPw?'Change password':'Set a password'}</button></div>`
 }
 const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const S=640,sc=Math.min(1,S/Math.min(im.width,im.height)),w=Math.round(im.width*sc),h=Math.round(im.height*sc),m=Math.min(w,h),c=document.createElement('canvas');c.width=c.height=Math.min(S,m);c.getContext('2d').drawImage(im,(w-m)/2/sc,(h-m)/2/sc,m/sc,m/sc,0,0,c.width,c.height);URL.revokeObjectURL(u);const d=c.toDataURL('image/jpeg',.85);ok(d.slice(d.indexOf(',')+1))};im.onerror=()=>no(new Error('bad'));im.src=u});
+function cropPick(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();
+  im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('bad'))};
+  im.onload=()=>{
+    const sh=$('cropSheet'),V=Math.max(200,Math.min(320,innerWidth-80)),w=im.width,h=im.height,base=Math.max(V/w,V/h);let z=1,ox=(V-w*base)/2,oy=(V-h*base)/2;
+    $('cropIn').innerHTML=`<div class="sec" style="margin-top:0">Crop photo</div><div class="hint" style="margin:0 0 10px">Drag the photo to position it. Use the slider to zoom.</div><canvas id="cropCv" width="${V}" height="${V}" style="display:block;margin:0 auto;border-radius:12px;touch-action:none;cursor:grab;background:#eee;max-width:100%"></canvas><input type="range" id="cropZ" min="1" max="4" step="0.01" value="1" style="width:100%;margin:14px 0"><div class="row" style="gap:8px"><button class="btn ol" id="cropNo" style="flex:1">Cancel</button><button class="btn" id="cropOk" style="flex:1">Use this photo</button></div>`;
+    sh.classList.remove('hide');
+    const cv=$('cropCv'),cx=cv.getContext('2d'),sc=()=>base*z;
+    const clamp=()=>{ox=Math.min(0,Math.max(V-w*sc(),ox));oy=Math.min(0,Math.max(V-h*sc(),oy))};
+    const draw=()=>{cx.clearRect(0,0,V,V);cx.drawImage(im,ox,oy,w*sc(),h*sc())};
+    const setZ=nz=>{const ix=(V/2-ox)/sc(),iy=(V/2-oy)/sc();z=nz;ox=V/2-ix*sc();oy=V/2-iy*sc();clamp();draw()};
+    let dr=null;
+    cv.onpointerdown=e=>{dr={x:e.clientX,y:e.clientY,ox,oy};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'};
+    cv.onpointermove=e=>{if(!dr)return;ox=dr.ox+(e.clientX-dr.x);oy=dr.oy+(e.clientY-dr.y);clamp();draw()};
+    cv.onpointerup=cv.onpointercancel=()=>{dr=null;cv.style.cursor='grab'};
+    cv.onwheel=e=>{e.preventDefault();const r=$('cropZ');r.value=Math.min(4,Math.max(1,z*(e.deltaY<0?1.08:.93)));setZ(+r.value)};
+    $('cropZ').oninput=e=>setZ(+e.target.value);
+    const done=()=>{sh.classList.add('hide');$('cropIn').innerHTML='';URL.revokeObjectURL(u)};
+    $('cropNo').onclick=()=>{done();no(new Error('cancel'))};
+    $('cropOk').onclick=()=>{const s=sc(),src=V/s,o=Math.min(640,Math.round(src)),c=document.createElement('canvas');c.width=c.height=o;c.getContext('2d').drawImage(im,-ox/s,-oy/s,src,src,0,0,o,o);const d=c.toDataURL('image/jpeg',.85);done();ok(d.slice(d.indexOf(',')+1))};
+    draw()};
+  im.src=u})}
 $('panel').addEventListener('change',async e=>{const t=e.target;if(!t.dataset||!t.dataset.ph||!t.files||!t.files[0])return;
-  toast('Uploading photo…');try{const d=await shrink(t.files[0]),r=await api({action:'admin_photo_set',id:t.dataset.ph,data:d});if(r.ok){D.ph=r.photos;render();toast('Photo saved. It is live on the website.')}else toast(r.error||'Could not save the photo')}catch(_){toast('Could not read that photo')}});
+  const fl=t.files[0];t.value='';let d;try{d=await cropPick(fl)}catch(x){if(x&&x.message!=='cancel')toast('Could not read that photo');return}
+  toast('Uploading photo…');try{const r=await api({action:'admin_photo_set',id:t.dataset.ph,data:d});if(r.ok){D.ph=r.photos;render();toast('Photo saved. It is live on the website.')}else toast(r.error||'Could not save the photo')}catch(_){toast('Could not read that photo')}});
 $('panel').addEventListener('click',async e=>{const b=e.target.closest('[data-phd]');if(!b)return;const r=await api({action:'admin_photo_del',id:b.dataset.phd});if(r.ok){D.ph=r.photos;render();toast('Photo removed')}else toast(r.error||'Could not remove')});
 /* ---------- recipes from photos ---------- */
 const SCAN_P='You are reading a photo of a bakery recipe (handwritten or printed). Reply with ONLY one JSON object and no other text, in exactly this shape: {"name":"","makes":1,"unit":"pieces","ingredients":[{"name":"","qty":0,"unit":"g"}],"steps":["",""],"notes":""}. Rules: qty must be a number (write 1/2 as 0.5 and 1 1/2 as 1.5). unit must be one of g, ml, pcs, tsp, tbsp, cup, kg, l, oz, lb. makes and unit say how much the recipe yields (for example 12 and muffins); if the yield is not written use 1 and pieces. steps is one string per step, in order, without numbering. notes holds oven temperature, baking time and tips. Never invent anything that is not in the photo; leave it empty if you cannot read it.';
