@@ -203,7 +203,13 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .hero button{background:var(--acc);color:var(--acc-ink);font-weight:800;font-size:13px;padding:8px 14px;border-radius:99px}
 .hs{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px}
 .hs span{font:800 12.5px 'Hanken Grotesk';letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
-.hs button{color:var(--acc);font-weight:700;font-size:13px}
+.hs button,.rv-a{color:var(--acc);font-weight:700;font-size:13px;text-decoration:none}
+.rv-top{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);margin:-2px 0 10px}.rv-top b{font-size:22px;color:var(--ink)}
+.rv-st{color:#e8a317;letter-spacing:1px;font-size:14px}
+.rv{flex:0 0 78%;max-width:300px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;scroll-snap-align:start}
+.rv p{margin:6px 0 8px;font-size:13.5px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.rv em{font-style:normal;font-weight:700;font-size:12.5px;color:var(--mut)}
+.rv-btn{display:block;text-align:center;margin:12px 0 8px;padding:11px;border:1.5px solid var(--acc);border-radius:12px;color:var(--acc);font-weight:700;font-size:14px;text-decoration:none}
 .car{scroll-padding-left:16px;display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scroll-snap-type:x proximity;scrollbar-width:none}.car::-webkit-scrollbar{display:none}
 .tl{flex:none;width:158px;text-align:left;scroll-snap-align:start;display:block}
 .tl .im{display:grid;place-items:center;height:128px;border-radius:18px;font-size:60px;position:relative;overflow:hidden}
@@ -511,6 +517,14 @@ function tile(d,price,sub,go,fb,i){
   return `<button class="tl${off?' off':''}" data-go="${go}" data-jump="${esc(d.id)}"><span class="im" style="${bg}">${d.img||ph||rp?'':emo(d.name,fb)}<s>${off?'Sold out':price}</s></span><b>${esc(d.name)}</b><span class="sb">${esc(sub)}</span></button>`}
 function cakeFrom(c){return 'from '+inr(Math.min(...c.creams.map(x=>x.prices[0])))}
 function car(title,go,tiles){return `<div class="hs"><span>${title}</span><button data-go="${go}">See all ›</button></div><div class="car">${tiles}</div>`}
+const GMAP='https://www.google.com/maps/place/Cravella+Bake+House/@13.0969234,77.6199817,17z/data=!4m8!3m7!1s0x3bae192e00319eef:0x6a29d6d8ca416182!8m2!3d13.0969182!4d77.6225566!9m1!1b1!16s%2Fg%2F11yq1h0x70';
+const stars=n=>'★★★★★'.slice(0,Math.round(n))+'☆☆☆☆☆'.slice(0,5-Math.round(n));
+function reviewsHtml(){
+  const R=(CFG&&CFG.reviews)||{},L=R.list||[];
+  const head=R.rating?`<div class="rv-top"><b>${R.rating.toFixed(1)}</b><span class="rv-st">${stars(R.rating)}</span><span>${R.count?R.count+' Google reviews':'on Google'}</span></div>`:`<div class="rv-top"><span>Loved by our customers</span></div>`;
+  return `<div class="hs"><span>Google reviews</span><a class="rv-a" href="${GMAP}" target="_blank" rel="noopener">See all ›</a></div>`+head
+   +(L.length?`<div class="car rv-car">${L.map(x=>`<div class="rv"><div class="rv-st">${stars(x.s)}</div><p>${esc(x.t)}</p><em>${esc(x.n)}</em></div>`).join('')}</div>`:'')
+   +`<a class="rv-btn" href="${GMAP}" target="_blank" rel="noopener">Read all reviews on Google</a>`}
 function homeHtml(){
   const cakes=MENU.cakes.filter(c=>!c.custom),bro=[...MENU.brownies,...(MENU.blondies||[])];
   return `<div class="hero"><h2>Fresh, eggless &amp; baked to order</h2><p>Cakes need 2 days' notice. Bakes need 1 day.</p><button data-go="custom">Custom theme cakes ›</button><i>🎂</i></div>`
@@ -518,7 +532,8 @@ function homeHtml(){
    +car('Cupcakes · box of 6','cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join(''))
    +car('Muffins · box of 6','muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join(''))
    +car('Cookies · per 250 g','cookies',MENU.cookies.map((d,i)=>tile(d,inr(d.rate),'per 250 g','cookies','🍪',i+1)).join(''))
-   +car('Brownies &amp; blondies','brownies',bro.map((d,i)=>tile(d,inr(d.box),'Box of '+d.size,'brownies','🍫',i+6)).join(''))}
+   +car('Brownies &amp; blondies','brownies',bro.map((d,i)=>tile(d,inr(d.box),'Box of '+d.size,'brownies','🍫',i+6)).join(''))
+   +reviewsHtml()}
 function searchHtml(q){
   const k=q.toLowerCase().trim();let h='',n=0;
   const hit=(d,kind)=>(d.name+' '+(d.desc||'')+' '+kind).toLowerCase().includes(k);
