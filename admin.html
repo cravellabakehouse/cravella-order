@@ -96,6 +96,7 @@ select.i{appearance:auto}.row .btn.sm{white-space:nowrap}
 /* ---------- dark dashboard theme ---------- */
 a.btn{text-decoration:none}
 body{background:var(--bg);padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+body.hasSave{padding-bottom:calc(168px + env(safe-area-inset-bottom))}
 .top{background:#fffbbe;border-bottom:0;color:#3b2416}
 .top h1{text-transform:uppercase;font-weight:800;color:#c4161c;letter-spacing:.08em}.top small{color:#6a5a2a}.top .btn.ol{color:#3b2416;border-color:rgba(59,36,22,.25);background:rgba(255,255,255,.7)}
 .top .lg{height:42px;width:auto}
@@ -417,7 +418,7 @@ const MORE=[['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Cust
 function renderTabs(){
   const nNew=D.orders.filter(o=>o.status==='New').length,inMore=MORE.some(m=>m[0]===tab);
   $('navIn').innerHTML=MAIN.map(([k,n,ic])=>`<button class="${tab===k?'on':''}" data-tab="${k}"><i>${ic}</i>${n}${k==='today'&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('')+`<button class="${inMore?'on':''}" data-more="1"><i>☰</i>More</button>`;
-  $('saveBar').classList.toggle('hide',!(tab==='menu'||tab==='settings'));
+  $('saveBar').classList.toggle('hide',!(tab==='menu'||tab==='settings'));document.body.classList.toggle('hasSave',tab==='menu'||tab==='settings');
 }
 function goTab(k){if(k===tab)return;tab=k;try{history.pushState({cb:'tab',tab},'')}catch(_){}render();scrollTo(0,0)}
 $('navIn').addEventListener('click',e=>{
