@@ -414,7 +414,7 @@ async function loadSettings(){const r=await api({action:'admin_settings_get'});i
 
 /* ---------- layout ---------- */
 const MAIN=[['today','Today','🏠'],['orders','Orders','📋'],['bake','Bake','🍰'],['stock','Stock','📦']];
-const MORE=[['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['settings','Settings','⚙️']];
+const MORE=[['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['offers','Offers','🎁'],['settings','Settings','⚙️']];
 function renderTabs(){
   const nNew=D.orders.filter(o=>o.status==='New').length,inMore=MORE.some(m=>m[0]===tab);
   $('navIn').innerHTML=MAIN.map(([k,n,ic])=>`<button class="${tab===k?'on':''}" data-tab="${k}"><i>${ic}</i>${n}${k==='today'&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('')+`<button class="${inMore?'on':''}" data-more="1"><i>☰</i>More</button>`;
@@ -431,7 +431,7 @@ $('moreSheet').addEventListener('click',e=>{
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
   try{if(history.state&&history.state.cb==='sheet')history.replaceState({cb:'tab',tab:k},'');else history.pushState({cb:'tab',tab:k},'')}catch(_){}
   tab=k;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff()}
 
 /* ---------- today (home) ---------- */
 const NEXT={New:['Confirmed','✓ Confirm order','c'],Confirmed:['Advance received','💰 Advance received','a'],'Advance received':['Ready','🍰 Mark ready','r'],Ready:['Delivered','✅ Mark delivered','r']};
@@ -670,6 +670,44 @@ function rvwHtml(){
   <div class="row" style="gap:8px;margin-top:10px"><input class="i" id="rvR" type="number" step="0.1" min="1" max="5" inputmode="decimal" placeholder="Rating, e.g. 4.8" value="${esc(v.rating)}"><input class="i" id="rvC" type="number" min="0" inputmode="numeric" placeholder="Review count" value="${esc(v.count)}"></div>
   ${v.list.map((x,i)=>`<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="row" style="gap:8px"><input class="i" data-rn="${i}" placeholder="Customer name" maxlength="60" value="${esc(x.n)}"><select class="i" data-rs="${i}" style="max-width:90px">${[5,4,3,2,1].map(n=>`<option value="${n}"${+x.s===n?' selected':''}>${n} ★</option>`).join('')}</select></div><textarea class="i" data-rt="${i}" rows="3" maxlength="600" style="margin-top:8px" placeholder="Review text">${esc(x.t)}</textarea><button class="btn ol sm" data-rd="${i}" style="margin-top:6px">Remove</button></div>`).join('')}
   <div class="row" style="gap:8px;margin-top:12px"><button class="btn ol sm" id="rvAdd">+ Add a review</button><button class="btn sm" id="rvSave">Save reviews</button></div></div>`}
+/* ---------- offers ---------- */
+async function loadOff(){D.offBusy=true;try{const r=await api({action:'admin_offers_get'});if(r.ok){D.off=r.offers;D.offC=r.coupons;D.offT=r.tiers}}catch(_){}D.offBusy=false;if(tab==='offers')render()}
+const offTog=(k,on)=>`<div class="chips" style="margin:8px 0"><button class="chip ${on?'on':''}" data-ot="${k}:1">ON</button><button class="chip ${on?'':'on'}" data-ot="${k}:0">OFF</button></div>`;
+const offDt=(id,v,l)=>`<label class="f">${l}</label><input class="i" type="date" id="${id}" value="${esc(v)}" data-of="1">`;
+const offNum=(id,v,l,mx)=>`<label class="f">${l}</label><input class="i" type="number" id="${id}" min="1" ${mx?'max="'+mx+'"':''} inputmode="numeric" value="${v}" data-of="1">`;
+function offersHtml(){
+  const o=D.off;if(!o)return '<div class="hint">Loading…</div>';
+  const t=[...(D.offT||[])].sort((a,b)=>a[0]-b[0]);
+  const cl=(D.offC||[]).map(c=>{const ph=(c.note.match(/phone:(\d+)/)||[])[1]||'',od=(c.note.match(/order:(\S+)/)||[])[1]||'';const st=c.used?'Used':!c.active?'Voided':todayS()>c.to?'Expired':'Open';
+    return `<div class="row" style="padding:8px 0;border-top:1px solid var(--line)"><div><b>${esc(c.code)}</b> <span class="hint">${esc(st)}</span><div class="hint" style="margin:0">${esc(ph)} · order ${esc(od)} · ${esc(fmtD(c.from))} to ${esc(fmtD(c.to))}</div></div>${c.used?'':`<button class="btn ol sm" data-ov="${esc(c.code)}:${c.active?0:1}">${c.active?'Void':'Restore'}</button>`}</div>`}).join('');
+  return `<div class="sec">Slab discounts</div><div class="card"><div class="hint" style="margin-top:0">Automatic discount on the order: ${t.map(([f,p])=>p+'% for '+inr(f-1)+' and above').join(', ')||'none'}.</div>
+  ${offTog('slabOn',o.slabOn)}${offDt('oSlabUntil',o.slabUntil,'Runs until (last day)')}</div>
+  <div class="sec">Festive next-order coupon</div><div class="card"><div class="hint" style="margin-top:0">Customers who order the minimum value during the festive dates get a one-time coupon for their next order. It stacks on top of the slab discount and only works with the same mobile number.</div>
+  ${offTog('festOn',o.festOn)}${offDt('oFestFrom',o.festFrom,'Festive offer starts')}${offDt('oFestTo',o.festTo,'Festive offer ends')}
+  ${offNum('oFestMin',o.festMin,'Minimum order value (₹)')}${offNum('oFestPct',o.festPct,'Coupon discount (%)',50)}${offNum('oFestDays',o.festDays,'Coupon valid for (days after issue)',365)}
+  <button class="btn" id="offSave" style="margin-top:14px;width:100%">Save offers</button><div class="hint">Changes go live on the website within a few seconds.</div></div>
+  <div class="sec">Calculator</div><div class="card"><div class="hint" style="margin-top:0">Type an order value to see what the customer gets with the settings above.</div>
+  <label class="f">Order value (₹)</label><input class="i" id="calcV" type="number" min="0" inputmode="numeric" placeholder="e.g. 5000" value="${D.calcV||''}">
+  <div id="calcOut"></div></div>
+  <div class="sec">Coupons issued</div><div class="card">${cl||'<div class="hint" style="margin-top:0">None yet.</div>'}</div>`}
+function offRead(){const g=id=>{const e=$(id);return e?e.value:''};const o=D.off;
+  return Object.assign({},o,{slabUntil:g('oSlabUntil')||o.slabUntil,festFrom:g('oFestFrom')||o.festFrom,festTo:g('oFestTo')||o.festTo,festMin:+g('oFestMin')||o.festMin,festPct:+g('oFestPct')||o.festPct,festDays:+g('oFestDays')||o.festDays})}
+function offCalc(){const el=$('calcOut');if(!el||!D.off)return;const o=offRead(),v=Math.round(+($('calcV').value)||0);D.calcV=v||'';
+  if(!v){el.innerHTML='';return}
+  const tiers=[...(D.offT||[])].sort((a,b)=>b[0]-a[0]),t=o.slabOn?tiers.find(x=>v>=x[0]):null,sl=t?Math.round(v*t[1]/100):0;
+  const earn=o.festOn&&v>=o.festMin,cp=Math.round(v*o.festPct/100);
+  const row=(a,b,c)=>`<div class="row" style="padding:6px 0;${c||''}"><span>${a}</span><b>${b}</b></div>`;
+  const nxt=Math.max(v,o.festMin),ns=o.slabOn?tiers.find(x=>nxt>=x[0]):null,nsa=ns?Math.round(nxt*ns[1]/100):0,nca=Math.round(nxt*o.festPct/100);
+  el.innerHTML=row('Order value',inr(v))+row(t?'Slab discount ('+t[1]+'%)':'Slab discount','−'+inr(sl),'color:var(--ok)')+row('Customer pays',inr(v-sl),'border-top:1px solid var(--line)')
+   +`<div class="hint">${earn?'Earns a '+o.festPct+'% coupon for the next order (during '+fmtD(o.festFrom)+' to '+fmtD(o.festTo)+').':'Below '+inr(o.festMin)+', no festive coupon is earned.'}</div>`
+   +(earn?`<div class="hint" style="margin-top:6px"><b>Next order of ${inr(nxt)} with the coupon:</b> ${ns?ns[1]+'% slab + ':''}${o.festPct}% coupon = <b>${inr(nsa+nca)}</b> off, so the customer pays <b>${inr(nxt-nsa-nca)}</b>.</div>`:'')}
+$('panel').addEventListener('input',e=>{if(e.target.id==='calcV'||e.target.dataset.of)offCalc()});
+$('panel').addEventListener('click',async e=>{
+  const t=e.target.closest('[data-ot]');if(t){const [k,v]=t.dataset.ot.split(':');D.off=offRead();D.off[k]=v==='1';render();return}
+  const ov=e.target.closest('[data-ov]');if(ov){const [c,on]=ov.dataset.ov.split(':');ov.disabled=true;try{const r=await api({action:'admin_coupon_void',code:c,on:on==='1'});if(r.ok){D.off=null;loadOff();toast(on==='1'?'Coupon restored':'Coupon voided')}else toast(r.error||'Could not update')}catch(_){toast('No connection')}return}
+  if(e.target.closest('#offSave')){const b=e.target.closest('#offSave');b.disabled=true;
+    try{const r=await api({action:'admin_offers_save',offers:offRead()});if(r.ok){D.off=r.offers;toast('Offers saved. They are live on the website.')}else toast(r.error||'Could not save');render()}catch(_){toast('No connection');b.disabled=false}}
+});
 function settingsHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
   return `<div class="sec">Closed dates</div><div class="card"><div class="hint" style="margin-top:0">Customers cannot order for these dates (holidays, travel, festivals).</div>
