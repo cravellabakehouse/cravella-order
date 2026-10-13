@@ -637,6 +637,13 @@ function menuHtml(){
 }
 
 /* ---------- settings ---------- */
+function rvwHtml(){
+  const R=(D.settings&&D.settings.reviews)||{};if(!D.rv)D.rv={rating:R.rating||'',count:R.count||'',list:(R.list||[]).map(x=>({...x}))};
+  const v=D.rv;
+  return `<div class="sec">Google reviews on the home page</div><div class="card"><div class="hint" style="margin-top:0">Copy the reviews you like from your Google Maps page, exactly as the customer wrote them. Enter your current rating and review count too.</div>
+  <div class="row" style="gap:8px;margin-top:10px"><input class="i" id="rvR" type="number" step="0.1" min="1" max="5" inputmode="decimal" placeholder="Rating, e.g. 4.8" value="${esc(v.rating)}"><input class="i" id="rvC" type="number" min="0" inputmode="numeric" placeholder="Review count" value="${esc(v.count)}"></div>
+  ${v.list.map((x,i)=>`<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="row" style="gap:8px"><input class="i" data-rn="${i}" placeholder="Customer name" maxlength="60" value="${esc(x.n)}"><select class="i" data-rs="${i}" style="max-width:90px">${[5,4,3,2,1].map(n=>`<option value="${n}"${+x.s===n?' selected':''}>${n} ★</option>`).join('')}</select></div><textarea class="i" data-rt="${i}" rows="3" maxlength="600" style="margin-top:8px" placeholder="Review text">${esc(x.t)}</textarea><button class="btn ol sm" data-rd="${i}" style="margin-top:6px">Remove</button></div>`).join('')}
+  <div class="row" style="gap:8px;margin-top:12px"><button class="btn ol sm" id="rvAdd">+ Add a review</button><button class="btn sm" id="rvSave">Save reviews</button></div></div>`}
 function settingsHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
   return `<div class="sec">Closed dates</div><div class="card"><div class="hint" style="margin-top:0">Customers cannot order for these dates (holidays, travel, festivals).</div>
@@ -648,6 +655,7 @@ function settingsHtml(){
   <div class="hint">Cakes count each cake. Bakes count each order. Cancelled orders free up a place.</div></div>
   <div class="sec">Notice on the website</div><div class="card"><div class="hint" style="margin-top:0">A short message shown at the top of the ordering page, such as "Closed 12 to 14 Oct for Diwali". Leave empty for none.</div>
   <input class="i" id="banner" maxlength="200" style="margin-top:10px" value="${esc(s.banner)}" placeholder="e.g. Closed 12–14 Oct for Diwali"></div>
+  ${rvwHtml()}
   <div class="sec">Your login</div><div class="card"><div class="hint" style="margin-top:0">Signed in as ${esc(me)}. Your username is this email.</div><button class="btn ol sm" id="chgPw" style="margin-top:10px">${hasPw?'Change password':'Set a password'}</button></div>`
 }
 const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const S=640,sc=Math.min(1,S/Math.min(im.width,im.height)),w=Math.round(im.width*sc),h=Math.round(im.height*sc),m=Math.min(w,h),c=document.createElement('canvas');c.width=c.height=Math.min(S,m);c.getContext('2d').drawImage(im,(w-m)/2/sc,(h-m)/2/sc,m/sc,m/sc,0,0,c.width,c.height);URL.revokeObjectURL(u);const d=c.toDataURL('image/jpeg',.85);ok(d.slice(d.indexOf(',')+1))};im.onerror=()=>no(new Error('bad'));im.src=u});
@@ -759,6 +767,14 @@ $('edSheet').addEventListener('click',async e=>{
   const x=(D.ri||[]).find(z=>z.id===ES.id),err=$('riErr');if(!x)return;
   if(t.closest('#riSave')){const r=await api({action:'admin_rimg',op:'rename',id:x.id,title:$('riTitle').value}).catch(()=>({}));if(r.ok){x.title=r.title;closeEd();render();toast('Title saved')}else err.textContent=r.error||'Could not save'}
   if(t.closest('#riDel')){if(!confirm('Delete this image?'))return;const r=await api({action:'admin_rimg',op:'del',id:x.id}).catch(()=>({}));if(r.ok){D.ri=D.ri.filter(z=>z.id!==x.id);closeEd();render();toast('Image deleted')}else err.textContent=r.error||'Could not delete'}
+});
+function rvRead(){const v=D.rv;if(!v)return;const g=q=>document.querySelector(q);if(g('#rvR')){v.rating=g('#rvR').value;v.count=g('#rvC').value}
+  document.querySelectorAll('[data-rn]').forEach(e=>v.list[+e.dataset.rn].n=e.value);document.querySelectorAll('[data-rs]').forEach(e=>v.list[+e.dataset.rs].s=+e.value);document.querySelectorAll('[data-rt]').forEach(e=>v.list[+e.dataset.rt].t=e.value)}
+$('panel').addEventListener('click',async e=>{const t=e.target;
+  if(t.closest('#rvAdd')){rvRead();D.rv.list.push({n:'',t:'',s:5});render();return}
+  const d=t.closest('[data-rd]');if(d){rvRead();D.rv.list.splice(+d.dataset.rd,1);render();return}
+  if(t.closest('#rvSave')){rvRead();const b=t.closest('#rvSave');b.disabled=true;
+    try{const r=await api({action:'admin_rvw',rating:D.rv.rating,count:D.rv.count,list:D.rv.list});if(r.ok){D.settings.reviews=r.reviews;D.rv=null;render();toast('Reviews saved. They are live on the website.')}else toast(r.error||'Could not save')}catch(_){toast('No connection')}b.disabled=false}
 });
 $('saveBtn').onclick=async()=>{
   const b=$('saveBtn');b.disabled=true;b.textContent='Saving…';
