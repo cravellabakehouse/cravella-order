@@ -54,6 +54,7 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .ph img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
 .ph{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mvb{display:flex;flex-direction:column;gap:2px}.mvb button{all:unset;cursor:pointer;font-size:11px;line-height:1;padding:5px 7px;border:1px solid var(--line);border-radius:6px;color:var(--mut);text-align:center}.mvb button:active{background:var(--cream)}
 .sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .sw:last-child{border-bottom:0}
 .tg{position:relative;width:46px;height:26px;border-radius:13px;background:#bbb;flex:none;transition:.15s}
@@ -390,7 +391,9 @@ $('out').onclick=async()=>{try{await api({action:'logout',token:tok})}catch(_){}
 function showApp(){$('login').classList.add('hide');$('nav').classList.remove('hide');$('app').classList.remove('hide');$('out').classList.remove('hide');$('who').textContent=me||'Signed in';bakeDate=bakeDate||ymd(new Date(Date.now()+86400000))}
 function saveCache(){SS('cb_admin_cache',JSON.stringify({orders:D.orders,statuses:D.statuses,mails:D.mails,me}))}
 function applyOrders(r){loaded=true;D.orders=r.orders;D.statuses=r.statuses;D.mails=r.mails||{};if(r.now)skew=r.now-Date.now();saveCache()}
-const lazySettings=p=>(p||api({action:'admin_settings_get'})).then(r=>{if(r&&r.ok){D.settings=r.settings;D.items=r.items;hasPw=r.hasPw!==false;dirty=false}if(tab==='menu'||tab==='settings')render()}).catch(()=>{});
+function sortItems(items,ord){const rk={};(ord||[]).forEach((id,i)=>rk[id]=i);const gs=[],by={};items.forEach((it,i)=>{if(!by[it.group]){by[it.group]=[];gs.push(it.group)}by[it.group].push([it,i])});
+  const out=[];gs.forEach(g=>by[g].sort((a,b)=>((a[0].id in rk?rk[a[0].id]:1e6+a[1])-(b[0].id in rk?rk[b[0].id]:1e6+b[1]))).forEach(x=>out.push(x[0])));return out}
+const lazySettings=p=>(p||api({action:'admin_settings_get'})).then(r=>{if(r&&r.ok){D.settings=r.settings;D.items=sortItems(r.items,r.settings.order);D.orderDirty=false;hasPw=r.hasPw!==false;dirty=false}if(tab==='menu'||tab==='settings')render()}).catch(()=>{});
 async function start(){
   showApp();const sp=api({action:'admin_settings_get'});await loadOrders();render();lazySettings(sp)
 }
@@ -406,7 +409,7 @@ async function boot(){
   }catch(_){if(!cached)showLogin('No connection. Please reload.');else toast('No connection. Showing your last saved orders.')}
 }
 async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok)applyOrders(r);else if(r.error==='auth'){tok='';showLogin('Please sign in again.')}}
-async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=r.items;hasPw=r.hasPw!==false;dirty=false}}
+async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=sortItems(r.items,r.settings.order);D.orderDirty=false;hasPw=r.hasPw!==false;dirty=false}}
 
 /* ---------- layout ---------- */
 const MAIN=[['today','Today','🏠'],['orders','Orders','📋'],['bake','Bake','🍰'],['stock','Stock','📦']];
@@ -632,7 +635,7 @@ function menuHtml(){
     if(it.group!==g){if(g)h+='</div>';g=it.group;h+=`<div class="sec">${esc(g)}</div><div class="card" style="padding:4px 14px">`}
     const on=!s.unavailable.includes(it.id);
     const pv=(D.ph||{})[it.id],th=pv?`<img src="${API_URL}?mp=${encodeURIComponent(it.id)}&v=${pv}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none">`:'<span style="width:44px;height:44px;border-radius:10px;background:#eee3d3;flex:none;display:grid;place-items:center;font-size:18px">📷</span>';
-    h+=`<div class="sw"><span style="display:flex;align-items:center;gap:10px;min-width:0">${th}<span style="min-width:0">${esc(it.name)}<br><label class="phl" style="font-size:12px;color:#c0581f;font-weight:600;cursor:pointer">${pv?'Change photo':'Add photo'}<input type="file" accept="image/*" data-ph="${esc(it.id)}" hidden></label>${pv?` <button class="phx" data-phc="${esc(it.id)}" style="all:unset;font-size:12px;color:#c0581f;font-weight:600;cursor:pointer;margin-left:8px">Crop</button> <button class="phx" data-phd="${esc(it.id)}" style="all:unset;font-size:12px;color:#999;cursor:pointer;margin-left:8px">Remove</button>`:''}</span></span><button class="tg ${on?'on':''}" data-tg="${esc(it.id)}" aria-label="Available"></button></div>`
+    h+=`<div class="sw"><span style="display:flex;align-items:center;gap:10px;min-width:0">${th}<span style="min-width:0">${esc(it.name)}<br><label class="phl" style="font-size:12px;color:#c0581f;font-weight:600;cursor:pointer">${pv?'Change photo':'Add photo'}<input type="file" accept="image/*" data-ph="${esc(it.id)}" hidden></label>${pv?` <button class="phx" data-phc="${esc(it.id)}" style="all:unset;font-size:12px;color:#c0581f;font-weight:600;cursor:pointer;margin-left:8px">Crop</button> <button class="phx" data-phd="${esc(it.id)}" style="all:unset;font-size:12px;color:#999;cursor:pointer;margin-left:8px">Remove</button>`:''}</span></span><span style="display:flex;align-items:center;gap:8px;flex:none"><span class="mvb"><button data-mv="${esc(it.id)}" data-d="-1" aria-label="Move up">▲</button><button data-mv="${esc(it.id)}" data-d="1" aria-label="Move down">▼</button></span><button class="tg ${on?'on':''}" data-tg="${esc(it.id)}" aria-label="Available"></button></span></div>`
   });
   return h+'</div>'
 }
@@ -802,10 +805,13 @@ $('panel').addEventListener('click',async e=>{const t=e.target;
   if(t.closest('#rvSave')){rvRead();const b=t.closest('#rvSave');b.disabled=true;
     try{const r=await api({action:'admin_rvw',rating:D.rv.rating,count:D.rv.count,list:D.rv.list});if(r.ok){D.settings.reviews=r.reviews;D.rv=null;render();toast('Reviews saved. They are live on the website.')}else toast(r.error||'Could not save')}catch(_){toast('No connection')}b.disabled=false}
 });
+$('panel').addEventListener('click',e=>{const m=e.target.closest('[data-mv]');if(!m)return;e.stopPropagation();
+  const id=m.dataset.mv,d=+m.dataset.d,i=D.items.findIndex(x=>x.id===id),j=i+d;if(i<0||j<0||j>=D.items.length||D.items[j].group!==D.items[i].group)return;
+  const t=D.items[i];D.items[i]=D.items[j];D.items[j]=t;D.orderDirty=true;dirty=true;render()},true);
 $('saveBtn').onclick=async()=>{
   const b=$('saveBtn');b.disabled=true;b.textContent='Saving…';
   try{const s=D.settings,r=await api({action:'admin_settings_save',unavailable:s.unavailable,closed:s.closed,capCake:s.capCake,capOther:s.capOther,banner:s.banner});
-    if(r.ok){D.settings=r.settings;dirty=false;toast('Saved. The website is updated.')}else toast(r.error||'Could not save')}
+    if(r.ok){D.settings=r.settings;if(D.orderDirty){const o=await api({action:'admin_menuorder',order:D.items.map(x=>x.id)});if(!o.ok){toast(o.error||'Could not save the order');return}D.settings.order=o.order;D.orderDirty=false}dirty=false;toast('Saved. The website is updated.')}else toast(r.error||'Could not save')}
   catch(_){toast('No connection')}finally{b.disabled=false;b.textContent='Save changes'}
 };
 addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
