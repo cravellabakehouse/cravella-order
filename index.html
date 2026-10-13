@@ -257,6 +257,29 @@ body{background:#fff}
 .dlv{border-color:#e08a5e;background:#fff0e0;color:#7a3b14}.dlv b{color:#b4532a}
 .tl .im s{background:rgba(59,36,22,.82)}
 .tabs{background:#fffbbe}
+
+/* ---------- festive theme (Diwali) ---------- */
+body.fest{--bg:#fff6e0;--card:#fffdf6;--ink:#3b0d0d;--mut:#8a5a3a;--line:#f0d9a8;--acc:#c1272d;background:#fff6e0}
+body.fest .banner{display:block!important;background:linear-gradient(90deg,#f5b83d,#ffe08a,#f5b83d)!important;color:#3b0d0d!important;font-weight:800;text-align:center;padding:8px;border-bottom:0!important;letter-spacing:.3px}
+body.fest .tabs{background:#2a0f4f!important;border-bottom:2px solid #f5b83d!important}
+body.fest .tab{background:#3a1a68!important;border-color:#f5b83d88!important;color:#ffe9a8!important}
+body.fest .tab.on{background:linear-gradient(135deg,#f5b83d,#f08a1c)!important;color:#3b0d0d!important;border-color:#f5b83d!important}
+body.fest .hero{background:radial-gradient(circle at 80% 30%,#4b1a86,#1b0a3a 70%)!important;border:1px solid #f5b83d!important;color:#fff}
+body.fest .hero h2{color:#ffd366!important;text-shadow:0 0 14px #ffb30088}body.fest .hero p{color:#fff!important}
+body.fest .hero button{background:linear-gradient(135deg,#f5b83d,#f08a1c)!important;color:#3b0d0d!important}
+body.fest .hero>i{display:none!important}
+body.fest .sec{color:#6a1b9a!important}body.fest .pr{color:#c1272d}
+body.fest button.add,body.fest .go{background:linear-gradient(135deg,#c1272d,#f08a1c)!important;color:#fff!important}
+body.fest .bn{background:linear-gradient(180deg,#c1272d,#8f1319)!important;border-top:2px solid #ffd366!important}
+body.fest .bn>*{color:#fff!important}body.fest .bn .on{background:#ffd366!important;color:#5a0b10!important}
+body.fest #hdr{overflow:hidden}
+body.fest .band{padding-top:calc(30px + env(safe-area-inset-top))}
+.lights{position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:3}.lights svg{width:100%;height:34px;display:block}
+.lights g{animation:ftw 1.8s infinite}.lights g:nth-child(3n+1){animation-delay:.4s}.lights g:nth-child(3n+2){animation-delay:.9s}
+@keyframes ftw{0%,100%{opacity:1}50%{opacity:.5}}
+.fstar{position:absolute;color:#ffe9a8;animation:ftw 1.6s infinite;pointer-events:none;font-size:14px}
+.ffw{position:absolute;pointer-events:none;right:0;top:0;width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){.lights g,.fstar{animation:none}}
 </style>
 </head>
 <body>
@@ -565,9 +588,21 @@ function applyOrder(){const ord=(CFG&&CFG.order)||[],rk={};ord.forEach((id,i)=>r
     if(k==='cakes'){const gs=[],by={};a.forEach(d=>{const g=d.group||'';if(!by[g]){by[g]=[];gs.push(g)}by[g].push(d)});a=[].concat(...gs.map(g=>by[g]))}
     const dl=(CFG&&CFG.del)||[];a=a.filter(d=>d.custom||!dl.includes(d.id));
     MENU[k].length=0;MENU[k].push(...a)})}
+
+/* ---------- festive theme ---------- */
+const FEST=true,FEST_MSG='🎆 Shubh Deepavali! Festive offer! 🪔';
+function festBurst(cx,cy,r,col){let o='<g stroke="'+col+'" stroke-width="2" stroke-linecap="round">';for(let k=0;k<16;k++){const a=k*Math.PI/8,c=Math.cos(a),s=Math.sin(a);o+='<line x1="'+(cx+r*.35*c).toFixed(1)+'" y1="'+(cy+r*.35*s).toFixed(1)+'" x2="'+(cx+r*c).toFixed(1)+'" y2="'+(cy+r*s).toFixed(1)+'"/><circle cx="'+(cx+r*1.18*c).toFixed(1)+'" cy="'+(cy+r*1.18*s).toFixed(1)+'" r="1.8" fill="'+col+'" stroke="none"/>'}return o+'<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="#fff" stroke="none"/></g>'}
+function heroFx(){if(!FEST)return '';
+  const st=[['8%','12%','✦'],['30%','78%','✧'],['62%','86%','✦'],['90%','30%','✧'],['48%','8%','✦']].map(a=>'<span class="fstar" style="left:'+a[0]+';top:'+a[1]+'">'+a[2]+'</span>').join('');
+  return '<svg class="ffw" viewBox="0 0 330 160" aria-hidden="true">'+festBurst(250,48,34,'#ffd23f')+festBurst(300,110,22,'#ff7ad9')+festBurst(205,115,18,'#4da3ff')+'</svg>'+st+'<span aria-hidden="true" style="position:absolute;right:14px;bottom:8px;font-size:34px;filter:drop-shadow(0 0 8px #ffb300)">🪔</span><span aria-hidden="true" style="position:absolute;right:62px;bottom:10px;font-size:26px">🎇</span>'}
+function festInit(){if(!FEST)return;document.body.classList.add('fest');
+  const cols=["#ff4d4d", "#ffd23f", "#3ddc97", "#4da3ff", "#ff7ad9", "#ffa94d"];let o='<svg viewBox="0 0 390 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 4 Q 15 20 30 4 T 60 4 T 90 4 T 120 4 T 150 4 T 180 4 T 210 4 T 240 4 T 270 4 T 300 4 T 330 4 T 360 4 T 390 4" fill="none" stroke="#7a5a2a" stroke-width="1.5"/>';
+  for(let i=0;i<14;i++){const x=i*30+15,c=cols[i%6];o+='<g><circle cx="'+x+'" cy="19" r="9" fill="'+c+'" opacity=".25"/><ellipse cx="'+x+'" cy="15" rx="3.6" ry="5.4" fill="'+c+'"/><rect x="'+(x-1.8)+'" y="8.5" width="3.6" height="3" fill="#7a5a2a"/></g>'}
+  $('hdr').insertAdjacentHTML('afterbegin','<div class="lights">'+o+'</svg></div>');hdrH()}
+const festBanner=()=>{if(FEST){const b=$('banner');if(b&&!b.textContent.trim())b.textContent=FEST_MSG}};
 function homeHtml(){
   const cakes=MENU.cakes.filter(c=>!c.custom),bro=[...MENU.brownies,...(MENU.blondies||[])];
-  return `<div class="hero"><h2>Fresh, eggless &amp; baked to order</h2><p>Cakes need 2 days' notice. Bakes need 1 day.</p><button data-go="custom">Custom theme cakes ›</button><i>🎂</i></div>`
+  return `<div class="hero"><h2>Fresh, eggless &amp; baked to order</h2><p>Cakes need 2 days' notice. Bakes need 1 day.</p><button data-go="custom">Custom theme cakes ›</button><i>🎂</i>${heroFx()}</div>`
    +car('Cakes','cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join(''))
    +car('Cupcakes · box of 6','cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join(''))
    +car('Muffins · box of 6','muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join(''))
@@ -595,6 +630,7 @@ function setSearch(o){$('sbox').hidden=!o;$('sBtn').setAttribute('aria-expanded'
 $('sBtn').onclick=()=>setSearch($('sbox').hidden);
 function hdrH(){document.documentElement.style.setProperty('--hh',$('hdr').offsetHeight+'px')}
 addEventListener('resize',hdrH);if(window.ResizeObserver)new ResizeObserver(hdrH).observe($('hdr'));
+festInit();festBanner();
 function goHome(){NAV.length=0;lastTab='home';S.tab='home';S.q='';$('q').value='';setSearch(false);renderTabs();renderPanel();scrollTo(0,0)}
 $('q').addEventListener('input',e=>{S.q=e.target.value;renderPanel()});
 $('panel').addEventListener('click',e=>{
@@ -913,7 +949,7 @@ $('dInstall').onclick=async()=>{if(deferred){deferred.prompt();await deferred.us
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 try{const p=JSON.parse(sessionStorage.getItem('cb_contact')||'null');if(p){$('fName').value=p.n||'';$('fPhone').value=p.p||''}}catch(_){}
 ['fName','fPhone'].forEach(i=>$(i).addEventListener('change',()=>{try{sessionStorage.setItem('cb_contact',JSON.stringify({n:$('fName').value,p:$('fPhone').value}))}catch(_){}}));
-try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;applyOrder();$('banner').textContent=CFG.banner||''}}catch(_){}
+try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;applyOrder();$('banner').textContent=CFG.banner||'';festBanner()}}catch(_){}
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;e.stopPropagation();e.preventDefault();
   const id=z.dataset.zoom,all=[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies||[],MENU.cookies),d=all.find(x=>x.id===id),o=d&&imgOf(d);if(!o)return;
   const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
@@ -921,7 +957,7 @@ renderAll();accBtn();hdrH();if(A.tok)loadMe();
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
   if(!r||!r.ok||!r.settings)return;CFG=r.settings;applyOrder();try{localStorage.setItem('cb_cfg',JSON.stringify(CFG))}catch(_){}
-  $('banner').textContent=CFG.banner||'';
+  $('banner').textContent=CFG.banner||'';festBanner();
   const n=purgeOff();renderAll();if(n)toast('Some items in your order are sold out and were removed.')
 }).catch(()=>{});
 </script>
