@@ -631,14 +631,35 @@ function menuHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
   if(!D.ph&&!D.phBusy){D.phBusy=1;fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{D.ph=m||{};if(tab==='menu')render()}).catch(()=>{D.ph={};D.phBusy=0})}
   let h=`<div class="hint" style="margin-top:12px">Switch an item off when it is sold out. Customers will see it as unavailable and cannot order it. Tap Save changes at the bottom.</div>`,g='';
-  D.items.forEach(it=>{
+  const dels=s.del||[];
+  D.items.filter(it=>!dels.includes(it.id)).forEach(it=>{
     if(it.group!==g){if(g)h+='</div>';g=it.group;h+=`<div class="sec">${esc(g)}</div><div class="card" style="padding:4px 14px">`}
     const on=!s.unavailable.includes(it.id);
     const pv=(D.ph||{})[it.id],th=pv?`<img src="${API_URL}?mp=${encodeURIComponent(it.id)}&v=${pv}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none">`:'<span style="width:44px;height:44px;border-radius:10px;background:#eee3d3;flex:none;display:grid;place-items:center;font-size:18px">📷</span>';
-    h+=`<div class="sw"><span style="display:flex;align-items:center;gap:10px;min-width:0">${th}<span style="min-width:0">${esc(it.name)}<br><label class="phl" style="font-size:12px;color:#c0581f;font-weight:600;cursor:pointer">${pv?'Change photo':'Add photo'}<input type="file" accept="image/*" data-ph="${esc(it.id)}" hidden></label>${pv?` <button class="phx" data-phc="${esc(it.id)}" style="all:unset;font-size:12px;color:#c0581f;font-weight:600;cursor:pointer;margin-left:8px">Crop</button> <button class="phx" data-phd="${esc(it.id)}" style="all:unset;font-size:12px;color:#999;cursor:pointer;margin-left:8px">Remove</button>`:''}</span></span><span style="display:flex;align-items:center;gap:8px;flex:none"><span class="mvb"><button data-mv="${esc(it.id)}" data-d="-1" aria-label="Move up">▲</button><button data-mv="${esc(it.id)}" data-d="1" aria-label="Move down">▼</button></span><button class="tg ${on?'on':''}" data-tg="${esc(it.id)}" aria-label="Available"></button></span></div>`
+    h+=`<div class="sw"><span style="display:flex;align-items:center;gap:10px;min-width:0">${th}<span style="min-width:0">${esc(it.name)}<br><label class="phl" style="font-size:12px;color:#c0581f;font-weight:600;cursor:pointer">${pv?'Change photo':'Add photo'}<input type="file" accept="image/*" data-ph="${esc(it.id)}" hidden></label>${pv?` <button class="phx" data-phc="${esc(it.id)}" style="all:unset;font-size:12px;color:#c0581f;font-weight:600;cursor:pointer;margin-left:8px">Crop</button> <button class="phx" data-phd="${esc(it.id)}" style="all:unset;font-size:12px;color:#999;cursor:pointer;margin-left:8px">Remove</button>`:''}${it.group==='Custom cake'?'':` <button data-del="${esc(it.id)}" style="all:unset;font-size:12px;color:#b3261e;font-weight:600;cursor:pointer;margin-left:8px">Delete item</button>`}</span></span><span style="display:flex;align-items:center;gap:8px;flex:none"><span class="mvb"><button data-mv="${esc(it.id)}" data-d="-1" aria-label="Move up">▲</button><button data-mv="${esc(it.id)}" data-d="1" aria-label="Move down">▼</button></span><button class="tg ${on?'on':''}" data-tg="${esc(it.id)}" aria-label="Available"></button></span></div>`
   });
-  return h+'</div>'
+  h+='</div>';
+  const gone=D.items.filter(it=>dels.includes(it.id));
+  if(gone.length)h+=`<div class="sec">Deleted items</div><div class="card" style="padding:4px 14px">`+gone.map(it=>`<div class="sw"><span style="min-width:0">${esc(it.name)}<br><span class="hint" style="margin:0">${esc(it.group)} · hidden from the website</span></span><button class="btn ol sm" data-undel="${esc(it.id)}">Restore</button></div>`).join('')+'</div>';
+  return h
 }
+function delAsk(id){
+  const it=D.items.find(x=>x.id===id);if(!it)return;
+  const o=document.createElement('div');o.id='delMod';o.style.cssText='position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);display:grid;place-items:center;padding:16px';
+  o.innerHTML=`<div style="background:var(--card,#fff);color:var(--ink,#222);border-radius:16px;padding:18px;max-width:380px;width:100%"><div class="t" style="font-size:18px;font-weight:700">Delete “${esc(it.name)}”?</div><div class="hint" style="margin:8px 0">It will be removed from the website menu and customers can no longer order it. You can restore it later from Deleted items. Enter your admin password to confirm.</div><input class="i" id="delPw" type="password" autocomplete="current-password" placeholder="Admin password"><div class="err" id="delErr"></div><div style="display:flex;gap:10px;margin-top:12px"><button class="btn ol" id="delNo" style="flex:1">Cancel</button><button class="btn" id="delYes" style="flex:1;background:#b3261e">Delete</button></div></div>`;
+  document.body.appendChild(o);const pw=$('delPw');pw.focus();
+  const close=()=>o.remove();$('delNo').onclick=close;o.addEventListener('click',e=>{if(e.target===o)close()});
+  const go=async()=>{const err=$('delErr');err.textContent='';if(!hasPw){err.textContent='Please set an admin password first (Settings → Change password).';return}
+    if(!pw.value){err.textContent='Enter your password.';return}
+    const b=$('delYes');b.disabled=true;b.textContent='Deleting…';
+    try{const r=await api({action:'admin_menudel',id,password:pw.value});if(r.ok){D.settings.del=r.del;close();render();toast('Item deleted')}else{err.textContent=r.error||'Could not delete.';b.disabled=false;b.textContent='Delete'}}
+    catch(_){err.textContent='No connection. Please try again.';b.disabled=false;b.textContent='Delete'}};
+  $('delYes').onclick=go;pw.addEventListener('keydown',e=>{if(e.key==='Enter')go()})
+}
+$('panel').addEventListener('click',async e=>{const d=e.target.closest('[data-del]'),u=e.target.closest('[data-undel]');
+  if(d){e.stopPropagation();delAsk(d.dataset.del);return}
+  if(u){e.stopPropagation();u.disabled=true;try{const r=await api({action:'admin_menudel',id:u.dataset.undel,undo:true});if(r.ok){D.settings.del=r.del;render();toast('Item restored')}else{toast(r.error||'Could not restore');u.disabled=false}}catch(_){toast('No connection');u.disabled=false}}
+},true);
 
 /* ---------- settings ---------- */
 function rvwHtml(){
