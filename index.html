@@ -596,7 +596,7 @@ function applyOrder(){const ord=(CFG&&CFG.order)||[],rk={};ord.forEach((id,i)=>r
     MENU[k].length=0;MENU[k].push(...a)})}
 
 /* ---------- festive theme ---------- */
-const FEST=true,FEST_MSG='🎆 Shubh Deepavali! Festive offer! 🪔';
+const FEST=true,FEST_MSG='🎆 Shubh Deepavali! Spend ₹1,000+ and get 5% off your next order 🪔';
 function festBurst(cx,cy,r,col){let o='<g stroke="'+col+'" stroke-width="2" stroke-linecap="round">';for(let k=0;k<16;k++){const a=k*Math.PI/8,c=Math.cos(a),s=Math.sin(a);o+='<line x1="'+(cx+r*.35*c).toFixed(1)+'" y1="'+(cy+r*.35*s).toFixed(1)+'" x2="'+(cx+r*c).toFixed(1)+'" y2="'+(cy+r*s).toFixed(1)+'"/><circle cx="'+(cx+r*1.18*c).toFixed(1)+'" cy="'+(cy+r*1.18*s).toFixed(1)+'" r="1.8" fill="'+col+'" stroke="none"/>'}return o+'<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="#fff" stroke="none"/></g>'}
 function heroFx(){if(!FEST)return '';
   const st=[['8%','12%','✦'],['30%','78%','✧'],['62%','86%','✦'],['90%','30%','✧'],['48%','8%','✦']].map(a=>'<span class="fstar" style="left:'+a[0]+';top:'+a[1]+'">'+a[2]+'</span>').join('');
