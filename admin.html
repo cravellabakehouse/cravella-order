@@ -416,7 +416,7 @@ async function loadSettings(){const r=await api({action:'admin_settings_get'});i
 
 /* ---------- layout ---------- */
 const MAIN=[['today','Today','🏠'],['orders','Orders','📋'],['bake','Bake','🍰'],['stock','Stock','📦']];
-const MORE=[['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['offers','Offers','🎁'],['settings','Settings','⚙️']];
+const MORE=[['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['offers','Offers','🎁'],['gal','Gallery','🖼️'],['settings','Settings','⚙️']];
 function renderTabs(){
   const nNew=D.orders.filter(o=>o.status==='New').length,inMore=MORE.some(m=>m[0]===tab);
   $('navIn').innerHTML=MAIN.map(([k,n,ic])=>`<button class="${tab===k?'on':''}" data-tab="${k}"><i>${ic}</i>${n}${k==='today'&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('')+`<button class="${inMore?'on':''}" data-more="1"><i>☰</i>More</button>`;
@@ -433,7 +433,7 @@ $('moreSheet').addEventListener('click',e=>{
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
   try{if(history.state&&history.state.cb==='sheet')history.replaceState({cb:'tab',tab:k},'');else history.pushState({cb:'tab',tab:k},'')}catch(_){}
   tab=k;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy)loadGal()}
 
 /* ---------- today (home) ---------- */
 const NEXT={New:['Confirmed','✓ Confirm order','c'],Confirmed:['Advance received','💰 Advance received','a'],'Advance received':['Ready','🍰 Mark ready','r'],Ready:['Delivered','✅ Mark delivered','r']};
@@ -672,6 +672,26 @@ function rvwHtml(){
   <div class="row" style="gap:8px;margin-top:10px"><input class="i" id="rvR" type="number" step="0.1" min="1" max="5" inputmode="decimal" placeholder="Rating, e.g. 4.8" value="${esc(v.rating)}"><input class="i" id="rvC" type="number" min="0" inputmode="numeric" placeholder="Review count" value="${esc(v.count)}"></div>
   ${v.list.map((x,i)=>`<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="row" style="gap:8px"><input class="i" data-rn="${i}" placeholder="Customer name" maxlength="60" value="${esc(x.n)}"><select class="i" data-rs="${i}" style="max-width:90px">${[5,4,3,2,1].map(n=>`<option value="${n}"${+x.s===n?' selected':''}>${n} ★</option>`).join('')}</select></div><textarea class="i" data-rt="${i}" rows="3" maxlength="600" style="margin-top:8px" placeholder="Review text">${esc(x.t)}</textarea><button class="btn ol sm" data-rd="${i}" style="margin-top:6px">Remove</button></div>`).join('')}
   <div class="row" style="gap:8px;margin-top:12px"><button class="btn ol sm" id="rvAdd">+ Add a review</button><button class="btn sm" id="rvSave">Save reviews</button></div></div>`}
+/* ---------- custom cake gallery ---------- */
+async function loadGal(){D.galBusy=true;try{const r=await api({action:'admin_gal',op:'list'});if(r.ok)D.gal=r.list}catch(_){}D.galBusy=false;if(tab==='gal')render()}
+const galImg=g=>API_URL+'?gi='+encodeURIComponent(g.id)+'&v='+(g.ts||0);
+function galAdm(){
+  if(!D.gal)return '<div class="hint">Loading…</div>';
+  return `<div class="sec">Custom cake gallery</div><div class="card"><div class="hint" style="margin-top:0">Photos of the custom and theme cakes you have made. Customers see them as a sliding banner on the home page and the Custom cake tab. New photos go to the front. Up to 40 photos.</div>
+  <label class="btn" style="display:block;margin-top:10px;cursor:pointer">Add photos<input type="file" id="galIn" accept="image/*" multiple hidden></label><div id="galProg" class="hint"></div></div>
+  <div class="card" style="padding:4px 14px">${D.gal.length?D.gal.map((g,i)=>`<div class="sw" style="align-items:flex-start;gap:10px"><img src="${esc(galImg(g))}" alt="" style="width:84px;height:63px;border-radius:10px;object-fit:cover;flex:none"><div style="flex:1;min-width:0"><input class="i" data-gcap="${esc(g.id)}" maxlength="80" placeholder="Caption (optional), e.g. Unicorn theme, 2 kg" value="${esc(g.cap||'')}"><div style="margin-top:6px;display:flex;gap:8px"><button class="btn ol sm" data-gmv="${esc(g.id)}:-1"${i?'':' disabled'}>▲</button><button class="btn ol sm" data-gmv="${esc(g.id)}:1"${i<D.gal.length-1?'':' disabled'}>▼</button><button class="btn ol sm" data-gdel="${esc(g.id)}" style="color:#b3261e">Delete</button></div></div></div>`).join(''):'<div class="hint">No photos yet. Tap Add photos.</div>'}</div>`}
+const galShrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('bad'))};im.onload=()=>{const M=1000,sc=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);let q=.82,d=c.toDataURL('image/jpeg',q);while(d.length>420000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q)}ok(d.split(',')[1])};im.src=u});
+document.addEventListener('change',async e=>{
+  if(e.target.id==='galIn'){const fs=[...e.target.files];e.target.value='';const pg=$('galProg');let n=0;
+    for(const f of fs.reverse()){try{pg.textContent='Adding photo '+(++n)+' of '+fs.length+'…';const d=await galShrink(f),r=await api({action:'admin_gal',op:'add',data:d});if(r.ok)D.gal=r.list;else{toast(r.error||'Could not add');break}}catch(_){toast('Could not read that photo')}}
+    render();toast('Photos added. They are live on the website.');return}
+  const c=e.target.closest&&e.target.closest('[data-gcap]');if(c){try{const r=await api({action:'admin_gal',op:'cap',id:c.dataset.gcap,cap:c.value});if(r.ok){D.gal=r.list;toast('Caption saved')}}catch(_){toast('No connection')}}});
+$('panel').addEventListener('click',async e=>{
+  const mv=e.target.closest('[data-gmv]');if(mv){const [id,d]=mv.dataset.gmv.split(':'),a=D.gal.map(x=>x.id),i=a.indexOf(id),j=i+ +d;if(i<0||j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];
+    try{const r=await api({action:'admin_gal',op:'order',order:a});if(r.ok){D.gal=r.list;render()}}catch(_){toast('No connection')}return}
+  const dl=e.target.closest('[data-gdel]');if(dl){if(!confirm('Delete this photo from the gallery?'))return;
+    try{const r=await api({action:'admin_gal',op:'del',id:dl.dataset.gdel});if(r.ok){D.gal=r.list;render();toast('Photo deleted')}else toast(r.error||'Could not delete')}catch(_){toast('No connection')}}
+});
 /* ---------- offers ---------- */
 async function loadOff(){D.offBusy=true;try{const r=await api({action:'admin_offers_get'});if(r.ok){D.off=r.offers;D.offC=r.coupons;D.offT=r.tiers}}catch(_){}D.offBusy=false;if(tab==='offers')render()}
 const offTog=(k,on)=>`<div class="chips" style="margin:8px 0"><button class="chip ${on?'on':''}" data-ot="${k}:1">ON</button><button class="chip ${on?'':'on'}" data-ot="${k}:0">OFF</button></div>`;
