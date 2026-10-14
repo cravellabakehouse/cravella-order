@@ -287,6 +287,7 @@ body.fest .bn>*{color:#fff!important}body.fest .bn .on{background:#ffd366!import
 #hdr .band{background:radial-gradient(150px 70px at 88% 45%,rgba(150,100,230,.30),transparent 70%),radial-gradient(150px 60px at 58% 90%,rgba(255,160,110,.28),transparent 70%),#fffbbe}
 #hdr .acc,#hdr .cartb{background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(231,216,255,.5))!important;-webkit-backdrop-filter:blur(14px) saturate(1.6);backdrop-filter:blur(14px) saturate(1.6);border:1px solid rgba(255,255,255,.85)!important;color:#3d1d72!important;box-shadow:0 4px 14px rgba(80,40,150,.16),inset 0 1px 0 rgba(255,255,255,.95)}
 #hdr .cartb .cn{background:#6a2fb8;color:#fff;border-color:rgba(255,255,255,.9)}
+body{padding-bottom:calc(92px + env(safe-area-inset-bottom))}body.hasbar{padding-bottom:calc(186px + env(safe-area-inset-bottom))}
 body.fest #hdr{overflow:hidden}
 body.fest .band{padding-top:calc(30px + env(safe-area-inset-top))}
 .lights{position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:3}.lights{overflow:hidden}.lights svg{height:34px;display:block}
@@ -535,7 +536,7 @@ function renderPanel(){
   $('panel').innerHTML=h;
 }
 function renderBar(){
-  const t=totals();$('bar').classList.toggle('hide',!t.count);
+  const t=totals();$('bar').classList.toggle('hide',!t.count);document.body.classList.toggle('hasbar',!!t.count);
   $('barA').textContent=t.count+(t.count===1?' item':' items');$('barB').textContent=inr(t.tot);
   $('barGo').textContent=t.count?'Order now ›':'Order now';
   const nb=$('bnN');if(nb){nb.textContent=t.count>99?'99+':t.count;nb.hidden=!t.count}
