@@ -131,8 +131,8 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .backrow button{font:700 14px 'Hanken Grotesk',sans-serif;color:var(--acc);padding:6px 12px 6px 6px;border-radius:10px}
 .dsc,.dsc b{color:var(--ok)}
 .gl-tr{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 2px 4px}.gl-tr::-webkit-scrollbar{display:none}
-.gs{flex:0 0 min(78%,340px);scroll-snap-align:center;aspect-ratio:16/10;border-radius:14px;overflow:hidden;position:relative;margin:0;background:#eee3d3;cursor:zoom-in}
-.gs img{width:100%;height:100%;object-fit:cover;object-position:50% 45%;display:block}.gs figcaption{position:absolute;left:0;right:0;bottom:0;padding:16px 10px 7px;color:#fff;font:700 12px 'Hanken Grotesk',sans-serif;background:linear-gradient(transparent,rgba(0,0,0,.62))}
+.gs{flex:0 0 clamp(128px,32%,190px);scroll-snap-align:center;aspect-ratio:4/3;border-radius:12px;overflow:hidden;position:relative;margin:0;background:#eee3d3;cursor:zoom-in}
+.gs img{width:100%;height:100%;object-fit:cover;object-position:50% 45%;display:block}.gs figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 6px;color:#fff;font:700 10.5px 'Hanken Grotesk',sans-serif;background:linear-gradient(transparent,rgba(0,0,0,.62))}
 .gal .hs{margin:8px 0 6px;font-size:14px}.gal .hs button{font-size:12px}.hero.sm{min-height:0;padding:12px 16px;margin:6px 0 2px;border-radius:16px}.hero.sm h2{font-size:17px;max-width:none}.hero.sm p{margin:3px 0 0;max-width:none;font-size:12px}.hero.sm button,.hero.sm>i{display:none}
 .gl-dots{display:flex;gap:6px;justify-content:center;margin:6px 0 0}.gl-dots i{width:7px;height:7px;border-radius:50%;background:#d9c7a6;transition:.2s}.gl-dots i.on{background:var(--ok,#1f7a4d);width:18px;border-radius:5px}
 .gl-cta{display:block;margin:6px auto 0;text-align:center;font-weight:700;font-size:13px}
@@ -279,6 +279,10 @@ body.fest .sec{color:#6a1b9a!important}body.fest .pr{color:#c1272d}
 body.fest button.add,body.fest .go{background:linear-gradient(135deg,#c1272d,#f08a1c)!important;color:#fff!important}
 body.fest .bn{background:linear-gradient(180deg,#c1272d,#8f1319)!important;border-top:2px solid #ffd366!important}
 body.fest .bn>*{color:#fff!important}body.fest .bn .on{background:#ffd366!important;color:#5a0b10!important}
+/* frosted purple glass footer */
+.bn,body.fest .bn{background:linear-gradient(180deg,rgba(104,50,176,.50),rgba(44,16,92,.72))!important;-webkit-backdrop-filter:blur(18px) saturate(1.6)!important;backdrop-filter:blur(18px) saturate(1.6)!important;border-top:1px solid rgba(255,255,255,.28)!important;box-shadow:0 -6px 24px rgba(40,10,90,.28),inset 0 1px 0 rgba(255,255,255,.22)}
+.bn>*,body.fest .bn>*{color:rgba(255,255,255,.88)!important}.bn .on,body.fest .bn .on{background:rgba(255,255,255,.2)!important;color:#ffd366!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.bn .n,body.fest .bn .n{background:#ffd366!important;color:#3b0d0d!important}
 body.fest #hdr{overflow:hidden}
 body.fest .band{padding-top:calc(30px + env(safe-area-inset-top))}
 .lights{position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:3}.lights{overflow:hidden}.lights svg{height:34px;display:block}
