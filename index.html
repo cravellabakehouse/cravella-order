@@ -131,9 +131,10 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .backrow button{font:700 14px 'Hanken Grotesk',sans-serif;color:var(--acc);padding:6px 12px 6px 6px;border-radius:10px}
 .dsc,.dsc b{color:var(--ok)}
 .gl-tr{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 2px 4px}.gl-tr::-webkit-scrollbar{display:none}
-.gs{flex:0 0 min(86%,440px);scroll-snap-align:center;aspect-ratio:4/3;border-radius:16px;overflow:hidden;position:relative;margin:0;background:#eee3d3;cursor:zoom-in}
-.gs img{width:100%;height:100%;object-fit:cover;display:block}.gs figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 12px 10px;color:#fff;font:700 13.5px 'Hanken Grotesk',sans-serif;background:linear-gradient(transparent,rgba(0,0,0,.62))}
-.gl-dots{display:flex;gap:6px;justify-content:center;margin:8px 0 2px}.gl-dots i{width:7px;height:7px;border-radius:50%;background:#d9c7a6;transition:.2s}.gl-dots i.on{background:var(--ok,#1f7a4d);width:18px;border-radius:5px}
+.gs{flex:0 0 min(78%,340px);scroll-snap-align:center;aspect-ratio:16/10;border-radius:14px;overflow:hidden;position:relative;margin:0;background:#eee3d3;cursor:zoom-in}
+.gs img{width:100%;height:100%;object-fit:cover;object-position:50% 45%;display:block}.gs figcaption{position:absolute;left:0;right:0;bottom:0;padding:16px 10px 7px;color:#fff;font:700 12px 'Hanken Grotesk',sans-serif;background:linear-gradient(transparent,rgba(0,0,0,.62))}
+.gal .hs{margin:8px 0 6px;font-size:14px}.gal .hs button{font-size:12px}.hero.sm{min-height:0;padding:12px 16px;margin:6px 0 2px;border-radius:16px}.hero.sm h2{font-size:17px;max-width:none}.hero.sm p{margin:3px 0 0;max-width:none;font-size:12px}.hero.sm button,.hero.sm>i{display:none}
+.gl-dots{display:flex;gap:6px;justify-content:center;margin:6px 0 0}.gl-dots i{width:7px;height:7px;border-radius:50%;background:#d9c7a6;transition:.2s}.gl-dots i.on{background:var(--ok,#1f7a4d);width:18px;border-radius:5px}
 .gl-cta{display:block;margin:6px auto 0;text-align:center;font-weight:700;font-size:13px}
 .gift{font-weight:700;margin-bottom:6px}.gcode{font-size:26px;font-weight:800;letter-spacing:.08em;margin:6px 0;color:var(--ok);user-select:all}
 .cpn{display:flex;gap:8px;margin:12px 0 2px;align-items:center}.cpn input{flex:1;text-transform:uppercase;letter-spacing:.04em}
@@ -514,7 +515,7 @@ function renderPanel(){
     h+=`<div class="note">Cakes need 2 days' notice. Want a custom or theme cake? See the Custom cake tab.</div>`;
   }else if(S.tab==='custom'){
     const c=MENU.cakes.find(x=>x.custom);
-    h+=galHtml('Cakes we have made for our customers')+`<div class="sec">Custom / theme cake</div><div class="card"><div class="t">Designed just for you</div><div class="d">Starts from ${inr(c.creams[0].prices[0])} per kg. Share a reference of your choice and we'll check if it's possible within your budget.</div>
+    h+=galHtml('Custom theme cakes')+`<div class="sec">Custom / theme cake</div><div class="card"><div class="t">Designed just for you</div><div class="d">Starts from ${inr(c.creams[0].prices[0])} per kg. Share a reference of your choice and we'll check if it's possible within your budget.</div>
     <ol class="how"><li>Choose a size and tap Add.</li><li>At checkout, upload a sample reference photo of the cake you like and tell us your budget.</li><li>We'll check if it's possible within your budget and discuss the design with you on WhatsApp.</li><li>50% advance to book, and the remaining 50% on delivery.</li></ol>
     <div class="d"><b>2 days' notice</b> needed for custom cakes.</div></div>`+cakeCard(c);
   }else if(S.tab==='cupcakes'){h+=`<div class="sec">Cupcakes</div>`+MENU.cupcakes.map(d=>pcCard(d,'cupcakes')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
@@ -637,8 +638,7 @@ function galLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return
     if(!S.q.trim()&&(S.tab==='home'||S.tab==='custom'))renderPanel();galWire()}).catch(()=>{})}
 function homeHtml(){
   const cakes=MENU.cakes.filter(c=>!c.custom),bro=[...MENU.brownies,...(MENU.blondies||[])];
-  return `<div class="hero"><h2>Fresh, eggless &amp; baked to order</h2><p>Cakes need 2 days' notice. Bakes need 1 day.</p><button data-go="custom">Custom theme cakes ›</button><i>🎂</i>${heroFx()}</div>`
-   +galHtml('Cakes we have made',1)
+  return galHtml('Custom theme cakes',1)+`<div class="hero${GAL.length?' sm':''}"><h2>Fresh, eggless &amp; baked to order</h2><p>Cakes need 2 days' notice. Bakes need 1 day.</p><button data-go="custom">Custom theme cakes ›</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`
    +car('Cakes','cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join(''))
    +car('Cupcakes · box of 6','cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join(''))
    +car('Muffins · box of 6','muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join(''))
