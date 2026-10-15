@@ -443,7 +443,7 @@ $('moreSheet').addEventListener('click',e=>{
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
   try{if(history.state&&history.state.cb==='sheet')history.replaceState({cb:'tab',tab:k},'');else history.pushState({cb:'tab',tab:k},'')}catch(_){}
   if(k!==tab){TS.push(tab);if(TS.length>30)TS.shift()}tab=k;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='home'?homeHtml():tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes'||tab==='home')&&!D.stock&&!kBusy)loadKit();if(tab==='home'&&!D.site&&!D.siteBusy)loadSite();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy)loadGal();if(tab==='site'&&!D.site&&!D.siteBusy)loadSite()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='home'?homeHtml():tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes'||tab==='home')&&!D.stock&&!kBusy)loadKit();if(tab==='home'&&!D.site&&!D.siteBusy)loadSite();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='cust'&&!D.crm&&!D.crmBusy)loadCrm();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy)loadGal();if(tab==='site'&&!D.site&&!D.siteBusy)loadSite()}
 
 /* ---------- today (home) ---------- */
 const NEXT={New:['Confirmed','✓ Confirm order','c'],Confirmed:['Advance received','💰 Advance received','a'],'Advance received':['Ready','🍰 Mark ready','r'],Ready:['Delivered','✅ Mark delivered','r']};
@@ -558,7 +558,10 @@ function histBtn(o){const a=CM[keyOf(o)]||[];return a.length>1?`<button class="b
 function histBox(o){const a=CM[keyOf(o)]||[];return a.length>1?`<div class="hist hide" id="h_${esc(o.id)}"><div class="m"><b>${a.length} orders · ${inr(spent(a))} lifetime</b> (cancelled not counted)</div>${histRows(a,o)}</div>`:''}
 function mailNote(o){const m=D.mails[String(o.id).toLowerCase()];return m?`<div class="hint">✉ Emailed ${m.n} time${m.n>1?'s':''} · last ${new Date(m.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</div>`:''}
 /* ---------- customer insights ---------- */
-let cf='all',cs='recent',cOpen='';
+let cf='all',cs='recent',cOpen='',CE={tags:[]};
+const PRESET=['VIP','Allergy','Birthday cakes','Corporate','Friend/Family','Eggless only','Sugar-free'];
+const crmOf=k=>(D.crm&&D.crm[k])||{};
+async function loadCrm(){if(D.crmBusy)return;D.crmBusy=1;try{const r=await api({action:'admin_crm_get'});if(r.ok){D.crm=r.crm||{};if(tab==='cust'&&!cOpen)render()}}catch(_){D.crm=D.crm||{}}finally{D.crmBusy=0}}
 const DAY=864e5,WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const itemName=l=>String(l).split(' – ₹')[0].replace(/\s*\[[^\]]*\]\s*$/,'').split(' · ')[0].replace(/\s*\([^)]*\)\s*$/,'').replace(/\s*×.*$/,'').trim();
 const topN=(arr,n)=>{const m={};arr.filter(Boolean).forEach(x=>m[x]=(m[x]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n)};
@@ -586,19 +589,19 @@ const SEG={vip:['⭐ VIP','vip'],active:['Active','act'],due:['Due to reorder','
 const segTag=s=>`<span class="rep sg-${SEG[s][1]}">${SEG[s][0]}</span>`;
 function custHtml(){
   const all=Object.keys(CM).map(cInfo),s=cq.trim().toLowerCase(),cnt=f=>all.filter(c=>f==='all'||(f==='repeat'?c.ok.length>1:c.seg===f)).length;
-  let L=all.filter(c=>(cf==='all'||(cf==='repeat'?c.ok.length>1:c.seg===cf))&&(!s||c.a.some(o=>(o.name+' '+o.phone+' '+o.email).toLowerCase().includes(s))));
+  let L=all.filter(c=>(cf==='all'||(cf==='repeat'?c.ok.length>1:c.seg===cf))&&(!s||(c.a.map(o=>o.name+' '+o.phone+' '+o.email).join(' ')+' '+JSON.stringify(crmOf(c.k))).toLowerCase().includes(s)));
   L.sort(cs==='spend'?(x,y)=>y.sp-x.sp:cs==='orders'?(x,y)=>y.ok.length-x.ok.length:cs==='gap'?(x,y)=>(y.since-x.since):(x,y)=>y.lastMs-x.lastMs);
   const rev=all.reduce((t,c)=>t+c.sp,0),rp=all.filter(c=>c.ok.length>1).length,gp=all.filter(c=>c.avgGap).map(c=>c.avgGap),ag=gp.length?gp.reduce((t,x)=>t+x,0)/gp.length:0;
   const CH=[['all','All'],['vip','⭐ VIP'],['repeat','Repeat'],['due','Due to reorder'],['lapsed','Lapsed'],['new','New']];
   let h=`<div class="stat"><div><b>${all.length}</b><span>Customers</span></div><div><b>${all.length?Math.round(rp*100/all.length):0}%</b><span>Repeat rate</span></div><div><b>${ag?Math.round(ag)+'d':'–'}</b><span>Avg days between orders</span></div></div>
   <div class="stat"><div><b>${inr(rev)}</b><span>Lifetime sales</span></div><div><b>${all.length?inr(rev/all.length):'–'}</b><span>Per customer</span></div></div>
-  <input class="i" id="cSearch" placeholder="Search name, phone or email" value="${esc(cq)}">
+  <input class="i" id="cSearch" placeholder="Search name, phone, email, tag or note" value="${esc(cq)}">
   <div class="chips" style="margin:8px 0">${CH.map(([k,n])=>`<button class="chip ${cf===k?'on':''}" data-cf="${k}">${n} ${cnt(k)}</button>`).join('')}</div>
   <div class="row" style="margin:4px 0 8px"><select class="i" id="cSort" style="width:auto;padding:7px 10px"><option value="recent"${cs==='recent'?' selected':''}>Sort: latest order</option><option value="spend"${cs==='spend'?' selected':''}>Sort: most spent</option><option value="orders"${cs==='orders'?' selected':''}>Sort: most orders</option><option value="gap"${cs==='gap'?' selected':''}>Sort: longest since order</option></select><button class="btn ol sm" id="cCsv">⬇ Export CSV</button></div>`;
   h+=L.length?L.map(c=>{const l=c.l;
     return `<div class="card" data-cp="${esc(c.k)}" style="cursor:pointer"><div class="row"><span class="id" style="font-weight:700">${esc(l.name)} ${segTag(c.seg)}</span><b>${inr(c.sp)}</b></div>
     <div class="m">${esc(l.phone)}${c.email?' · '+esc(c.email):''}</div>
-    <div class="m">${c.ok.length} order${c.ok.length==1?'':'s'}${c.avgGap?' · every ~'+Math.round(c.avgGap)+' days':''} · last ${dShort(c.lastMs)} (${Math.round(c.since)}d ago)${c.items[0]?' · loves '+esc(c.items[0][0]):''}</div></div>`}).join(''):`<div class="card"><div class="hint">No customers match.</div></div>`;
+    <div class="m">${c.ok.length} order${c.ok.length==1?'':'s'}${c.avgGap?' · every ~'+Math.round(c.avgGap)+' days':''} · last ${dShort(c.lastMs)} (${Math.round(c.since)}d ago)${c.items[0]?' · loves '+esc(c.items[0][0]):''}</div>${crmOf(c.k).tags&&crmOf(c.k).tags.length?`<div class="m">${crmOf(c.k).tags.map(t=>`<span class="rep">${esc(t)}</span>`).join(' ')}</div>`:''}${crmOf(c.k).notes?`<div class="hint" style="margin-top:4px">📝 ${esc(crmOf(c.k).notes.slice(0,90))}${crmOf(c.k).notes.length>90?'…':''}</div>`:''}</div>`}).join(''):`<div class="card"><div class="hint">No customers match.</div></div>`;
   return h
 }
 function custProfile(k){
@@ -607,6 +610,7 @@ function custProfile(k){
   return `<div class="row"><div class="t" style="font-size:20px">${esc(l.name)} ${segTag(c.seg)}</div><button class="btn ol sm" id="cpClose">Close</button></div>
   <div class="m" style="margin:4px 0 10px"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>${c.email?' · '+esc(c.email):''}</div>
   <div class="stat"><div><b>${c.ok.length}</b><span>Orders</span></div><div><b>${inr(c.sp)}</b><span>Lifetime</span></div><div><b>${inr(c.avg)}</b><span>Avg order</span></div></div>
+  ${crmEdit(c.k)}
   <div class="hist" style="display:block"><div class="m"><b>Ordering pattern</b></div>
   ${row('First order',c.ok.length?dShort(c.ok[0].placedMs):'')}${row('Last order',c.lastMs?dShort(c.lastMs)+' · '+Math.round(c.since)+' days ago':'')}
   ${row('Orders about every',c.avgGap?Math.round(c.avgGap)+' days':(c.ok.length==1?'only one order so far':''))}${row('Likely next order',c.next?(c.next<Date.now()?'overdue since '+dShort(c.next):dShort(c.next)):'')}
@@ -618,12 +622,32 @@ function custProfile(k){
   <div class="acts" style="margin:10px 0"><a class="btn ol sm" href="tel:${esc(l.phone)}">📞 Call</a><a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a><button class="btn ol sm" data-mail="${esc(l.id)}">✉ Email</button></div>
   <div class="hist" style="display:block"><div class="m"><b>Order history (${c.a.length})</b></div>${histRows(c.a)}</div>`
 }
+function crmEdit(k){const r=CE.k===k?CE:null;if(!r)return'';const all=[...new Set(PRESET.concat(CE.tags))];
+  return `<div class="hist" style="display:block"><div class="m"><b>About this customer</b> <span class="hint">(only you can see this)</span></div>
+  <div class="chips" style="margin:8px 0">${all.map(t=>`<button class="chip ${CE.tags.includes(t)?'on':''}" data-ctag="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+  <div class="row" style="gap:8px"><input class="i" id="cpTagNew" maxlength="24" placeholder="Add your own tag"><button class="btn ol sm" id="cpTagAdd">Add</button></div>
+  <label class="f">Notes</label><textarea class="i" id="cpNotes" maxlength="1500" placeholder="e.g. Likes less sugar, always collects after 5 pm, kids: Aarav & Anaya">${esc(CE.notes)}</textarea>
+  <label class="f">Taste / preferences</label><input class="i" id="cpPref" maxlength="400" placeholder="e.g. no nuts, loves coffee flavours" value="${esc(CE.pref)}">
+  <div class="row" style="gap:10px"><div style="flex:1"><label class="f">Birthday</label><input class="i" id="cpBd" type="date" value="${esc(CE.bday)}"></div><div style="flex:1"><label class="f">Anniversary</label><input class="i" id="cpAn" type="date" value="${esc(CE.anniv)}"></div></div>
+  <button class="btn" id="cpSave" style="width:100%;margin-top:12px">Save customer details</button></div>`}
 function custCsv(){
-  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',R=[['Name','Phone','Email','Segment','Orders','Lifetime spend','Avg order','First order','Last order','Days since last','Avg days between orders','Favourite items','Usual day','Pickup/Delivery']];
-  Object.keys(CM).map(cInfo).forEach(c=>R.push([c.l.name,c.l.phone,c.email,SEG[c.seg][0],c.ok.length,Math.round(c.sp),Math.round(c.avg),c.ok.length?new Date(c.ok[0].placedMs).toISOString().slice(0,10):'',c.lastMs?new Date(c.lastMs).toISOString().slice(0,10):'',Math.round(c.since),c.avgGap?Math.round(c.avgGap):'',c.items.map(x=>x[0]).join('; '),c.days.map(x=>x[0]).join('; '),c.modes.map(x=>x[0]).join('; ')]));
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',R=[['Name','Phone','Email','Segment','Orders','Lifetime spend','Avg order','First order','Last order','Days since last','Avg days between orders','Favourite items','Usual day','Pickup/Delivery','Tags','Notes','Preferences','Birthday','Anniversary']];
+  Object.keys(CM).map(cInfo).forEach(c=>{const m=crmOf(c.k);R.push([c.l.name,c.l.phone,c.email,SEG[c.seg][0],c.ok.length,Math.round(c.sp),Math.round(c.avg),c.ok.length?new Date(c.ok[0].placedMs).toISOString().slice(0,10):'',c.lastMs?new Date(c.lastMs).toISOString().slice(0,10):'',Math.round(c.since),c.avgGap?Math.round(c.avgGap):'',c.items.map(x=>x[0]).join('; '),c.days.map(x=>x[0]).join('; '),c.modes.map(x=>x[0]).join('; '),(m.tags||[]).join('; '),m.notes||'',m.pref||'',m.bday||'',m.anniv||''])});
   const b=new Blob(['﻿'+R.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='cravella-customers-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)
 }
-function openCust(k){cOpen=k;$('cpIn').innerHTML=custProfile(k);showSheet('cpSheet')}
+function openCust(k){cOpen=k;const m=crmOf(k);CE={k,tags:(m.tags||[]).slice(),notes:m.notes||'',pref:m.pref||'',bday:m.bday||'',anniv:m.anniv||''};$('cpIn').innerHTML=custProfile(k);showSheet('cpSheet')}
+$('cpSheet').addEventListener('click',async e=>{
+  if(e.target===$('cpSheet')||e.target.closest('#cpClose')){closeCust();return}
+  const ctg=e.target.closest('[data-ctag]');if(ctg){syncCE();const t=ctg.dataset.ctag,i=CE.tags.indexOf(t);if(i<0)CE.tags.push(t);else CE.tags.splice(i,1);$('cpIn').innerHTML=custProfile(CE.k);return}
+  if(e.target.closest('#cpTagAdd')){syncCE();const v=($('cpTagNew').value||'').trim().slice(0,24);if(v&&!CE.tags.includes(v)&&CE.tags.length<8)CE.tags.push(v);$('cpIn').innerHTML=custProfile(CE.k);return}
+  if(e.target.closest('#cpSave')){saveCrm();return}
+  const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
+});
+function syncCE(){if(!$('cpNotes'))return;CE.notes=$('cpNotes').value;CE.pref=$('cpPref').value;CE.bday=$('cpBd').value;CE.anniv=$('cpAn').value}
+async function saveCrm(){syncCE();const b=$('cpSave');b.disabled=true;b.textContent='Saving…';const k=CE.k;
+  try{const r=await api({action:'admin_crm_save',key:k,rec:{notes:CE.notes,pref:CE.pref,bday:CE.bday,anniv:CE.anniv,tags:CE.tags}});
+    if(r.ok){D.crm=D.crm||{};if(r.rec)D.crm[k]=r.rec;else delete D.crm[k];toast('Customer details saved');const y=scrollY;render();scrollTo(0,y)}else toast(r.error||'Could not save')}
+  catch(_){toast('No connection. Not saved.')}finally{const c=$('cpSave');if(c){c.disabled=false;c.textContent='Save customer details'}}}
 function closeCust(){cOpen='';$('cpSheet').classList.add('hide');popSheet()}
 
 /* ---------- email composer ---------- */
@@ -666,7 +690,6 @@ $('panel').addEventListener('click',async e=>{
   const op=e.target.closest('[data-open]');if(op){q=op.dataset.open;filt='all';goTab('orders');if(tab==='orders'){render();scrollTo(0,0)}return}
   const f=e.target.closest('[data-f]');if(f){filt=f.dataset.f;render();return}
   const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
-  if(e.target===$('cpSheet')||e.target.closest('#cpClose')){closeCust();return}
   const cfb=e.target.closest('[data-cf]');if(cfb){cf=cfb.dataset.cf;render();return}
   if(e.target.closest('#cCsv')){custCsv();return}
   const cpb=e.target.closest('[data-cp]');if(cpb&&!e.target.closest('a,button')){openCust(cpb.dataset.cp);return}
