@@ -229,8 +229,8 @@ function fmtAmt(q,u){
 }
 async function loadKit(){
   kBusy=true;
-  try{const r=await api({action:'admin_stock_get'});if(r.ok){D.stock=r.stock;D.recipes=r.recipes}else toast(r.error||'Could not load')}
-  catch(_){toast('No connection')}
+  try{const r=await api({action:'admin_stock_get'});if(r.ok&&r.stock){D.stock=r.stock;D.recipes=r.recipes}else{D.kitF=Date.now();toast(r.error||'Could not load')}}
+  catch(_){D.kitF=Date.now();toast('No connection')}
   kBusy=false;if(tab==='stock'||tab==='recipes'||tab==='home')render()
 }
 const unitOpts=sel=>KU.map(u=>`<option ${u===sel?'selected':''}>${u}</option>`).join('');
@@ -443,7 +443,7 @@ $('moreSheet').addEventListener('click',e=>{
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
   try{if(history.state&&history.state.cb==='sheet')history.replaceState({cb:'tab',tab:k},'');else history.pushState({cb:'tab',tab:k},'')}catch(_){}
   if(k!==tab){TS.push(tab);if(TS.length>30)TS.shift()}tab=k;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='home'?homeHtml():tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes'||tab==='home')&&!D.stock&&!kBusy)loadKit();if(tab==='home'&&!D.site&&!D.siteBusy)loadSite();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='cust'&&!D.crm&&!D.crmBusy)loadCrm();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy)loadGal();if(tab==='site'&&!D.site&&!D.siteBusy)loadSite()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='home'?homeHtml():tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes'||tab==='home')&&!D.stock&&!kBusy&&nf('kit'))loadKit();if(tab==='home'&&!D.site&&!D.siteBusy&&nf('site'))loadSite();if(tab==='recipes'&&!D.ri&&!D.riBusy&&nf('ri'))loadRi();if(tab==='cust'&&!D.crm&&!D.crmBusy&&nf('crm'))loadCrm();if(tab==='settings'&&!D.wa&&!D.waBusy&&nf('wa'))loadWa();if(tab==='bake'&&!bake&&nf('bake'))loadBake();if(tab==='offers'&&!D.off&&!D.offBusy&&nf('off'))loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy&&nf('gal'))loadGal();if(tab==='site'&&!D.site&&!D.siteBusy&&nf('site'))loadSite()}
 
 /* ---------- today (home) ---------- */
 const NEXT={New:['Confirmed','✓ Confirm order','c'],Confirmed:['Advance received','💰 Advance received','a'],'Advance received':['Ready','🍰 Mark ready','r'],Ready:['Delivered','✅ Mark delivered','r']};
@@ -561,7 +561,8 @@ function mailNote(o){const m=D.mails[String(o.id).toLowerCase()];return m?`<div 
 let cf='all',cs='recent',cOpen='',CE={tags:[]};
 const PRESET=['VIP','Allergy','Birthday cakes','Corporate','Friend/Family','Eggless only','Sugar-free'];
 const crmOf=k=>(D.crm&&D.crm[k])||{};
-async function loadCrm(){if(D.crmBusy)return;D.crmBusy=1;try{const r=await api({action:'admin_crm_get'});if(r.ok){D.crm=r.crm||{};if(tab==='cust'&&!cOpen)render()}}catch(_){D.crm=D.crm||{}}finally{D.crmBusy=0}}
+const nf=k=>!(D[k+'F']&&Date.now()-D[k+'F']<15000);   // after a failed load, wait 15s before auto-retrying (stops request loops)
+async function loadCrm(){if(D.crmBusy)return;D.crmBusy=1;try{const r=await api({action:'admin_crm_get'});if(r.ok){D.crm=r.crm||{};if(tab==='cust'&&!cOpen)render()}else D.crmF=Date.now()}catch(_){D.crmF=Date.now()}finally{D.crmBusy=0}}
 const DAY=864e5,WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const itemName=l=>String(l).split(' – ₹')[0].replace(/\s*\[[^\]]*\]\s*$/,'').split(' · ')[0].replace(/\s*\([^)]*\)\s*$/,'').replace(/\s*×.*$/,'').trim();
 const topN=(arr,n)=>{const m={};arr.filter(Boolean).forEach(x=>m[x]=(m[x]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n)};
@@ -693,6 +694,8 @@ $('panel').addEventListener('click',async e=>{
   const cfb=e.target.closest('[data-cf]');if(cfb){cf=cfb.dataset.cf;render();return}
   if(e.target.closest('#cCsv')){custCsv();return}
   const cpb=e.target.closest('[data-cp]');if(cpb&&!e.target.closest('a,button')){openCust(cpb.dataset.cp);return}
+  const wo=e.target.closest('[data-wa-on]');if(wo){const on=wo.dataset.waOn==='1';if(on&&!confirm('Turn on automatic WhatsApp messages to customers?'))return;wo.disabled=true;try{const r=await api({action:'admin_wa_set',on});if(r.ok){D.wa=Object.assign(D.wa||{},{on:r.on,phone:r.phone});toast(r.on?'WhatsApp messages on':'WhatsApp messages off')}else toast(r.error||'Could not change')}catch(_){toast('No connection')}const y=scrollY;render();scrollTo(0,y);return}
+  if(e.target.closest('#waTest')){const to=($('waTo').value||'').trim();if(!to){toast('Enter a phone number');return}const b=$('waTest');b.disabled=true;b.textContent='Sending…';try{const r=await api({action:'admin_wa_test',to});toast(r.ok?'Test sent. Check WhatsApp.':(r.error||'Could not send'))}catch(_){toast('No connection')}await loadWa();return}
   const hb=e.target.closest('[data-hist]');if(hb){const x=document.getElementById(hb.dataset.hist);if(x)x.classList.toggle('hide');return}
   if(e.target.closest('#refresh')){await loadOrders();render();toast('Updated');return}
   const sb=e.target.closest('[data-s]');if(sb){
@@ -784,7 +787,7 @@ function rvwHtml(){
   ${v.list.map((x,i)=>`<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="row" style="gap:8px"><input class="i" data-rn="${i}" placeholder="Customer name" maxlength="60" value="${esc(x.n)}"><select class="i" data-rs="${i}" style="max-width:90px">${[5,4,3,2,1].map(n=>`<option value="${n}"${+x.s===n?' selected':''}>${n} ★</option>`).join('')}</select></div><textarea class="i" data-rt="${i}" rows="3" maxlength="600" style="margin-top:8px" placeholder="Review text">${esc(x.t)}</textarea><button class="btn ol sm" data-rd="${i}" style="margin-top:6px">Remove</button></div>`).join('')}
   <div class="row" style="gap:8px;margin-top:12px"><button class="btn ol sm" id="rvAdd">+ Add a review</button><button class="btn sm" id="rvSave">Save reviews</button></div></div>`}
 /* ---------- custom cake gallery ---------- */
-async function loadGal(){D.galBusy=true;try{const r=await api({action:'admin_gal',op:'list'});if(r.ok)D.gal=r.list}catch(_){}D.galBusy=false;if(tab==='gal')render()}
+async function loadGal(){D.galBusy=true;try{const r=await api({action:'admin_gal',op:'list'});if(r.ok)D.gal=r.list;else D.galF=Date.now()}catch(_){D.galF=Date.now()}D.galBusy=false;if(tab==='gal')render()}
 const galImg=g=>API_URL+'?gi='+encodeURIComponent(g.id)+'&v='+(g.ts||0);
 function galAdm(){
   if(!D.gal)return '<div class="hint">Loading…</div>';
@@ -822,7 +825,7 @@ function siteNorm(s){s=JSON.parse(JSON.stringify(s&&typeof s==='object'?s:{}));
   s.hero=Object.assign({t:'',s:'',b:''},s.hero);s.gal=Object.assign({t:'',auto:true,secs:3.5},s.gal);
   const st=Object.assign({on:true,speed:32,items:[]},s.strip);if(!st.items||!st.items.length)st.items=SITE_ITEMS.map(q=>Object.assign({on:true},q));st.items=st.items.map(q=>Object.assign({on:true,t:''},q));s.strip=st;
   s.fx=Object.assign({theme:'diwali',lights:true,props:true,fall:false,colors:true,amt:2},s.fx);if(!['none','fall','bursts','sparks','both'].includes(s.fx.anim))s.fx.anim=s.fx.fall?'fall':'none';s.col=s.col&&typeof s.col==='object'?s.col:{};SITE_COL.forEach(c=>{s.col[c[0]]=Object.assign({bg:'',fg:'',bg2:'',ang:135},s.col[c[0]])});s.ban=Object.assign({on:true,t:''},s.ban);s.brk=Object.assign({on:false,t:''},s.brk);s.foot=Object.assign({on:true,dlv:true,note:'',fssai:true,soc:true},s.foot);delete s.v;return s}
-async function loadSite(){D.siteBusy=true;try{if(!D.settings)await loadSettings();const r=await api({action:'admin_site_get'});if(r.ok){D.site=siteNorm(r.site);D.siteSaved=JSON.stringify(D.site)}}catch(_){}D.siteBusy=false;if(tab==='site'||tab==='home')render()}
+async function loadSite(){D.siteBusy=true;try{if(!D.settings)await loadSettings();const r=await api({action:'admin_site_get'});if(r.ok){D.site=siteNorm(r.site);D.siteSaved=JSON.stringify(D.site)}else D.siteF=Date.now()}catch(_){D.siteF=Date.now()}D.siteBusy=false;if(tab==='site'||tab==='home')render()}
 let BRKQ=Promise.resolve();
 function brkSave(on,msg,quiet){BRKQ=BRKQ.then(()=>brkDo(on,msg,quiet)).catch(()=>{});return BRKQ}
 async function brkDo(on,msg,quiet){if(!D.site){toast('Still loading, try again');return}let sv={};try{sv=JSON.parse(D.siteSaved)}catch(_){}const cp=JSON.parse(JSON.stringify(D.site));cp.brk=sv.brk;if(JSON.stringify(cp)!==D.siteSaved){toast('Save or finish your Site layout changes first');return}const keep=D.site.brk;D.site.brk={on:on,t:(msg||'').trim()===BRK_DEF?'':(msg||'').trim()};try{const r=await api({action:'admin_site_save',site:siteOut()});if(r.ok){D.site=siteNorm(r.site);D.siteSaved=JSON.stringify(D.site);if(!quiet)toast(D.site.brk.on?'Website is on a break. Refresh the site to see it.':'Website is back open')}else{D.site.brk=keep;toast(r.error||'Could not save')}}catch(_){D.site.brk=keep;toast('No connection')}if(!quiet||(tab==='home'&&!$('brkMsg')))render()}
@@ -903,7 +906,7 @@ function sitePreview(){if(!D.site)return;let m=$('svw');
 $('panel').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('tg')){e.preventDefault();e.target.click()}});
 function siteReorder(kind,ids){const s=D.site;if(kind==='sec'){const by={};s.sec.forEach(q=>by[q.id]=q);s.sec=ids.map(i=>by[i]).filter(Boolean)}else{const it=s.strip.items;s.strip.items=ids.map(i=>it[+i.slice(1)]).filter(Boolean)}render();toast('Order changed. Tap Save and publish.')}
 /* ---------- offers ---------- */
-async function loadOff(){D.offBusy=true;try{const r=await api({action:'admin_offers_get'});if(r.ok){D.off=r.offers;D.offC=r.coupons;D.offT=r.tiers}}catch(_){}D.offBusy=false;if(tab==='offers')render()}
+async function loadOff(){D.offBusy=true;try{const r=await api({action:'admin_offers_get'});if(r.ok){D.off=r.offers;D.offC=r.coupons;D.offT=r.tiers}else D.offF=Date.now()}catch(_){D.offF=Date.now()}D.offBusy=false;if(tab==='offers')render()}
 const offTog=(k,on)=>`<div class="chips" style="margin:8px 0"><button class="chip ${on?'on':''}" data-ot="${k}:1">ON</button><button class="chip ${on?'':'on'}" data-ot="${k}:0">OFF</button></div>`;
 const offDt=(id,v,l)=>`<label class="f">${l}</label><input class="i" type="date" id="${id}" value="${esc(v)}" data-of="1">`;
 const offNum=(id,v,l,mx)=>`<label class="f">${l}</label><input class="i" type="number" id="${id}" min="1" ${mx?'max="'+mx+'"':''} inputmode="numeric" value="${v}" data-of="1">`;
@@ -940,9 +943,20 @@ $('panel').addEventListener('click',async e=>{
   if(e.target.closest('#offSave')){const b=e.target.closest('#offSave');b.disabled=true;
     try{const r=await api({action:'admin_offers_save',offers:offRead()});if(r.ok){D.off=r.offers;toast('Offers saved. They are live on the website.')}else toast(r.error||'Could not save');render()}catch(_){toast('No connection');b.disabled=false}}
 });
+async function loadWa(){if(D.waBusy)return;D.waBusy=1;try{const r=await api({action:'admin_wa_get'});if(r.ok)D.wa=r;else D.waF=Date.now()}catch(_){D.waF=Date.now()}D.waBusy=0;if(tab==='settings'&&!dirty){const y=scrollY;render();scrollTo(0,y)}}
+const tAgo=ms=>new Date(ms).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+function waCard(){const w=D.wa;
+  if(!w)return `<div class="sec">WhatsApp messages</div><div class="card"><div class="hint" style="margin-top:0">Loading…</div></div>`;
+  return `<div class="sec">WhatsApp messages</div><div class="card"><div class="hint" style="margin-top:0">Automatic order updates to customers (received, confirmed, ready) from your WhatsApp Business account. Nothing is sent while this is off.</div>
+  <div class="hist" style="display:block"><div class="h"><span>Access token</span><b>${w.hasToken?'✅ Set':'❌ Missing'}</b></div>
+  <div class="h"><span>Sending number ID</span><b>${esc(w.phone)}</b></div></div>
+  <div class="row" style="margin-top:10px"><b>${w.on?'🟢 Messages are ON':'⚪ Messages are OFF'}</b><button class="btn ${w.on?'ol':''} sm" data-wa-on="${w.on?0:1}">${w.on?'Turn off':'Turn on'}</button></div>
+  <label class="f">Send a test message</label><div class="row" style="gap:8px"><input class="i" id="waTo" type="tel" inputmode="tel" placeholder="Phone number" maxlength="20"><button class="btn ol sm" id="waTest">Send test</button></div>
+  <div class="hint">Sends Meta's "hello_world" sample. While the test number is in use, only numbers you have added in Meta's allowed list will receive it.</div>
+  ${w.log&&w.log.length?`<div class="hist" style="display:block"><div class="m"><b>Recent messages</b></div>${w.log.slice(0,8).map(l=>`<div class="h"><span>${esc(tAgo(l.t))} · ${esc(l.to)} · ${esc(l.tpl.replace('cravella_order_',''))}${l.ok?'':`<div class="hint" style="margin-top:2px;color:var(--bad,#b3261e)">${esc(l.err)}</div>`}</span><b>${l.ok?'✓':'✕'}</b></div>`).join('')}</div>`:''}</div>`}
 function settingsHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
-  return `<div class="sec">Closed dates</div><div class="card"><div class="hint" style="margin-top:0">Customers cannot order for these dates (holidays, travel, festivals).</div>
+  return waCard()+`<div class="sec">Closed dates</div><div class="card"><div class="hint" style="margin-top:0">Customers cannot order for these dates (holidays, travel, festivals).</div>
   <div class="row" style="gap:8px;margin-top:10px"><input class="i" type="date" id="closedIn" min="${todayS()}"><button class="btn sm" id="addClosed">Add</button></div>
   <div class="chips">${s.closed.length?s.closed.map(d=>`<button class="chip on" data-del="${esc(d)}">${esc(fmtD(d))} ✕</button>`).join(''):'<span class="hint">No closed dates.</span>'}</div></div>
   <div class="sec">Daily limits</div><div class="card"><div class="hint" style="margin-top:0">When a day is full, customers are asked to pick another date. Use 0 for no limit.</div>
