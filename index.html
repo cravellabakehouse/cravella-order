@@ -465,12 +465,13 @@ function renderTabs(){
 }
 let CFG={unavailable:[],closed:[],full:{cake:[],other:[]},banner:''};
 /* ---------- site layout (admin-controlled) ---------- */
-let SITE=null;try{SITE=JSON.parse(localStorage.getItem('cb_site')||'null')}catch(_){}
+const PV=/[?&]sp=1/.test(location.search);let SITE=null;if(!PV)try{SITE=JSON.parse(localStorage.getItem('cb_site')||'null')}catch(_){}
+const bgCss=c=>{const ok=v=>/^#[0-9a-f]{6}$/i.test(v||'');if(!c||!ok(c.bg))return '';return ok(c.bg2)?'linear-gradient('+(Math.round(+c.ang)||135)+'deg,'+c.bg+','+c.bg2+')':c.bg};
 const SIDS=['gallery','hero','cakes','cupcakes','muffins','cookies','brownies','reviews'];
 const sx=k=>(SITE&&SITE[k]&&typeof SITE[k]==='object'&&!Array.isArray(SITE[k]))?SITE[k]:{};
 function siteSecs(){const out=[],seen={};((SITE&&Array.isArray(SITE.sec))?SITE.sec:[]).forEach(q=>{if(q&&SIDS.includes(q.id)&&!seen[q.id]){seen[q.id]=1;out.push(q)}});SIDS.forEach(id=>{if(!seen[id])out.push({id,on:true,t:''})});return out}
 function colApply(){const C=sx('col'),K=n=>C[n]&&typeof C[n]==='object'?C[n]:{};
-  const set=(el,c)=>{if(!el)return;el.style.removeProperty('background');el.style.removeProperty('color');if(/^#[0-9a-f]{6}$/i.test(c.bg||''))el.style.setProperty('background',c.bg,'important');if(/^#[0-9a-f]{6}$/i.test(c.fg||''))el.style.setProperty('color',c.fg,'important');return el};
+  const set=(el,c)=>{if(!el)return;el.style.removeProperty('background');el.style.removeProperty('color');const g=bgCss(c);if(g)el.style.setProperty('background',g,'important');if(/^#[0-9a-f]{6}$/i.test(c.fg||''))el.style.setProperty('color',c.fg,'important');return el};
   set($('banner'),K('ban'));set($('offer'),K('strip'));const f=set(document.querySelector('.ft2'),K('foot'));if(f)f.classList.toggle('cc',!!K('foot').fg)}
 function footApply(){colApply();const F=sx('foot'),f=document.querySelector('.ft2');if(!f)return;
   f.style.display=F.on===false?'none':'';
@@ -673,7 +674,8 @@ function galTick(){const G=sx('gal');setTimeout(galTick,Math.max(2000,(+G.secs||
 setTimeout(galTick,3500);
 document.addEventListener('click',e=>{const z=e.target.closest('[data-gz]');if(!z)return;const g=GAL[+z.dataset.gz];if(!g)return;
   const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="" src="${esc(galUrl(g))}">${g.cap?`<b>${esc(g.cap)}</b>`:''}`;b.onclick=()=>b.remove();document.body.appendChild(b)});
-function siteLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
+window.addEventListener('message',e=>{if(!PV||e.source!==parent||!e.data||e.data.cbSite===undefined)return;SITE=e.data.cbSite;applySite()});
+function siteLoad(){if(PV)return;if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
   fetch(API_URL+'?site=1').then(r=>r.json()).then(o=>{if(!o||typeof o!=='object')return;const ns=Object.keys(o).length?o:null;if(JSON.stringify(ns)===JSON.stringify(SITE))return;SITE=ns;try{localStorage.setItem('cb_site',JSON.stringify(ns))}catch(_){}applySite()}).catch(()=>{})}
 function galLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
   fetch(API_URL+'?gal=1').then(r=>r.json()).then(l=>{if(!Array.isArray(l))return;if(JSON.stringify(l)===JSON.stringify(GAL))return;GAL=l;try{localStorage.setItem('cb_gal',JSON.stringify(l))}catch(_){}
@@ -684,7 +686,7 @@ function homeHtml(){
   const T=(q,d)=>q.t?esc(q.t):d;
   const P={
    gallery:q=>galHtml(q.t?esc(q.t):esc(G.t||'Custom theme cakes'),1),
-   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(ok(hc.bg)?'background:'+hc.bg+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero${galOn?' sm':''}"${hs?' style="'+hs+'"':''}><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
+   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero${galOn?' sm':''}"${hs?' style="'+hs+'"':''}><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
    cakes:q=>car(T(q,'Cakes'),'cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join('')),
    cupcakes:q=>car(T(q,'Cupcakes · box of 6'),'cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join('')),
    muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
@@ -1047,7 +1049,7 @@ try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArr
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;e.stopPropagation();e.preventDefault();
   const id=z.dataset.zoom,all=[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies||[],MENU.cookies),d=all.find(x=>x.id===id),o=d&&imgOf(d);if(!o)return;
   const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
-footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();siteLoad();
+footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();siteLoad();if(PV)try{parent.postMessage({cbReady:1},'*')}catch(_){}
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
   if(!r||!r.ok||!r.settings)return;CFG=r.settings;applyOrder();try{localStorage.setItem('cb_cfg',JSON.stringify(CFG))}catch(_){}
