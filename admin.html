@@ -36,6 +36,7 @@ a{color:var(--acc)}
 label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:14px 0 6px}
 .hint{font-size:13px;color:var(--mut);margin-top:6px}
 .err{color:var(--bad);font-weight:600;margin-top:8px;font-size:14px}
+.rep.sg-vip{background:#fff1c2;color:#8a5a00}.rep.sg-act{background:#dff5e3;color:#1d6b33}.rep.sg-due{background:#ffe3cc;color:#a24a00}.rep.sg-lap{background:#eee;color:#666}.rep.sg-new{background:#e4edff;color:#27509e}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .chip{padding:7px 12px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;font-weight:600;background:var(--card)}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -158,6 +159,7 @@ body.hasSave{padding-bottom:calc(168px + env(safe-area-inset-bottom))}
 <div class="save hide" id="saveBar"><button class="btn" id="saveBtn">Save changes</button></div>
 <div class="sheet hide" id="edSheet"><div class="in" id="edIn"></div></div>
 <div class="sheet hide" id="pwSheet"><div class="in" id="pwIn"></div></div>
+<div class="sheet hide" id="cpSheet"><div class="in" id="cpIn"></div></div>
 <div class="sheet hide" id="mailSheet"><div class="in" id="mailIn"></div></div>
 <div class="sheet hide" id="cropSheet" style="z-index:40;align-items:center"><div class="in" id="cropIn" style="border-radius:18px;max-width:380px;margin:0 12px"></div></div>
 <div class="toast" id="toast"></div>
@@ -555,19 +557,74 @@ function histRows(a,skip){return a.filter(x=>x!==skip).slice().reverse().map(x=>
 function histBtn(o){const a=CM[keyOf(o)]||[];return a.length>1?`<button class="btn ol sm" data-hist="h_${esc(o.id)}">History (${a.length-1})</button>`:''}
 function histBox(o){const a=CM[keyOf(o)]||[];return a.length>1?`<div class="hist hide" id="h_${esc(o.id)}"><div class="m"><b>${a.length} orders · ${inr(spent(a))} lifetime</b> (cancelled not counted)</div>${histRows(a,o)}</div>`:''}
 function mailNote(o){const m=D.mails[String(o.id).toLowerCase()];return m?`<div class="hint">✉ Emailed ${m.n} time${m.n>1?'s':''} · last ${new Date(m.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</div>`:''}
+/* ---------- customer insights ---------- */
+let cf='all',cs='recent',cOpen='';
+const DAY=864e5,WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const itemName=l=>String(l).split(' – ₹')[0].replace(/\s*\[[^\]]*\]\s*$/,'').split(' · ')[0].replace(/\s*\([^)]*\)\s*$/,'').replace(/\s*×.*$/,'').trim();
+const topN=(arr,n)=>{const m={};arr.filter(Boolean).forEach(x=>m[x]=(m[x]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n)};
+const dShort=ms=>new Date(ms).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
+function cInfo(k){
+  const a=CM[k]||[],ok=a.filter(o=>o.status!=='Cancelled'),l=a[a.length-1],now=Date.now();
+  const ms=ok.map(o=>o.placedMs).filter(Boolean).sort((x,y)=>x-y),gaps=[];for(let i=1;i<ms.length;i++)gaps.push((ms[i]-ms[i-1])/DAY);
+  const avgGap=gaps.length?gaps.reduce((s,x)=>s+x,0)/gaps.length:0,lastMs=ms.length?ms[ms.length-1]:(l.placedMs||0),since=(now-lastMs)/DAY;
+  const sp=spent(a),avg=ok.length?sp/ok.length:0;
+  let seg='new';
+  if(!ok.length)seg='cancelled';
+  else if(ok.length>=5||sp>=10000)seg='vip';
+  else if(ok.length>1&&since>Math.max(120,avgGap*3))seg='lapsed';
+  else if(ok.length>1&&since>avgGap*1.2)seg='due';
+  else if(ok.length>1)seg='active';
+  else if(since>90)seg='lapsed';
+  const items=topN(ok.flatMap(o=>o.lines.map(itemName)),4),days=topN(ok.map(o=>{const d=new Date(o.date+'T00:00');return isNaN(d)?'':WD[d.getDay()]}),2),
+    modes=topN(ok.map(o=>o.mode),2),times=topN(ok.map(o=>o.time),2),addrs=topN(ok.map(o=>o.mode&&/deliver/i.test(o.mode)?o.address:''),2);
+  const lead=ok.map(o=>{const d=new Date(o.date+'T00:00');return isNaN(d)||!o.placedMs?null:(d-o.placedMs)/DAY}).filter(x=>x!==null&&x>=0);
+  const email=a.map(o=>o.email).filter(Boolean).pop()||'';
+  return{k,a,ok,l,sp,avg,avgGap,since,lastMs,seg,items,days,modes,times,addrs,email,lead:lead.length?lead.reduce((s,x)=>s+x,0)/lead.length:0,
+    next:ok.length>1?lastMs+avgGap*DAY:0,notes:ok.map(o=>o.notes).filter(Boolean).slice(-3)}
+}
+const SEG={vip:['⭐ VIP','vip'],active:['Active','act'],due:['Due to reorder','due'],lapsed:['Lapsed','lap'],new:['New','new'],cancelled:['Cancelled only','lap']};
+const segTag=s=>`<span class="rep sg-${SEG[s][1]}">${SEG[s][0]}</span>`;
 function custHtml(){
-  const all=Object.keys(CM).map(k=>({k,a:CM[k]})),rp=all.filter(c=>c.a.length>1).length,s=cq.trim().toLowerCase();
-  const L=all.filter(c=>!s||c.a.some(o=>(o.name+' '+o.phone+' '+o.email).toLowerCase().includes(s))).sort((x,y)=>y.a[y.a.length-1].placedMs-x.a[x.a.length-1].placedMs);
-  let h=`<div class="stat"><div><b>${all.length}</b><span>Customers</span></div><div><b>${rp}</b><span>Repeat</span></div><div><b>${all.length?Math.round(rp*100/all.length):0}%</b><span>Repeat rate</span></div></div>
-  <input class="i" id="cSearch" placeholder="Search name, phone or email" value="${esc(cq)}">`;
-  h+=L.length?L.map(({k,a})=>{const l=a[a.length-1],em=a.map(o=>o.email).filter(Boolean).pop()||'';
-    return `<div class="card"><div class="row"><span class="id" style="font-weight:700">${esc(l.name)}${a.length>1?'<span class="rep">Repeat</span>':'<span class="rep new">New</span>'}</span><b>${inr(spent(a))}</b></div>
-    <div class="m"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>${em?' · '+esc(em):''}</div>
-    <div class="m">${a.length} order${a.length>1?'s':''} · last ${esc(l.placed)}${a.length>1?' · avg '+inr(spent(a)/a.filter(o=>o.status!=='Cancelled').length||0):''}</div>
-    <div class="acts"><button class="btn ol sm" data-hist="c_${esc(k)}">Order history</button><a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${esc(String(l.phone).replace(/\D/g,'').slice(-10))}">WhatsApp</a><button class="btn ol sm" data-mail="${esc(l.id)}">✉ Email</button></div>
-    <div class="hist hide" id="c_${esc(k)}">${histRows(a)}</div></div>`}).join(''):`<div class="card"><div class="hint">No customers yet.</div></div>`;
+  const all=Object.keys(CM).map(cInfo),s=cq.trim().toLowerCase(),cnt=f=>all.filter(c=>f==='all'||(f==='repeat'?c.ok.length>1:c.seg===f)).length;
+  let L=all.filter(c=>(cf==='all'||(cf==='repeat'?c.ok.length>1:c.seg===cf))&&(!s||c.a.some(o=>(o.name+' '+o.phone+' '+o.email).toLowerCase().includes(s))));
+  L.sort(cs==='spend'?(x,y)=>y.sp-x.sp:cs==='orders'?(x,y)=>y.ok.length-x.ok.length:cs==='gap'?(x,y)=>(y.since-x.since):(x,y)=>y.lastMs-x.lastMs);
+  const rev=all.reduce((t,c)=>t+c.sp,0),rp=all.filter(c=>c.ok.length>1).length,gp=all.filter(c=>c.avgGap).map(c=>c.avgGap),ag=gp.length?gp.reduce((t,x)=>t+x,0)/gp.length:0;
+  const CH=[['all','All'],['vip','⭐ VIP'],['repeat','Repeat'],['due','Due to reorder'],['lapsed','Lapsed'],['new','New']];
+  let h=`<div class="stat"><div><b>${all.length}</b><span>Customers</span></div><div><b>${all.length?Math.round(rp*100/all.length):0}%</b><span>Repeat rate</span></div><div><b>${ag?Math.round(ag)+'d':'–'}</b><span>Avg days between orders</span></div></div>
+  <div class="stat"><div><b>${inr(rev)}</b><span>Lifetime sales</span></div><div><b>${all.length?inr(rev/all.length):'–'}</b><span>Per customer</span></div></div>
+  <input class="i" id="cSearch" placeholder="Search name, phone or email" value="${esc(cq)}">
+  <div class="chips" style="margin:8px 0">${CH.map(([k,n])=>`<button class="chip ${cf===k?'on':''}" data-cf="${k}">${n} ${cnt(k)}</button>`).join('')}</div>
+  <div class="row" style="margin:4px 0 8px"><select class="i" id="cSort" style="width:auto;padding:7px 10px"><option value="recent"${cs==='recent'?' selected':''}>Sort: latest order</option><option value="spend"${cs==='spend'?' selected':''}>Sort: most spent</option><option value="orders"${cs==='orders'?' selected':''}>Sort: most orders</option><option value="gap"${cs==='gap'?' selected':''}>Sort: longest since order</option></select><button class="btn ol sm" id="cCsv">⬇ Export CSV</button></div>`;
+  h+=L.length?L.map(c=>{const l=c.l;
+    return `<div class="card" data-cp="${esc(c.k)}" style="cursor:pointer"><div class="row"><span class="id" style="font-weight:700">${esc(l.name)} ${segTag(c.seg)}</span><b>${inr(c.sp)}</b></div>
+    <div class="m">${esc(l.phone)}${c.email?' · '+esc(c.email):''}</div>
+    <div class="m">${c.ok.length} order${c.ok.length==1?'':'s'}${c.avgGap?' · every ~'+Math.round(c.avgGap)+' days':''} · last ${dShort(c.lastMs)} (${Math.round(c.since)}d ago)${c.items[0]?' · loves '+esc(c.items[0][0]):''}</div></div>`}).join(''):`<div class="card"><div class="hint">No customers match.</div></div>`;
   return h
 }
+function custProfile(k){
+  const c=cInfo(k),l=c.l,ph=String(l.phone).replace(/\D/g,'').slice(-10),row=(a,b)=>b?`<div class="h"><span>${a}</span><b>${b}</b></div>`:'';
+  const pct=(n,t)=>t?Math.round(n*100/t)+'%':'';
+  return `<div class="row"><div class="t" style="font-size:20px">${esc(l.name)} ${segTag(c.seg)}</div><button class="btn ol sm" id="cpClose">Close</button></div>
+  <div class="m" style="margin:4px 0 10px"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>${c.email?' · '+esc(c.email):''}</div>
+  <div class="stat"><div><b>${c.ok.length}</b><span>Orders</span></div><div><b>${inr(c.sp)}</b><span>Lifetime</span></div><div><b>${inr(c.avg)}</b><span>Avg order</span></div></div>
+  <div class="hist" style="display:block"><div class="m"><b>Ordering pattern</b></div>
+  ${row('First order',c.ok.length?dShort(c.ok[0].placedMs):'')}${row('Last order',c.lastMs?dShort(c.lastMs)+' · '+Math.round(c.since)+' days ago':'')}
+  ${row('Orders about every',c.avgGap?Math.round(c.avgGap)+' days':(c.ok.length==1?'only one order so far':''))}${row('Likely next order',c.next?(c.next<Date.now()?'overdue since '+dShort(c.next):dShort(c.next)):'')}
+  ${row('Usually books ahead',c.lead?Math.round(c.lead)+' days':'')}${row('Needed-by day',c.days.map(x=>x[0]+' ('+pct(x[1],c.ok.length)+')').join(', '))}
+  ${row('Usual time',c.times.map(x=>esc(x[0])).join(', '))}${row('Pickup / delivery',c.modes.map(x=>esc(x[0])+' ('+pct(x[1],c.ok.length)+')').join(', '))}
+  ${row('Delivery address',c.addrs.map(x=>esc(x[0])).join(' | '))}</div>
+  ${c.items.length?`<div class="hist" style="display:block"><div class="m"><b>Favourites</b></div>${c.items.map(x=>`<div class="h"><span>${esc(x[0])}</span><b>${x[1]}×</b></div>`).join('')}</div>`:''}
+  ${c.notes.length?`<div class="hist" style="display:block"><div class="m"><b>Recent notes on orders</b></div>${c.notes.map(n=>`<div class="hint" style="margin:4px 0">“${esc(n)}”</div>`).join('')}</div>`:''}
+  <div class="acts" style="margin:10px 0"><a class="btn ol sm" href="tel:${esc(l.phone)}">📞 Call</a><a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a><button class="btn ol sm" data-mail="${esc(l.id)}">✉ Email</button></div>
+  <div class="hist" style="display:block"><div class="m"><b>Order history (${c.a.length})</b></div>${histRows(c.a)}</div>`
+}
+function custCsv(){
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',R=[['Name','Phone','Email','Segment','Orders','Lifetime spend','Avg order','First order','Last order','Days since last','Avg days between orders','Favourite items','Usual day','Pickup/Delivery']];
+  Object.keys(CM).map(cInfo).forEach(c=>R.push([c.l.name,c.l.phone,c.email,SEG[c.seg][0],c.ok.length,Math.round(c.sp),Math.round(c.avg),c.ok.length?new Date(c.ok[0].placedMs).toISOString().slice(0,10):'',c.lastMs?new Date(c.lastMs).toISOString().slice(0,10):'',Math.round(c.since),c.avgGap?Math.round(c.avgGap):'',c.items.map(x=>x[0]).join('; '),c.days.map(x=>x[0]).join('; '),c.modes.map(x=>x[0]).join('; ')]));
+  const b=new Blob(['﻿'+R.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='cravella-customers-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)
+}
+function openCust(k){cOpen=k;$('cpIn').innerHTML=custProfile(k);showSheet('cpSheet')}
+function closeCust(){cOpen='';$('cpSheet').classList.add('hide');popSheet()}
 
 /* ---------- email composer ---------- */
 const MK=[['confirm','Confirmed'],['advance','Advance received'],['ready','Ready'],['thanks','Thank you'],['ask','Question']];
@@ -609,6 +666,10 @@ $('panel').addEventListener('click',async e=>{
   const op=e.target.closest('[data-open]');if(op){q=op.dataset.open;filt='all';goTab('orders');if(tab==='orders'){render();scrollTo(0,0)}return}
   const f=e.target.closest('[data-f]');if(f){filt=f.dataset.f;render();return}
   const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
+  if(e.target===$('cpSheet')||e.target.closest('#cpClose')){closeCust();return}
+  const cfb=e.target.closest('[data-cf]');if(cfb){cf=cfb.dataset.cf;render();return}
+  if(e.target.closest('#cCsv')){custCsv();return}
+  const cpb=e.target.closest('[data-cp]');if(cpb&&!e.target.closest('a,button')){openCust(cpb.dataset.cp);return}
   const hb=e.target.closest('[data-hist]');if(hb){const x=document.getElementById(hb.dataset.hist);if(x)x.classList.toggle('hide');return}
   if(e.target.closest('#refresh')){await loadOrders();render();toast('Updated');return}
   const sb=e.target.closest('[data-s]');if(sb){
@@ -631,6 +692,7 @@ $('panel').addEventListener('click',async e=>{
 });
 $('panel').addEventListener('input',e=>{
   if(e.target.id==='search'){q=e.target.value;const pos=e.target.selectionStart;render();const s=$('search');s.focus();s.setSelectionRange(pos,pos)}
+  if(e.target.id==='cSort'){cs=e.target.value;render();return}
   if(e.target.id==='cSearch'){cq=e.target.value;const pos=e.target.selectionStart;render();const s=$('cSearch');s.focus();s.setSelectionRange(pos,pos)}
   if(['capCake','capOther','banner'].includes(e.target.id)){D.settings[e.target.id]=e.target.id==='banner'?e.target.value:Math.max(0,parseInt(e.target.value)||0);dirty=true}
 });
@@ -1045,13 +1107,13 @@ function popSheet(){try{if(history.state&&history.state.cb==='sheet')history.bac
 try{history.replaceState({cb:'tab',tab},'')}catch(_){}
 addEventListener('popstate',e=>{
   if(!tok){showLogin();return}
-  const CL={pwSheet:closePw,edSheet:closeEd,mailSheet:closeMail,moreSheet:()=>$('moreSheet').classList.add('hide')};
+  const CL={cpSheet:closeCust,pwSheet:closePw,edSheet:closeEd,mailSheet:closeMail,moreSheet:()=>$('moreSheet').classList.add('hide')};
   for(const id in CL){if(!$(id).classList.contains('hide')){CL[id]();return}}
   const st=e.state;if(st&&st.cb==='tab'&&st.tab!==tab){tab=st.tab;render();scrollTo(0,0)}
 });
 addEventListener('pageshow',e=>{if(e.persisted&&!tok)showLogin()});
 
-setInterval(()=>{if(document.hidden||!tok||(tab!=='today'&&tab!=='home')||['pwSheet','edSheet','mailSheet','moreSheet'].some(i=>!$(i).classList.contains('hide')))return;loadOrders().then(()=>{if(tab==='today'||tab==='home')render()}).catch(()=>{})},60000);
+setInterval(()=>{if(document.hidden||!tok||(tab!=='today'&&tab!=='home')||['cpSheet','pwSheet','edSheet','mailSheet','moreSheet'].some(i=>!$(i).classList.contains('hide')))return;loadOrders().then(()=>{if(tab==='today'||tab==='home')render()}).catch(()=>{})},60000);
 boot();
 $('panel').addEventListener('change',e=>{if(e.target.id==='brkMsg'&&D.site&&tab==='home')brkSave(D.site.brk.on,e.target.value,true)});
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
