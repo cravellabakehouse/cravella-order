@@ -308,7 +308,7 @@ body.fx-l .band{padding-top:calc(30px + env(safe-area-inset-top))}
 .ffw{position:absolute;pointer-events:none;right:0;top:0;width:100%;height:100%}
 #fall{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}#fall span{position:absolute;top:-34px;animation:fallk linear infinite;opacity:.85;will-change:transform}@keyframes fallk{0%{transform:translate3d(0,-34px,0) rotate(0)}50%{transform:translate3d(18px,50vh,0) rotate(180deg)}100%{transform:translate3d(-10px,108vh,0) rotate(360deg)}}
 .hero.fxp>i{display:none}
-@media (prefers-reduced-motion:reduce){.lights g,.fstar{animation:none}#fall{display:none}}
+#fxc{position:fixed;left:0;top:0;pointer-events:none;z-index:19}@media (prefers-reduced-motion:reduce){.lights g,.fstar{animation:none}#fall,#fxc{display:none}}
 </style>
 </head>
 <body>
@@ -652,7 +652,7 @@ const TH={
  party:{msg:'🎉 Planning a party? Order a custom theme cake! 🎂',L:['#ff7ad9','#ffd23f','#4da3ff','#3ddc97','#ffa94d'],wire:'#8a5a8a',fall:['🎊','🎈','✨'],P:['🎈','🎉','🎂'],pal:{bg:'#fff5fb',ink:'#4a1440',mut:'#9a5a8a',line:'#f3d3ea',acc:'#d6338a',tabs:'#7a1f6e',tab:'#98308a',tabB:'#ffd23f88',on:['#ffd23f','#ffa94d'],onInk:'#4a1440',heroA:'#d6338a',heroB:'#7a1f6e',heroBd:'#ffd23f',heroH:'#fff3a8',banA:'#ff7ad9',banB:'#ffd23f',banInk:'#4a1440',sec:'#a02277',pr:'#d6338a',btn:['#d6338a','#ff7ad9']}},
  hearts:{msg:'❤️ Say it with cake! Custom cakes for your special someone 💝',L:['#ff4d6d','#ff8fa3','#ffffff','#ff4d6d'],wire:'#8a3a4a',fall:['❤️','💖','💕'],P:['❤️','💝','🍰'],pal:{bg:'#fff5f6',ink:'#4a1020',mut:'#9a5a66',line:'#f3d3d9',acc:'#c9184a',tabs:'#7a1030',tab:'#9a2045',tabB:'#ffb3c188',on:['#ff4d6d','#ff8fa3'],onInk:'#ffffff',heroA:'#c9184a',heroB:'#590d22',heroBd:'#ffb3c1',heroH:'#ffe0e6',banA:'#ff8fa3',banB:'#ffc2d1',banInk:'#4a1020',sec:'#a4133c',pr:'#c9184a',btn:['#c9184a','#ff4d6d']}}
 };
-const FX=()=>{const f=sx('fx'),F=Object.assign({theme:'diwali',lights:true,props:true,fall:false,colors:true},f);if(!TH[F.theme])F.theme='none';return F};
+const FX=()=>{const f=sx('fx'),F=Object.assign({theme:'diwali',lights:true,props:true,fall:false,colors:true,amt:2},f);if(!TH[F.theme])F.theme='none';if(!['none','fall','bursts','sparks','both'].includes(F.anim))F.anim=F.fall?'fall':'none';F.amt=Math.min(3,Math.max(1,+F.amt||2));return F};
 const festOn=()=>FX().theme!=='none';
 function themeCss(p){return `body.fest{--bg:${p.bg};--card:#fff;--ink:${p.ink};--mut:${p.mut};--line:${p.line};--acc:${p.acc};background:${p.bg}}
 body.fest .banner{display:block!important;background:linear-gradient(90deg,${p.banA},${p.banB},${p.banA})!important;color:${p.banInk}!important;font-weight:800;text-align:center;padding:8px;border-bottom:0!important}
@@ -682,9 +682,25 @@ function fxApply(){const F=FX(),T=TH[F.theme],on=festOn(),b=document.body;FXT=T|
   document.querySelectorAll('#hdr .lights').forEach(n=>n.remove());
   if(on&&F.lights){$('hdr').insertAdjacentHTML('afterbegin','<div class="lights"></div>');drawLights()}
   const fl=$('fall');if(fl)fl.remove();
-  if(on&&F.fall){const N=innerWidth<500?10:16,sp=T.fall;let h='';for(let i=0;i<N;i++){const r=(i*61+13)%100,d=7+(i*37)%8,dl=-((i*53)%d),sz=14+(i*29)%10;h+='<span style="left:'+r+'%;animation-duration:'+d+'s;animation-delay:'+dl+'s;font-size:'+sz+'px">'+sp[i%sp.length]+'</span>'}
+  if(on&&F.anim==='fall'){const N=(innerWidth<500?10:16)+(F.amt-2)*4,sp=T.fall;let h='';for(let i=0;i<N;i++){const r=(i*61+13)%100,d=7+(i*37)%8,dl=-((i*53)%d),sz=14+(i*29)%10;h+='<span style="left:'+r+'%;animation-duration:'+d+'s;animation-delay:'+dl+'s;font-size:'+sz+'px">'+sp[i%sp.length]+'</span>'}
     const el=document.createElement('div');el.id='fall';el.setAttribute('aria-hidden','true');el.innerHTML=h;document.body.appendChild(el)}
-  hdrH()}
+  fxCanvas(on?F.anim:'none',T,F);hdrH()}
+let FXR=0,FXP=[],FXS=null;addEventListener('resize',()=>{if(FXS)FXS()});
+function fxCanvas(an,T,F){cancelAnimationFrame(FXR);FXR=0;FXP=[];FXS=null;let c=$('fxc');
+  const bu=an==='bursts'||an==='both',sp=an==='sparks'||an==='both';
+  if(!(bu||sp)||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)){if(c)c.remove();return}
+  if(!c){c=document.createElement('canvas');c.id='fxc';c.setAttribute('aria-hidden','true');document.body.appendChild(c)}
+  const x=c.getContext('2d'),A=F.amt-1,cols=T.L.filter(k=>k!=='#ffffff'&&k!=='#c0c0c0'),gold=['#ffd23f','#ffb347','#fff2a8','#ff9f1c'];
+  let W=0,H=0;const size=()=>{const D=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;c.style.width=W+'px';c.style.height=H+'px';x.setTransform(D,0,0,D,0,0)};size();FXS=size;
+  const R=Math.random,bi=[2200,1400,800][A],sr=[.35,.8,1.5][A];let last=0,nb=performance.now()+500;
+  const burst=(px,py)=>{const a=cols[R()*cols.length|0],b=cols[R()*cols.length|0],n=30+(R()*14|0);for(let i=0;i<n;i++){const g=i/n*6.283+R()*.2,s=1.6+R()*2.2;FXP.push({x:px,y:py,vx:Math.cos(g)*s,vy:Math.sin(g)*s,l:0,m:55+R()*30,c:i%3?a:b,r:1.8,g:.045})}};
+  const spark=()=>{const tb=document.querySelector('.tabs')||$('hdr'),r=tb.getBoundingClientRect();FXP.push({x:R()*W,y:R()<.5?r.bottom:r.top+3,vx:(R()-.5)*1.6,vy:(R()-.9)*1.8,l:0,m:28+R()*22,c:gold[R()*4|0],r:1.2+R()*1.2,g:.07})};
+  const step=t=>{FXR=requestAnimationFrame(step);if(document.hidden||t-last<30)return;last=t;x.clearRect(0,0,W,H);
+    if(bu&&t>nb){burst(W*(.15+R()*.7),(parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hh'))||60)+50+R()*H*.3);nb=t+bi*(.7+R()*.6)}
+    if(sp){let k=sr;while(k>0){if(R()<Math.min(1,k))spark();k-=1}}
+    FXP=FXP.filter(p=>{if(++p.l>p.m)return false;p.vx*=.985;p.vy=p.vy*.985+p.g;p.x+=p.vx;p.y+=p.vy;const al=1-p.l/p.m;x.fillStyle=p.c;x.globalAlpha=al*.25;x.beginPath();x.arc(p.x,p.y,p.r*2.6,0,6.283);x.fill();x.globalAlpha=al;x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fill();return true});
+    if(FXP.length>400)FXP.splice(0,FXP.length-400);x.globalAlpha=1};
+  FXR=requestAnimationFrame(step)}
 const festBanner=()=>{const F=FX();if(F.theme==='none')return;const b=$('banner');if(b&&!b.textContent.trim())b.textContent=TH[F.theme].msg};
 /* ---------- custom cake gallery (auto-sliding banner) ---------- */
 let GAL=[];try{GAL=JSON.parse(localStorage.getItem('cb_gal')||'[]')||[]}catch(_){}
