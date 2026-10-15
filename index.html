@@ -156,7 +156,9 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .bar .go{font-size:20px;padding:17px 24px;border-radius:15px;letter-spacing:.01em}
 .bar.empty .go{width:100%}
 .bar .b{font-size:23px}
-body.acct-open .bar{z-index:25}
+body.acct-open .bar{z-index:25}body.acct-open .bn{z-index:24}
+.aclg{margin-left:auto;height:34px;width:auto;cursor:pointer;flex:none;border-radius:8px}
+#acFoot .ft2{margin-top:18px}
 #acct{padding-bottom:130px}
 .o{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}
 .o .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -315,7 +317,7 @@ body.fest .band{padding-top:calc(30px + env(safe-area-inset-top))}
 <div class="tabs" id="tabs"></div>
 <main id="panel"></main>
 <div class="foot ft2"><a class="fph" href="tel:+919845904310">📞 98459-04310</a><div class="fnote" style="margin-top:8px"><b class="dlvh">Delivery charges extra</b></div>
-<div class="flinks"><a href="#" id="polLink">Our policy</a><a href="#" id="abtLink">About us</a></div>
+<div class="flinks"><a href="#" id="polLink" data-fl="policy">Our policy</a><a href="#" id="abtLink" data-fl="about">About us</a></div>
 <div class="soc"><a href="https://www.instagram.com/cravellabakehouse/" target="_blank" rel="noopener" aria-label="Cravella on Instagram"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg></a><a href="https://www.facebook.com/profile.php?id=61584029883237" target="_blank" rel="noopener" aria-label="Cravella on Facebook"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></a></div>
 <div class="fine">FSSAI Lic. No. 21225177003525</div>
 <div class="credit">Website by <b>MEETUNOVA TECH (OPC) PVT. LTD.</b> · Ver 1.26</div></div>
@@ -388,8 +390,8 @@ body.fest .band{padding-top:calc(30px + env(safe-area-inset-top))}
 </div>
 
 <div class="ov" id="acct">
- <div class="ovh"><button class="back" id="acBack" aria-label="Back">‹</button><h2>My account</h2></div>
- <div class="wrap" id="acBody"></div>
+ <div class="ovh"><button class="back" id="acBack" aria-label="Back">‹</button><h2>My orders</h2><img class="aclg" id="acLg" alt="Cravella Bake House" role="button" tabindex="0"></div>
+ <div class="wrap" id="acBody"></div><div id="acFoot"></div>
 </div>
 
 <script src="img.js"></script>
@@ -461,6 +463,19 @@ function renderTabs(){
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${n}${cnt[k]?`<span class="n">${cnt[k]}</span>`:''}</button>`).join('');
 }
 let CFG={unavailable:[],closed:[],full:{cake:[],other:[]},banner:''};
+/* ---------- site layout (admin-controlled) ---------- */
+let SITE=null;try{SITE=JSON.parse(localStorage.getItem('cb_site')||'null')}catch(_){}
+const SIDS=['gallery','hero','cakes','cupcakes','muffins','cookies','brownies','reviews'];
+const sx=k=>(SITE&&SITE[k]&&typeof SITE[k]==='object'&&!Array.isArray(SITE[k]))?SITE[k]:{};
+function siteSecs(){const out=[],seen={};((SITE&&Array.isArray(SITE.sec))?SITE.sec:[]).forEach(q=>{if(q&&SIDS.includes(q.id)&&!seen[q.id]){seen[q.id]=1;out.push(q)}});SIDS.forEach(id=>{if(!seen[id])out.push({id,on:true,t:''})});return out}
+function footApply(){const F=sx('foot'),f=document.querySelector('.ft2');if(!f)return;
+  f.style.display=F.on===false?'none':'';
+  const n=f.querySelector('.fnote');if(n){n.style.display=F.dlv===false?'none':'';const b=n.querySelector('b');if(b)b.textContent=F.note||'Delivery charges extra'}
+  const fi=f.querySelector('.fine');if(fi)fi.style.display=F.fssai===false?'none':'';
+  const so=f.querySelector('.soc');if(so)so.style.display=F.soc===false?'none':''}
+function bannerSet(){const b=$('banner'),B=sx('ban');if(B.on===false){b.textContent='';b.style.display='none';return}b.style.display='';b.textContent=B.t||CFG.banner||'';festBanner()}
+function applySite(){bannerSet();offerStrip();footApply();if(!S.q.trim()&&(S.tab==='home'||S.tab==='custom'))renderPanel();const a=$('acFoot');if(a&&a.firstChild)acFoot()}
+
 let PHM={};try{PHM=JSON.parse(localStorage.getItem('cb_ph')||'{}')||{}}catch(_){}
 const phUrl=id=>{const m=PHM;return m[id]?API_URL+'?mp='+encodeURIComponent(id)+'&v='+m[id]:''};
 const isOff=id=>CFG.unavailable.includes(id)||(CFG.del||[]).includes(id);
@@ -648,22 +663,31 @@ function galWire(){document.querySelectorAll('.gal .gl-tr').forEach(tr=>{if(tr._
   tr.addEventListener('scroll',()=>{const i=galIdx(tr);dots.forEach((d,k)=>d.classList.toggle('on',k===i))},{passive:true});
   ['pointerdown','touchstart','wheel','mouseenter'].forEach(ev=>tr.addEventListener(ev,()=>{galHold=Date.now()+8000},{passive:true}))})}
 new MutationObserver(galWire).observe($('panel'),{childList:true,subtree:true});
-setInterval(()=>{if(document.hidden||Date.now()<galHold||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
-  document.querySelectorAll('.gal .gl-tr').forEach(tr=>{const n=tr.children.length;if(n<2)return;const r=tr.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;galGo(tr,(galIdx(tr)+1)%n)})},3500);
+function galTick(){const G=sx('gal');setTimeout(galTick,Math.max(2000,(+G.secs||3.5)*1000));
+  if(G.auto===false||document.hidden||Date.now()<galHold||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  document.querySelectorAll('.gal .gl-tr').forEach(tr=>{const n=tr.children.length;if(n<2)return;const r=tr.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;galGo(tr,(galIdx(tr)+1)%n)})}
+setTimeout(galTick,3500);
 document.addEventListener('click',e=>{const z=e.target.closest('[data-gz]');if(!z)return;const g=GAL[+z.dataset.gz];if(!g)return;
   const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="" src="${esc(galUrl(g))}">${g.cap?`<b>${esc(g.cap)}</b>`:''}`;b.onclick=()=>b.remove();document.body.appendChild(b)});
+function siteLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
+  fetch(API_URL+'?site=1').then(r=>r.json()).then(o=>{if(!o||typeof o!=='object')return;const ns=Object.keys(o).length?o:null;if(JSON.stringify(ns)===JSON.stringify(SITE))return;SITE=ns;try{localStorage.setItem('cb_site',JSON.stringify(ns))}catch(_){}applySite()}).catch(()=>{})}
 function galLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
   fetch(API_URL+'?gal=1').then(r=>r.json()).then(l=>{if(!Array.isArray(l))return;if(JSON.stringify(l)===JSON.stringify(GAL))return;GAL=l;try{localStorage.setItem('cb_gal',JSON.stringify(l))}catch(_){}
     if(!S.q.trim()&&(S.tab==='home'||S.tab==='custom'))renderPanel();galWire()}).catch(()=>{})}
 function homeHtml(){
   const cakes=MENU.cakes.filter(c=>!c.custom),bro=[...MENU.brownies,...(MENU.blondies||[])];
-  return galHtml('Custom theme cakes',1)+`<div class="hero${GAL.length?' sm':''}"><h2>Fresh, eggless &amp; baked to order</h2><p>Cakes need 2 days' notice. Bakes need 1 day.</p><button data-go="custom">Custom theme cakes ›</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`
-   +car('Cakes','cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join(''))
-   +car('Cupcakes · box of 6','cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join(''))
-   +car('Muffins · box of 6','muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join(''))
-   +car('Cookies · per 250 g','cookies',MENU.cookies.map((d,i)=>tile(d,inr(d.rate),'per 250 g','cookies','🍪',i+1)).join(''))
-   +car('Brownies &amp; blondies','brownies',bro.map((d,i)=>tile(d,inr(d.box),'Box of '+d.size,'brownies','🍫',i+6)).join(''))
-   +reviewsHtml()}
+  const H=sx('hero'),G=sx('gal'),secs=siteSecs(),galOn=GAL.length&&secs.some(q=>q.id==='gallery'&&q.on);
+  const T=(q,d)=>q.t?esc(q.t):d;
+  const P={
+   gallery:q=>galHtml(q.t?esc(q.t):esc(G.t||'Custom theme cakes'),1),
+   hero:()=>`<div class="hero${galOn?' sm':''}"><h2>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`,
+   cakes:q=>car(T(q,'Cakes'),'cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join('')),
+   cupcakes:q=>car(T(q,'Cupcakes · box of 6'),'cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join('')),
+   muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
+   cookies:q=>car(T(q,'Cookies · per 250 g'),'cookies',MENU.cookies.map((d,i)=>tile(d,inr(d.rate),'per 250 g','cookies','🍪',i+1)).join('')),
+   brownies:q=>car(T(q,'Brownies &amp; blondies'),'brownies',bro.map((d,i)=>tile(d,inr(d.box),'Box of '+d.size,'brownies','🍫',i+6)).join('')),
+   reviews:()=>reviewsHtml()};
+  return secs.filter(q=>q.on!==false).map(q=>P[q.id](q)).join('')}
 function searchHtml(q){
   const k=q.toLowerCase().trim();let h='',n=0;
   const hit=(d,kind)=>(d.name+' '+(d.desc||'')+' '+kind).toLowerCase().includes(k);
@@ -677,8 +701,7 @@ const NAV=[];let lastTab='home';
 function syncBack(){const b=$('backRow');if(b)b.hidden=!(S.tab!=='home'||S.q.trim())}
 function goBack(){if(S.q.trim()){S.q='';$('q').value='';setSearch(false);renderPanel();syncBack();return}const t=NAV.pop();S.tab=t||'home';lastTab=S.tab;renderTabs();renderPanel();syncBack();scrollTo(0,0)}
 $('backBtn').onclick=goBack;
-$('polLink').onclick=e=>{e.preventDefault();S.q='';$('q').value='';setSearch(false);S.tab='policy';renderTabs();renderPanel();scrollTo(0,0)};
-$('abtLink').onclick=e=>{e.preventDefault();S.q='';$('q').value='';setSearch(false);S.tab='about';renderTabs();renderPanel();scrollTo(0,0)};
+document.addEventListener('click',e=>{const a=e.target.closest('[data-fl]');if(!a)return;e.preventDefault();if($('acct').classList.contains('on'))closeAcct();S.q='';$('q').value='';setSearch(false);S.tab=a.dataset.fl;renderTabs();renderPanel();scrollTo(0,0)});
 $('logoHome').onclick=()=>goHome();$('logoHome').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goHome()}};
 $('q').addEventListener('input',()=>setTimeout(syncBack,0));
 function setSearch(o){$('sbox').hidden=!o;$('sBtn').setAttribute('aria-expanded',o?'true':'false');if(o)setTimeout(()=>$('q').focus(),30);hdrH()}
@@ -694,7 +717,7 @@ $('panel').addEventListener('click',e=>{
   const j=g.dataset.jump,el=j&&document.querySelector(`[data-cake="${j}"],[data-pc="${j}"],[data-ck="${j}"]`);
   if(el){el.scrollIntoView({block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1300)}else scrollTo(0,0)});
 $('bn').addEventListener('click',e=>{const b=e.target.closest('[data-n]');if(!b)return;const n=b.dataset.n;
-  if(n==='home')goHome();else if(n==='orders')openAcct();else if(n==='cart')goOrder()});
+  if(n==='home'){if($('acct').classList.contains('on'))closeAcct();goHome()}else if(n==='orders'){if(!$('acct').classList.contains('on'))openAcct()}else if(n==='cart')goOrder()});
 
 /* ---------- review ---------- */
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -776,8 +799,12 @@ $('thumbs').addEventListener('click',e=>{const b=e.target.closest('[data-x]');if
 function offerStrip(){const asc=[...TIERS()].sort((a,b)=>a[0]-b[0]);const disc=asc.map(([from,pct],i)=>pct+'% off '+(i?'':'orders ')+'above '+inr(from-1)).join(' · ');
   const fe=FESTO(),fd=d=>{const q=d.split('-');return +q[2]+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][q[1]-1]};
   const fst=fe&&fe.live?'🎁 Order '+inr(fe.min)+'+ till '+fd(fe.to)+' and get '+fe.pct+'% off your next order':'';
-  const items=['🌱 100% eggless','Freshly baked to order',disc,fst,'🚚 Delivery charges extra','📍 Delivery within Bengaluru, Karnataka only'].filter(Boolean),one=items.map(t=>'<span>'+esc(t)+'</span>').join('');
-  $('offer').innerHTML='<div class="trk" aria-label="'+esc(items.join('. '))+'">'+one+one+'</div>'}
+  const ST=sx('strip');if(ST.on===false){$('offer').innerHTML='';return}
+  const def=[{k:'x',t:'🌱 100% eggless'},{k:'x',t:'Freshly baked to order'},{k:'disc'},{k:'fest'},{k:'x',t:'🚚 Delivery charges extra'},{k:'x',t:'📍 Delivery within Bengaluru, Karnataka only'}];
+  const src=Array.isArray(ST.items)&&ST.items.length?ST.items:def;
+  const items=src.filter(q=>q.on!==false).map(q=>q.k==='disc'?disc:q.k==='fest'?fst:q.t).filter(Boolean),one=items.map(t=>'<span>'+esc(t)+'</span>').join('');
+  if(!items.length){$('offer').innerHTML='';return}
+  $('offer').innerHTML='<div class="trk" style="animation-duration:'+(+ST.speed||32)+'s" aria-label="'+esc(items.join('. '))+'">'+one+one+'</div>'}
 offerStrip();
 $('cpnGo').onclick=async()=>{
   const code=$('cpnIn').value.trim();if(!code)return setCpn('Please enter a coupon code.','bad');
@@ -985,13 +1012,16 @@ $('acBody').addEventListener('click',e=>{
 });
 $('acBody').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const t=e.target;
   if(t.id==='aEmail'||t.id==='aCode'){e.preventDefault();const b=$('acBody').querySelector('button.go');if(b)b.click()}});
+function acFoot(){const f=document.querySelector('.ft2');if(!f)return;const c=f.cloneNode(true);c.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));$('acFoot').replaceChildren(c)}
+function acNav(on){document.querySelectorAll('#bn [data-n]').forEach(b=>b.classList.toggle('on',on?b.dataset.n==='orders':b.dataset.n==='home'))}
 async function openAcct(){
+  const li=document.querySelector('#logoHome img');if(li&&!$('acLg').src)$('acLg').src=li.src;acFoot();acNav(true);
   $('acct').classList.add('on');document.body.classList.add('acct-open');document.body.style.overflow='hidden';
   A.msg='';A.view=A.tok?'home':'in';acRender();$('acct').scrollTop=0;
   if(A.tok){await loadMe();if(!A.tok)A.view='in';acRender()}
 }
 function closeAcct(){
-  $('acct').classList.remove('on');document.body.classList.remove('acct-open');
+  acNav(false);$('acct').classList.remove('on');document.body.classList.remove('acct-open');
   const rv=$('review').classList.contains('on');document.body.style.overflow=rv?'hidden':'';
   if(rv){renderReview();prefill()}
 }
@@ -1000,7 +1030,7 @@ function goOrder(){
   if(totals().count)openReview();
   else{$('review').classList.remove('on');scrollTo({top:Math.max(0,$('tabs').offsetTop),behavior:'smooth'});toast('Pick something from the menu, then tap Order now')}
 }
-$('accBtn').onclick=openAcct;$('acBack').onclick=closeAcct;
+$('accBtn').onclick=openAcct;$('acBack').onclick=closeAcct;$('acLg').onclick=()=>{closeAcct();goHome()};$('acLg').onkeydown=e=>{if(e.key==='Enter'){closeAcct();goHome()}};
 document.addEventListener('click',e=>{if(e.target.closest('[data-signin]'))openAcct()});
 ['input','change'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.classList)e.target.classList.remove('bad')}));
 let deferred=null;
@@ -1009,15 +1039,15 @@ $('dInstall').onclick=async()=>{if(deferred){deferred.prompt();await deferred.us
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 try{const p=JSON.parse(sessionStorage.getItem('cb_contact')||'null');if(p){$('fName').value=p.n||'';$('fPhone').value=p.p||''}}catch(_){}
 ['fName','fPhone'].forEach(i=>$(i).addEventListener('change',()=>{try{sessionStorage.setItem('cb_contact',JSON.stringify({n:$('fName').value,p:$('fPhone').value}))}catch(_){}}));
-try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;applyOrder();$('banner').textContent=CFG.banner||'';festBanner();offerStrip()}}catch(_){}
+try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;applyOrder();bannerSet();offerStrip();footApply()}}catch(_){}
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;e.stopPropagation();e.preventDefault();
   const id=z.dataset.zoom,all=[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies||[],MENU.cookies),d=all.find(x=>x.id===id),o=d&&imgOf(d);if(!o)return;
   const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
-renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();
+footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();siteLoad();
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
   if(!r||!r.ok||!r.settings)return;CFG=r.settings;applyOrder();try{localStorage.setItem('cb_cfg',JSON.stringify(CFG))}catch(_){}
-  $('banner').textContent=CFG.banner||'';festBanner();offerStrip();
+  bannerSet();offerStrip();
   const n=purgeOff();renderAll();if(n)toast('Some items in your order are sold out and were removed.')
 }).catch(()=>{});
 </script>
