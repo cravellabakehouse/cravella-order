@@ -423,7 +423,7 @@ async function loadSettings(){const r=await api({action:'admin_settings_get'});i
 
 /* ---------- layout ---------- */
 const MAIN=[['home','Home','🏠'],['today','Today','📅'],['orders','Orders','📋'],['bake','Bake','🍰']];
-const MORE=[['stock','Stock','📦'],['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['offers','Offers','🎁'],['gal','Gallery','🖼️'],['site','Site layout','🧩'],['settings','Settings','⚙️']];
+const MORE=[['stock','Stock','📦'],['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['offers','Offers','🎁'],['gal','Gallery','🖼️'],['wa','WhatsApp','💬'],['site','Site layout','🧩'],['settings','Settings','⚙️']];
 function renderTabs(){
   const nNew=D.orders.filter(o=>o.status==='New').length,inMore=MORE.some(m=>m[0]===tab);
   $('navIn').innerHTML=(tab!=='home'?'<button data-back="1" aria-label="Go back"><i>←</i>Back</button>':'')+MAIN.map(([k,n,ic])=>`<button class="${tab===k?'on':''}" data-tab="${k}"><i>${ic}</i>${n}${(k==='home'||k==='today')&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('')+`<button class="${inMore?'on':''}" data-more="1"><i>☰</i>More</button>`;
@@ -443,7 +443,7 @@ $('moreSheet').addEventListener('click',e=>{
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
   try{if(history.state&&history.state.cb==='sheet')history.replaceState({cb:'tab',tab:k},'');else history.pushState({cb:'tab',tab:k},'')}catch(_){}
   if(k!==tab){TS.push(tab);if(TS.length>30)TS.shift()}tab=k;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='home'?homeHtml():tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes'||tab==='home')&&!D.stock&&!kBusy&&nf('kit'))loadKit();if(tab==='home'&&!D.site&&!D.siteBusy&&nf('site'))loadSite();if(tab==='recipes'&&!D.ri&&!D.riBusy&&nf('ri'))loadRi();if(tab==='cust'&&!D.crm&&!D.crmBusy&&nf('crm'))loadCrm();if(tab==='settings'&&!D.wa&&!D.waBusy&&nf('wa'))loadWa();if(tab==='bake'&&!bake&&nf('bake'))loadBake();if(tab==='offers'&&!D.off&&!D.offBusy&&nf('off'))loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy&&nf('gal'))loadGal();if(tab==='site'&&!D.site&&!D.siteBusy&&nf('site'))loadSite()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='home'?homeHtml():tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='wa'?waTabHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes'||tab==='home')&&!D.stock&&!kBusy&&nf('kit'))loadKit();if(tab==='home'&&!D.site&&!D.siteBusy&&nf('site'))loadSite();if(tab==='recipes'&&!D.ri&&!D.riBusy&&nf('ri'))loadRi();if(tab==='cust'&&!D.crm&&!D.crmBusy&&nf('crm'))loadCrm();if(tab==='settings'&&!D.wa&&!D.waBusy&&nf('wa'))loadWa();if(tab==='wa')waTabLoad();if(tab==='bake'&&!bake&&nf('bake'))loadBake();if(tab==='offers'&&!D.off&&!D.offBusy&&nf('off'))loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy&&nf('gal'))loadGal();if(tab==='site'&&!D.site&&!D.siteBusy&&nf('site'))loadSite()}
 
 /* ---------- today (home) ---------- */
 const NEXT={New:['Confirmed','✓ Confirm order','c'],Confirmed:['Advance received','💰 Advance received','a'],'Advance received':['Ready','🍰 Mark ready','r'],Ready:['Delivered','✅ Mark delivered','r']};
@@ -954,6 +954,79 @@ function waCard(){const w=D.wa;
   <label class="f">Send a test message</label><div class="row" style="gap:8px"><input class="i" id="waTo" type="tel" inputmode="tel" placeholder="Phone number" maxlength="20"><button class="btn ol sm" id="waTest">Send test</button></div>
   <div class="hint">Sends Meta's "hello_world" sample. While the test number is in use, only numbers you have added in Meta's allowed list will receive it.</div>
   ${w.log&&w.log.length?`<div class="hist" style="display:block"><div class="m"><b>Recent messages</b></div>${w.log.slice(0,8).map(l=>`<div class="h"><span>${esc(tAgo(l.t))} · ${esc(l.to)} · ${esc(l.tpl.replace('cravella_order_',''))}${l.ok?'':`<div class="hint" style="margin-top:2px;color:var(--bad,#b3261e)">${esc(l.err)}</div>`}</span><b>${l.ok?'✓':'✕'}</b></div>`).join('')}</div>`:''}</div>`}
+/* ---- WhatsApp tab: inbox, send, ads ---- */
+const WS={sub:'inbox',thr:null,draft:'',ad:{busy:0,msg:''}};
+async function waLoad(k,act,extra,put){if(D[k+'B'])return;D[k+'B']=1;try{const r=await api(Object.assign({action:act},extra||{}));if(r.ok)D[k]=r;else{D[k+'F']=Date.now();D[k+'E']=r.error||'Could not load'}}catch(_){D[k+'F']=Date.now();D[k+'E']='No connection'}D[k+'B']=0;if(tab==='wa'&&!WS.typing){const y=scrollY;render();scrollTo(0,y)}}
+function waTabLoad(){if(!D.wa&&!D.waBusy&&nf('wa'))loadWa();
+  if(WS.sub==='inbox'&&!WS.thr&&!D.wInb&&nf('wInb'))waLoad('wInb','admin_wa_inbox');
+  if(WS.sub!=='inbox'&&!D.wTpl&&nf('wTpl'))waLoad('wTpl','admin_wa_tpl_list');
+  if(WS.sub==='ads'){if(!D.wOpt&&nf('wOpt'))waLoad('wOpt','admin_wa_optin_get');if(!D.wAds&&nf('wAds'))waLoad('wAds','admin_wa_ads_get')}}
+const waSt=s=>({sent:'✓',delivered:'✓✓',read:'✓✓',failed:'✕'}[s]||'');
+function waTabHtml(){
+  const chips=[['inbox','Inbox'],['send','Send'],['ads','Ads']].map(([k,n])=>`<button class="chip ${WS.sub===k?'on':''}" data-wsub="${k}">${n}</button>`).join(' ');
+  let h=`<div class="sec">WhatsApp</div><div class="row" style="gap:8px;justify-content:flex-start;margin-bottom:10px">${chips}</div>`;
+  const w=D.wa;
+  if(w&&(!w.hasVerify||!w.hasSecret)&&WS.sub==='inbox')h+=`<div class="card"><b>Inbox needs a one-time setup</b><div class="hint">To receive customer replies, Meta must call your Worker. Add two secrets in Cloudflare (Worker → Settings → Variables and Secrets): <b>WA_VERIFY</b> (any word you choose) and <b>WA_APP_SECRET</b> (Meta app → Settings → Basic → App secret). Then in Meta → WhatsApp → Configuration set the callback URL to <b>${esc(API_URL)}</b> with your verify word, and subscribe to <b>messages</b>. Status: ${w.hasVerify?'✅':'❌'} verify word · ${w.hasSecret?'✅':'❌'} app secret</div></div>`;
+  if(WS.sub==='inbox')h+=waInboxHtml();else if(WS.sub==='send')h+=waSendHtml();else h+=waAdsHtml();
+  return h}
+function waInboxHtml(){
+  if(WS.thr){const t=D.wThr;
+    let h=`<div class="card"><div class="row"><button class="btn ol sm" data-wsub="inbox">← All chats</button><b>${esc(t&&t.name||'')} ${t?'+'+esc(t.phone):''}</b></div>`;
+    if(!t)return h+`<div class="hint">${D.wThrE?esc(D.wThrE):'Loading…'}</div></div>`;
+    h+=`<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto">${t.msgs.map(m=>`<div style="align-self:${m.dir==='in'?'flex-start':'flex-end'};max-width:85%;padding:8px 11px;border-radius:12px;background:${m.dir==='in'?'#f4efe3':'#d9efe1'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div class="hint" style="margin:3px 0 0;font-size:11.5px">${esc(tAgo(m.t))} ${m.dir==='out'?waSt(m.status):''}${m.status==='failed'?` · ${esc(m.err)}`:''}</div></div>`).join('')||'<div class="hint">No messages yet.</div>'}</div>`;
+    h+=t.open?`<textarea class="i" id="wTxt" style="min-height:70px;margin-top:10px" maxlength="1000" placeholder="Type a reply">${esc(WS.draft)}</textarea><div class="row" style="margin-top:8px"><span class="hint" style="margin:0">Free replies work for 24 hours after their last message.</span><button class="btn sm" id="wReply">Send</button></div>`:`<div class="hint" style="margin-top:10px">More than 24 hours since this customer wrote, so WhatsApp only allows an approved template now. Use the <b>Send</b> tab.</div>`;
+    return h+'</div>'}
+  const l=D.wInb;if(!l)return `<div class="card"><div class="hint" style="margin:0">${D.wInbE?esc(D.wInbE):'Loading…'}</div></div>`;
+  return `<div class="card"><div class="row"><b>Chats</b><button class="btn ol sm" id="wRef">Refresh</button></div>${l.list.length?l.list.map(c=>`<div class="h" data-wt="${esc(c.phone)}" style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px dashed var(--line);cursor:pointer"><span><b>${esc(c.name||'+'+c.phone)}</b>${c.waiting?' <span class="pill">Reply</span>':''}<div class="hint" style="margin:2px 0 0">${c.dir==='out'?'You: ':''}${esc(c.last)}</div></span><span class="hint" style="margin:0;white-space:nowrap">${esc(tAgo(c.t))}</span></div>`).join(''):'<div class="hint">No chats yet. Customer replies and the order messages you send will show up here.</div>'}</div>`}
+const waTplOpts=(cat)=>((D.wTpl&&D.wTpl.list)||[]).filter(t=>t.status==='APPROVED'&&(!cat||t.cat===cat));
+const waNb=b=>(String(b||'').match(/\{\{\d+\}\}/g)||[]).length;
+function waSendHtml(){
+  const ok=waTplOpts();
+  return `<div class="card"><b>Send a template message</b><div class="hint">Use this to message a customer who has not written in the last 24 hours. Only approved templates can be chosen.</div>
+  <label class="f">Template</label><select class="i" id="wsT">${ok.map(t=>`<option value="${esc(t.name)}" data-lang="${esc(t.lang)}" data-nb="${waNb(t.body)}">${esc(t.name)} (${esc(t.cat.toLowerCase())})</option>`).join('')||'<option value="">No approved templates yet</option>'}</select>
+  <label class="f">Phone number</label><input class="i" id="wsTo" type="tel" inputmode="tel" placeholder="98450 12345" maxlength="20">
+  <label class="f">Blanks {{1}}, {{2}}… (comma separated)</label><input class="i" id="wsP" placeholder="Asha, CB-1042, tomorrow">
+  <div class="row" style="margin-top:10px"><span class="hint" style="margin:0" id="wsMsg"></span><button class="btn sm" id="wsGo">Send</button></div></div>
+  ${waTplList()}`}
+function waTplList(){const l=D.wTpl;
+  return `<div class="sec">Your templates</div><div class="card"><div class="row"><span class="hint" style="margin:0">Status comes straight from Meta.</span><button class="btn ol sm" id="wTplRef">Refresh</button></div>${!l?`<div class="hint">${D.wTplE?esc(D.wTplE):'Loading…'}</div>`:l.list.map(t=>`<div class="h" style="padding:8px 0;border-top:1px dashed var(--line)"><div class="row"><b>${esc(t.name)}</b><span class="pill ${t.status==='APPROVED'?'Confirmed':t.status==='REJECTED'?'Cancelled':''}">${esc(t.status.toLowerCase().replace('_',' '))}</span></div><div class="hint" style="margin:3px 0 0">${esc(t.cat.toLowerCase())} · ${esc(t.lang)}${t.why?' · '+esc(t.why):''}<br>${esc(t.body)}</div></div>`).join('')}</div>`}
+function waAdsHtml(){
+  const o=D.wOpt,mk=waTplOpts('MARKETING'),a=WS.ad;
+  return `<div class="card"><b>1. Customers who agreed to offers</b><div class="hint">You may only send ads to people who said yes (for example by replying START, or telling you in person). They can reply STOP at any time and are removed automatically.</div>
+  <div class="hist" style="display:block"><div class="h"><span>Opted in</span><b>${o?o.yes:'…'}</b></div><div class="h"><span>Opted out</span><b>${o?o.no:'…'}</b></div></div>
+  <label class="f">Add customers (one per line: name, phone)</label><textarea class="i" id="woAdd" style="min-height:90px" placeholder="Asha, 98450 12345&#10;Ravi, 98450 54321"></textarea>
+  <label class="f" style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" id="woOk" style="margin-top:3px"> These customers agreed to receive offers from Cravella on WhatsApp.</label>
+  <div class="row" style="margin-top:8px"><span class="hint" style="margin:0" id="woMsg"></span><button class="btn ol sm" id="woGo">Add</button></div></div>
+  <div class="card"><b>2. Write an ad (needs Meta approval)</b><div class="hint">Keep it short and honest. Use {{1}} for the customer's first name. Add "Reply STOP to opt out." at the end. Approval usually takes a few hours.</div>
+  <label class="f">Name (letters, numbers, underscores)</label><input class="i" id="wtN" placeholder="diwali_gift_boxes_2026" maxlength="60">
+  <label class="f">Message</label><textarea class="i" id="wtB" style="min-height:110px" maxlength="1024" placeholder="Hi {{1}}, our eggless Diwali gift boxes are now open for orders. Call 98459 04310 or visit order.cravellabakehouse.com. Reply STOP to opt out."></textarea>
+  <div class="row" style="margin-top:8px"><span class="hint" style="margin:0" id="wtMsg"></span><button class="btn sm" id="wtGo">Submit to Meta</button></div></div>
+  <div class="card"><b>3. Send to everyone who opted in</b>
+  <label class="f">Approved marketing template</label><select class="i" id="wbT">${mk.map(t=>`<option value="${esc(t.name)}" data-lang="${esc(t.lang)}" data-nb="${waNb(t.body)}">${esc(t.name)}</option>`).join('')||'<option value="">No approved marketing template yet</option>'}</select>
+  <label class="f">Other blanks, {{2}} onward (comma separated, optional)</label><input class="i" id="wbP" placeholder="">
+  <div class="hint">Each marketing message is charged by Meta (about ₹0.8 per message in India). Send a test to yourself first.</div>
+  <div class="row" style="margin-top:10px;gap:8px"><input class="i" id="wbTo" type="tel" placeholder="Your number for a test" maxlength="20"><button class="btn ol sm" id="wbTest">Test</button></div>
+  <div class="row" style="margin-top:10px"><span class="hint" style="margin:0" id="wbMsg">${esc(a.msg)}</span><button class="btn sm" id="wbGo" ${a.busy?'disabled':''}>${a.busy?'Sending…':'Send to '+(o?o.yes:'…')}</button></div>
+  ${D.wAds&&D.wAds.list.length?`<div class="hist" style="display:block"><div class="m"><b>Past sends</b></div>${D.wAds.list.slice(0,6).map(c=>`<div class="h"><span>${esc(tAgo(c.t))} · ${esc(c.tpl)}</span><b>${c.sent} sent${c.failed?` · ${c.failed} failed`:''}</b></div>`).join('')}</div>`:''}</div>${waTplList()}`}
+const waSel=id=>{const s=$(id),o=s&&s.options[s.selectedIndex];return o&&o.value?{tpl:o.value,lang:o.dataset.lang||'en',nb:+o.dataset.nb||0}:null};
+const waCsv=v=>String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
+$('panel').addEventListener('input',e=>{if(e.target.id==='wTxt')WS.draft=e.target.value});
+$('panel').addEventListener('click',async e=>{
+  const g=e.target.closest('[data-wsub]');if(g){WS.sub=g.dataset.wsub;WS.thr=null;D.wThr=null;render();return}
+  const th=e.target.closest('[data-wt]');if(th){WS.thr=th.dataset.wt;WS.draft='';D.wThr=null;render();waLoad('wThr','admin_wa_thread',{phone:WS.thr});return}
+  const id=e.target.id,B=b=>{b.disabled=true;return()=>{b.disabled=false}};
+  if(id==='wRef'){D.wInb=null;D.wInbF=0;render();waTabLoad();return}
+  if(id==='wTplRef'){D.wTpl=null;D.wTplF=0;render();waTabLoad();return}
+  if(id==='wReply'){const t=($('wTxt').value||'').trim();if(!t){toast('Type a message');return}const u=B(e.target);try{const r=await api({action:'admin_wa_reply',phone:WS.thr,text:t});if(r.ok){WS.draft='';D.wThr=null;render();waLoad('wThr','admin_wa_thread',{phone:WS.thr})}else{toast(r.error||'Could not send');u()}}catch(_){toast('No connection');u()}return}
+  if(id==='wsGo'){const s=waSel('wsT'),to=($('wsTo').value||'').trim();if(!s){toast('Pick a template');return}if(!to){toast('Enter a phone number');return}const u=B(e.target);try{const r=await api({action:'admin_wa_send_tpl',to,tpl:s.tpl,lang:s.lang,params:waCsv($('wsP').value)});$('wsMsg').textContent=r.ok?'Sent ✓':(r.error||'Could not send')}catch(_){$('wsMsg').textContent='No connection'}u();return}
+  if(id==='woGo'){const t=$('woAdd').value;if(!t.trim()){toast('Add at least one customer');return}const u=B(e.target);try{const r=await api({action:'admin_wa_optin_add',text:t,consent:$('woOk').checked});if(r.ok){D.wOpt=null;D.wOptF=0;toast('Added '+r.added+(r.bad?', skipped '+r.bad:''));render();waTabLoad()}else{$('woMsg').textContent=r.error||'Could not add';u()}}catch(_){$('woMsg').textContent='No connection';u()}return}
+  if(id==='wtGo'){const u=B(e.target);try{const r=await api({action:'admin_wa_tpl_create',name:$('wtN').value.trim(),body:$('wtB').value,cat:'MARKETING'});if(r.ok){toast('Sent to Meta for approval');D.wTpl=null;D.wTplF=0;render();waTabLoad()}else{$('wtMsg').textContent=r.error||'Could not submit';u()}}catch(_){$('wtMsg').textContent='No connection';u()}return}
+  if(id==='wbTest'){const s=waSel('wbT'),to=($('wbTo').value||'').trim();if(!s){toast('No approved marketing template yet');return}if(!to){toast('Enter your number');return}const u=B(e.target);try{const r=await api({action:'admin_wa_send_tpl',to,tpl:s.tpl,lang:s.lang,params:['Test'].concat(waCsv($('wbP').value)).slice(0,s.nb)});$('wbMsg').textContent=r.ok?'Test sent ✓':(r.error||'Could not send')}catch(_){$('wbMsg').textContent='No connection'}u();return}
+  if(id==='wbGo'){const s=waSel('wbT'),o=D.wOpt;if(!s){toast('No approved marketing template yet');return}if(!o||!o.yes){toast('Nobody has opted in yet');return}if(!confirm('Send this ad to '+o.yes+' customers who opted in? Meta charges for each message.'))return;
+    const a=WS.ad;a.busy=1;a.msg='Sending…';render();let cid='',fin=0;
+    try{for(let i=0;i<40&&!fin;i++){const r=await api({action:'admin_wa_broadcast',tpl:s.tpl,lang:s.lang,nparams:s.nb,params:waCsv($('wbP')&&$('wbP').value),cid});if(!r.ok){a.msg=r.error||'Stopped';break}cid=r.cid;a.msg=r.sent+' sent'+(r.failed?', '+r.failed+' failed':'')+(r.remaining?'… '+r.remaining+' left':' ✓ done');if(!r.remaining)fin=1;const sp=$('wbMsg');if(sp)sp.textContent=a.msg}}catch(_){a.msg='Connection lost. Press Send again to continue where it stopped.'}
+    a.busy=0;D.wAds=null;D.wAdsF=0;render();waTabLoad();return}
+});
 function settingsHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
   return waCard()+`<div class="sec">Closed dates</div><div class="card"><div class="hint" style="margin-top:0">Customers cannot order for these dates (holidays, travel, festivals).</div>
