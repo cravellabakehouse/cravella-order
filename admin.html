@@ -120,7 +120,7 @@ body.hasSave{padding-bottom:calc(168px + env(safe-area-inset-bottom))}
 .save{bottom:calc(64px + env(safe-area-inset-bottom));padding-bottom:12px;background:rgba(255,255,255,.97)}
 .toast{bottom:calc(96px + env(safe-area-inset-bottom))}
 .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:18px 0 4px}.hd h2{font-size:27px;line-height:1.1}.hd small{display:block;color:var(--mut);font-size:13.5px;margin-top:3px}
-.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.kp div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 11px}.kp b{display:block;font:800 25px 'Bricolage Grotesque',system-ui}.kp span{font-size:11.5px;color:var(--mut)}.kp .hot b{color:var(--acc)}
+.hg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 4px}.ht{all:unset;cursor:pointer;box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;min-height:104px;padding:10px 6px;background:var(--card);border:1px solid var(--line);border-radius:16px}.ht:active{transform:scale(.97)}.ht i{font-style:normal;font-size:30px;line-height:1}.ht b{font-size:14px}.ht span{font-size:11.5px;color:var(--mut);min-height:14px}.ht em{position:absolute;top:6px;right:8px;background:#c1272d;color:#fff;font-style:normal;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px}.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.kp div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 11px}.kp b{display:block;font:800 25px 'Bricolage Grotesque',system-ui}.kp span{font-size:11.5px;color:var(--mut)}.kp .hot b{color:var(--acc)}
 .sc{font:800 12px 'Hanken Grotesk';letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin:22px 0 2px;display:flex;justify-content:space-between}
 .tc .acts{margin-top:12px}.tc .acts .btn{flex:1 1 auto}.tc .acts .big{flex:1 1 100%;font-size:15.5px;padding:13px}
 .up{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}.up:last-child{border-bottom:0}.up b{font-weight:700}.up small{display:block;color:var(--mut);font-size:12.5px}
@@ -169,7 +169,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 const ST=(k=>{try{return localStorage.getItem(k)}catch(_){return null}});
 const SS=((k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}});
-let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[],mails:{},stock:null,recipes:null},tab='today',loaded=false,filt='active',q='',bakeDate='',bake=null,dirty=false,CM={},cq='',skew=0;
+let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[],mails:{},stock:null,recipes:null},tab='home',loaded=false,filt='active',q='',bakeDate='',bake=null,dirty=false,CM={},cq='',skew=0;
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
 async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -229,7 +229,7 @@ async function loadKit(){
   kBusy=true;
   try{const r=await api({action:'admin_stock_get'});if(r.ok){D.stock=r.stock;D.recipes=r.recipes}else toast(r.error||'Could not load')}
   catch(_){toast('No connection')}
-  kBusy=false;if(tab==='stock'||tab==='recipes')render()
+  kBusy=false;if(tab==='stock'||tab==='recipes'||tab==='home')render()
 }
 const unitOpts=sel=>KU.map(u=>`<option ${u===sel?'selected':''}>${u}</option>`).join('');
 function stockHtml(){
@@ -420,14 +420,14 @@ async function loadOrders(){const r=await api({action:'admin_orders'});if(r.ok)a
 async function loadSettings(){const r=await api({action:'admin_settings_get'});if(r.ok){D.settings=r.settings;D.items=sortItems(r.items,r.settings.order);D.orderDirty=false;hasPw=r.hasPw!==false;dirty=false}}
 
 /* ---------- layout ---------- */
-const MAIN=[['today','Today','🏠'],['orders','Orders','📋'],['bake','Bake','🍰'],['stock','Stock','📦']];
-const MORE=[['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['offers','Offers','🎁'],['gal','Gallery','🖼️'],['site','Site layout','🧩'],['settings','Settings','⚙️']];
+const MAIN=[['home','Home','🏠'],['today','Today','📅'],['orders','Orders','📋'],['bake','Bake','🍰']];
+const MORE=[['stock','Stock','📦'],['recipes','Recipes','📖'],['menu','Menu','🍽️'],['cust','Customers','👥'],['offers','Offers','🎁'],['gal','Gallery','🖼️'],['site','Site layout','🧩'],['settings','Settings','⚙️']];
 function renderTabs(){
   const nNew=D.orders.filter(o=>o.status==='New').length,inMore=MORE.some(m=>m[0]===tab);
-  $('navIn').innerHTML=MAIN.map(([k,n,ic])=>`<button class="${tab===k?'on':''}" data-tab="${k}"><i>${ic}</i>${n}${k==='today'&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('')+`<button class="${inMore?'on':''}" data-more="1"><i>☰</i>More</button>`;
+  $('navIn').innerHTML=MAIN.map(([k,n,ic])=>`<button class="${tab===k?'on':''}" data-tab="${k}"><i>${ic}</i>${n}${(k==='home'||k==='today')&&nNew?`<span class="n">${nNew}</span>`:''}</button>`).join('')+`<button class="${inMore?'on':''}" data-more="1"><i>☰</i>More</button>`;
   $('saveBar').classList.toggle('hide',!(tab==='menu'||tab==='settings'));document.body.classList.toggle('hasSave',tab==='menu'||tab==='settings');
 }
-$('brandHome').onclick=()=>{if(!tok)return;if($('moreSheet')&&!$('moreSheet').classList.contains('hide'))$('moreSheet').classList.add('hide');if(tab==='today'){scrollTo({top:0,behavior:'smooth'});return}goTab('today')};$('brandHome').onkeydown=e=>{if(e.key==='Enter')$('brandHome').click()};
+$('brandHome').onclick=()=>{if(!tok)return;if($('moreSheet')&&!$('moreSheet').classList.contains('hide'))$('moreSheet').classList.add('hide');if(tab==='home'){scrollTo({top:0,behavior:'smooth'});return}goTab('home')};$('brandHome').onkeydown=e=>{if(e.key==='Enter')$('brandHome').click()};
 function goTab(k){if(k===tab)return;tab=k;try{history.pushState({cb:'tab',tab},'')}catch(_){}render();scrollTo(0,0)}
 $('navIn').addEventListener('click',e=>{
   if(e.target.closest('[data-more]')){$('moreIn').innerHTML=MORE.map(([k,n,ic])=>`<button class="mi" data-tab="${k}"><i>${ic}</i>${n}</button>`).join('')+`<button class="mi" id="moreOut"><i>🚪</i>Sign out</button>`;showSheet('moreSheet');return}
@@ -439,7 +439,7 @@ $('moreSheet').addEventListener('click',e=>{
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
   try{if(history.state&&history.state.cb==='sheet')history.replaceState({cb:'tab',tab:k},'');else history.pushState({cb:'tab',tab:k},'')}catch(_){}
   tab=k;render();scrollTo(0,0)});
-function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes')&&!D.stock&&!kBusy)loadKit();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy)loadGal();if(tab==='site'&&!D.site&&!D.siteBusy)loadSite()}
+function render(){CM=custMap();renderTabs();$('panel').innerHTML=tab==='home'?homeHtml():tab==='today'?todayHtml():tab==='orders'?ordersHtml():tab==='bake'?bakeHtml():tab==='menu'?menuHtml():tab==='cust'?custHtml():tab==='stock'?stockHtml():tab==='offers'?offersHtml():tab==='gal'?galAdm():tab==='site'?siteHtml():tab==='recipes'?recipesHtml():settingsHtml();if((tab==='stock'||tab==='recipes'||tab==='home')&&!D.stock&&!kBusy)loadKit();if(tab==='recipes'&&!D.ri&&!D.riBusy)loadRi();if(tab==='bake'&&!bake)loadBake();if(tab==='offers'&&!D.off&&!D.offBusy)loadOff();if(tab==='gal'&&!D.gal&&!D.galBusy)loadGal();if(tab==='site'&&!D.site&&!D.siteBusy)loadSite()}
 
 /* ---------- today (home) ---------- */
 const NEXT={New:['Confirmed','✓ Confirm order','c'],Confirmed:['Advance received','💰 Advance received','a'],'Advance received':['Ready','🍰 Mark ready','r'],Ready:['Delivered','✅ Mark delivered','r']};
@@ -452,6 +452,17 @@ function todayCard(o,t){
   <div class="tm" data-id="${esc(o.id)}">${tmHtml(o)}</div>
   <div class="acts">${nx?`<button class="btn big" data-s="${esc(nx[0])}">${nx[1]}</button>`:''}${nx?`<a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,nx[2]))}">💬 WhatsApp</a>`:''}<a class="btn ol sm" href="tel:${esc(o.phone)}">📞 Call</a><button class="btn ol sm" data-open="${esc(o.id)}">Details</button></div></div>`
 }
+function homeHtml(){
+  const t=todayS(),live=D.orders.filter(o=>!['Cancelled','Delivered'].includes(o.status)),dueOn=(o,d)=>o.date===d||(o.split&&o.split.date===d);
+  const nw=live.filter(o=>o.status==='New').length,dn=D.orders.filter(o=>o.status!=='Cancelled'&&dueOn(o,t)).length;
+  const low=D.stock?D.stock.filter(x=>x.low>0&&x.qty<=x.low).length:null,nc=Object.keys(custMap()).length;
+  const fxT=D.site&&D.site.fx&&SITE_TH.find(x=>x[0]===D.site.fx.theme),dayName=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  const T=[['today','📅','Today',nw?nw+' to confirm':dn+' due today',nw],['orders','📋','Orders',live.length+' active',0],['bake','🍰','Bake','What to bake',0],['stock','📦','Stock',low===null?'…':(low?low+' running low':'All good'),low||0],['recipes','📖','Recipes','',0],['menu','🍽️','Menu',D.items.length?D.items.length+' items':'',0],['cust','👥','Customers',nc+' people',0],['offers','🎁','Offers','',0],['gal','🖼️','Gallery','',0],['site','🧩','Site layout',fxT&&fxT[0]!=='none'?fxT[1]+' '+fxT[2]:'',0],['settings','⚙️','Settings','',0]];
+  const closed=D.settings&&D.settings.closed.includes(t);
+  return `<div class="hd"><div><h2>Home</h2><small>${esc(dayName)}</small></div><button class="btn ol sm" id="refresh">↻ Refresh</button></div>
+  <div class="kp"><div class="${nw?'hot':''}"><b>${nw}</b><span>To confirm</span></div><div><b>${dn}</b><span>Due today</span></div><div><b>${live.length}</b><span>Active</span></div><div><b>${low===null?'–':low}</b><span>Low stock</span></div></div>
+  <div class="hg">${T.map(x=>`<button class="ht" data-hgo="${x[0]}"><i>${x[1]}</i><b>${x[2]}</b><span>${esc(x[3])}</span>${x[4]?`<em>${x[4]}</em>`:''}</button>`).join('')}<a class="ht" href="./index.html" target="_blank" rel="noopener"><i>🌐</i><b>Website</b><span>Open the shop</span></a></div>
+  <div class="sec">Quick controls</div><div class="card"><div class="sw"><span>Closed for orders today<br><small class="hint">Customers cannot order for ${esc(fmtD(t))}</small></span>${D.settings?stg(closed,'data-qclose="1"'):'<span class="hint">Loading…</span>'}</div></div>`}
 function todayHtml(){
   if(!loaded&&!D.orders.length)return '<div class="hd"><div><h2>Today</h2><small>Loading…</small></div></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>';
   const t=todayS(),dd=new Date(Date.now()+864e5),tm=ymd(dd),d3=ymd(new Date(Date.now()+3*864e5));
@@ -586,6 +597,8 @@ $('mailSheet').addEventListener('click',async e=>{
   }
 });
 $('panel').addEventListener('click',async e=>{
+  const hg=e.target.closest('[data-hgo]');if(hg){goTab(hg.dataset.hgo);return}
+  if(e.target.closest('[data-qclose]')){if(!D.settings){toast('Still loading, try again');return}if(dirty){toast('Save your Menu or Settings changes first');return}const t=todayS(),st=D.settings,was=st.closed.includes(t),nc=was?st.closed.filter(x=>x!==t):st.closed.concat([t]).sort();try{const r=await api({action:'admin_settings_save',unavailable:st.unavailable,closed:nc,capCake:st.capCake,capOther:st.capOther,banner:st.banner});if(r.ok){D.settings=r.settings;toast(was?'Orders open for today':'Closed for orders today');render()}else toast(r.error||'Could not save')}catch(_){toast('No connection')}return}
   const op=e.target.closest('[data-open]');if(op){q=op.dataset.open;filt='all';goTab('orders');if(tab==='orders'){render();scrollTo(0,0)}return}
   const f=e.target.closest('[data-f]');if(f){filt=f.dataset.f;render();return}
   const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
@@ -1028,7 +1041,7 @@ addEventListener('popstate',e=>{
 });
 addEventListener('pageshow',e=>{if(e.persisted&&!tok)showLogin()});
 
-setInterval(()=>{if(document.hidden||!tok||tab!=='today'||['pwSheet','edSheet','mailSheet','moreSheet'].some(i=>!$(i).classList.contains('hide')))return;loadOrders().then(()=>{if(tab==='today')render()}).catch(()=>{})},60000);
+setInterval(()=>{if(document.hidden||!tok||(tab!=='today'&&tab!=='home')||['pwSheet','edSheet','mailSheet','moreSheet'].some(i=>!$(i).classList.contains('hide')))return;loadOrders().then(()=>{if(tab==='today'||tab==='home')render()}).catch(()=>{})},60000);
 boot();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
