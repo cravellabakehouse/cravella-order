@@ -474,7 +474,7 @@ const sx=k=>(SITE&&SITE[k]&&typeof SITE[k]==='object'&&!Array.isArray(SITE[k]))?
 function siteSecs(){const out=[],seen={};((SITE&&Array.isArray(SITE.sec))?SITE.sec:[]).forEach(q=>{if(q&&SIDS.includes(q.id)&&!seen[q.id]){seen[q.id]=1;out.push(q)}});SIDS.forEach(id=>{if(!seen[id])out.push({id,on:true,t:''})});return out}
 function colApply(){const C=sx('col'),K=n=>C[n]&&typeof C[n]==='object'?C[n]:{};
   const set=(el,c)=>{if(!el)return;el.style.removeProperty('background');el.style.removeProperty('color');const g=bgCss(c);if(g)el.style.setProperty('background',g,'important');if(/^#[0-9a-f]{6}$/i.test(c.fg||''))el.style.setProperty('color',c.fg,'important');return el};
-  set($('banner'),K('ban'));set($('offer'),K('strip'));const f=set(document.querySelector('.ft2'),K('foot'));if(f)f.classList.toggle('cc',!!K('foot').fg)}
+  set($('banner'),K('ban'));set($('offer'),K('strip'));set(document.querySelector('.tabs'),K('tabs'));const f=set(document.querySelector('.ft2'),K('foot'));if(f)f.classList.toggle('cc',!!K('foot').fg)}
 function footApply(){colApply();const F=sx('foot'),f=document.querySelector('.ft2');if(!f)return;
   f.style.display=F.on===false?'none':'';
   const n=f.querySelector('.fnote');if(n){n.style.display=F.dlv===false?'none':'';const b=n.querySelector('b');if(b)b.textContent=F.note||'Delivery charges extra'}
