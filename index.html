@@ -296,6 +296,7 @@ body{padding-bottom:calc(92px + env(safe-area-inset-bottom))}body.hasbar{padding
 .ft2 .fnote{font-size:12.5px;color:var(--mut)}
 .ft2 .flinks{display:flex;justify-content:center;gap:10px;margin:12px 0 4px}.ft2 .flinks a{padding:7px 16px;border-radius:99px;background:rgba(104,50,176,.1);border:1px solid rgba(104,50,176,.18);color:#4a1f8c;font-weight:700;font-size:13px;text-decoration:none}
 .ft2 .soc{margin:12px 0 10px}.ft2 .soc a{background:rgba(255,255,255,.8);border-color:rgba(255,255,255,.9)}
+.ft2.cc .fph,.ft2.cc .fsub,.ft2.cc .fnote,.ft2.cc .fine,.ft2.cc .credit{color:inherit!important}
 .ft2 .fine{font-size:11.5px;color:var(--mut);opacity:.85}
 .ft2 .credit{margin:12px 0 0;padding:9px 6px 0;max-width:none;border:0;background:none;border-radius:0;font-size:11.5px}
 body.fest #hdr{overflow:hidden}
@@ -468,7 +469,10 @@ let SITE=null;try{SITE=JSON.parse(localStorage.getItem('cb_site')||'null')}catch
 const SIDS=['gallery','hero','cakes','cupcakes','muffins','cookies','brownies','reviews'];
 const sx=k=>(SITE&&SITE[k]&&typeof SITE[k]==='object'&&!Array.isArray(SITE[k]))?SITE[k]:{};
 function siteSecs(){const out=[],seen={};((SITE&&Array.isArray(SITE.sec))?SITE.sec:[]).forEach(q=>{if(q&&SIDS.includes(q.id)&&!seen[q.id]){seen[q.id]=1;out.push(q)}});SIDS.forEach(id=>{if(!seen[id])out.push({id,on:true,t:''})});return out}
-function footApply(){const F=sx('foot'),f=document.querySelector('.ft2');if(!f)return;
+function colApply(){const C=sx('col'),K=n=>C[n]&&typeof C[n]==='object'?C[n]:{};
+  const set=(el,c)=>{if(!el)return;el.style.removeProperty('background');el.style.removeProperty('color');if(/^#[0-9a-f]{6}$/i.test(c.bg||''))el.style.setProperty('background',c.bg,'important');if(/^#[0-9a-f]{6}$/i.test(c.fg||''))el.style.setProperty('color',c.fg,'important');return el};
+  set($('banner'),K('ban'));set($('offer'),K('strip'));const f=set(document.querySelector('.ft2'),K('foot'));if(f)f.classList.toggle('cc',!!K('foot').fg)}
+function footApply(){colApply();const F=sx('foot'),f=document.querySelector('.ft2');if(!f)return;
   f.style.display=F.on===false?'none':'';
   const n=f.querySelector('.fnote');if(n){n.style.display=F.dlv===false?'none':'';const b=n.querySelector('b');if(b)b.textContent=F.note||'Delivery charges extra'}
   const fi=f.querySelector('.fine');if(fi)fi.style.display=F.fssai===false?'none':'';
@@ -680,7 +684,7 @@ function homeHtml(){
   const T=(q,d)=>q.t?esc(q.t):d;
   const P={
    gallery:q=>galHtml(q.t?esc(q.t):esc(G.t||'Custom theme cakes'),1),
-   hero:()=>`<div class="hero${galOn?' sm':''}"><h2>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`,
+   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(ok(hc.bg)?'background:'+hc.bg+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero${galOn?' sm':''}"${hs?' style="'+hs+'"':''}><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
    cakes:q=>car(T(q,'Cakes'),'cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join('')),
    cupcakes:q=>car(T(q,'Cupcakes · box of 6'),'cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join('')),
    muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
