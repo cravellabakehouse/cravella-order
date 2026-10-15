@@ -309,6 +309,10 @@ body.fx-l .band{padding-top:calc(30px + env(safe-area-inset-top))}
 .ffw{position:absolute;pointer-events:none;right:0;top:0;width:100%;height:100%}
 #fall{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}#fall span{position:absolute;top:-34px;animation:fallk linear infinite;opacity:.85;will-change:transform}@keyframes fallk{0%{transform:translate3d(0,-34px,0) rotate(0)}50%{transform:translate3d(18px,50vh,0) rotate(180deg)}100%{transform:translate3d(-10px,108vh,0) rotate(360deg)}}
 .hero.fxp>i{display:none}
+#brk{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(10px) grayscale(1);backdrop-filter:blur(10px) grayscale(1)}
+#brk .bt{position:absolute;left:0;right:0;top:0;overflow:hidden;white-space:nowrap;background:rgba(32,32,40,.88);color:#fff;font-weight:700;font-size:15px;padding:12px 0}#brk .bt span{display:inline-block;padding-left:100%;animation:brkm 24s linear infinite}@keyframes brkm{to{transform:translateX(-100%)}}
+#brk .bc{max-width:340px;width:100%;text-align:center;padding:26px 22px;border-radius:24px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8);box-shadow:0 10px 40px rgba(0,0,0,.18);color:#222}#brk .bc b{display:block;font-size:42px;line-height:1}#brk .bc h2{margin:10px 0 6px;font-size:22px}#brk .bc p{margin:0 0 14px;font-size:15px;line-height:1.45}#brk .bc a{display:inline-block;padding:10px 18px;border-radius:99px;background:#222;color:#fff;font-weight:700;text-decoration:none}
+body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media (prefers-reduced-motion:reduce){#brk .bt span{animation:none;padding-left:12px}}
 #fxc{position:fixed;left:0;top:0;pointer-events:none;z-index:19}@media (prefers-reduced-motion:reduce){.lights g,.fstar{animation:none}#fall,#fxc{display:none}}
 </style>
 </head>
@@ -482,7 +486,13 @@ function footApply(){colApply();const F=sx('foot'),f=document.querySelector('.ft
   const fi=f.querySelector('.fine');if(fi)fi.style.display=F.fssai===false?'none':'';
   const so=f.querySelector('.soc');if(so)so.style.display=F.soc===false?'none':''}
 function bannerSet(){const b=$('banner'),B=sx('ban');if(B.on===false){b.textContent='';b.style.setProperty('display','none','important');return}b.style.removeProperty('display');b.textContent=B.t||CFG.banner||'';festBanner()}
-function applySite(){fxApply();bannerSet();offerStrip();footApply();if(!S.q.trim()&&(S.tab==='home'||S.tab==='custom'))renderPanel();const a=$('acFoot');if(a&&a.firstChild)acFoot()}
+const BRK_MSG="We're taking a short break and are not taking any orders right now. We'll be back soon!";
+function brkApply(){const b=sx('brk'),on=!!b.on;document.body.classList.toggle('brk',on);let el=$('brk');if(!on){if(el)el.remove();return}
+  const m=(b.t&&String(b.t).trim())||BRK_MSG,k=(m+' \u00a0\u2022\u00a0 ').repeat(4);
+  if(!el){el=document.createElement('div');el.id='brk';el.setAttribute('role','dialog');el.setAttribute('aria-live','polite');document.body.appendChild(el)}
+  el.innerHTML='<div class="bt"><span></span></div><div class="bc"><b>\ud83c\udf19</b><h2>Taking a short break</h2><p></p><a href="tel:+919845904310">\ud83d\udcde 98459-04310</a></div>';
+  el.querySelector('.bt span').textContent=k;el.querySelector('p').textContent=m}
+function applySite(){brkApply();fxApply();bannerSet();offerStrip();footApply();if(!S.q.trim()&&(S.tab==='home'||S.tab==='custom'))renderPanel();const a=$('acFoot');if(a&&a.firstChild)acFoot()}
 
 let PHM={};try{PHM=JSON.parse(localStorage.getItem('cb_ph')||'{}')||{}}catch(_){}
 const phUrl=id=>{const m=PHM;return m[id]?API_URL+'?mp='+encodeURIComponent(id)+'&v='+m[id]:''};
@@ -761,7 +771,7 @@ function setSearch(o){$('sbox').hidden=!o;$('sBtn').setAttribute('aria-expanded'
 $('sBtn').onclick=()=>setSearch($('sbox').hidden);
 function hdrH(){document.documentElement.style.setProperty('--hh',$('hdr').offsetHeight+'px')}
 addEventListener('resize',hdrH);if(window.ResizeObserver)new ResizeObserver(hdrH).observe($('hdr'));
-fxApply();festBanner();
+brkApply();fxApply();festBanner();
 function goHome(){NAV.length=0;lastTab='home';S.tab='home';S.q='';$('q').value='';setSearch(false);renderTabs();renderPanel();scrollTo(0,0)}
 $('q').addEventListener('input',e=>{S.q=e.target.value;renderPanel()});
 $('panel').addEventListener('click',e=>{
