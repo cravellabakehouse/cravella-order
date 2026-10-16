@@ -963,10 +963,17 @@ function waTabLoad(){if(!D.wa&&!D.waBusy&&nf('wa'))loadWa();
   if(WS.sub==='staff'&&!D.wStf&&nf('wStf'))waLoad('wStf','admin_wa_staff_get');
   if(WS.sub==='ads'){if(!D.wOpt&&nf('wOpt'))waLoad('wOpt','admin_wa_optin_get');if(!D.wAds&&nf('wAds'))waLoad('wAds','admin_wa_ads_get')}}
 const waSt=s=>({sent:'✓',delivered:'✓✓',read:'✓✓',failed:'✕'}[s]||'');
+function waBalHtml(){
+  const w=D.wa;if(!w||!w.bal)return '';const b=w.bal,inr=n=>'₹'+(Math.round(n*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const set=b.amt!==null,low=set&&b.amt<=b.low,since=b.at?tAgo(b.at):'';
+  return `<div class="card" id="waBal"><div class="row"><b>Message balance</b><span class="pill ${!set?'':low?'Cancelled':'Confirmed'}">${!set?'not set':low?'running low':'ok'}</span></div>
+  ${set?`<div style="font-size:26px;font-weight:700;margin:6px 0">about ${inr(b.amt)} left</div><div class="hint" style="margin-top:0">${b.n} message${b.n===1?'':'s'} sent since you set it${since?' ('+esc(since)+')':''}. This is an estimate, using about ₹0.15 per order update and ₹0.85 per offer message. Messages inside a customer's 24-hour reply window are free, so the real balance is usually a little higher.</div>${low?`<div class="hint" style="color:var(--bad,#b3261e);font-weight:600">Balance is below your ₹${b.low} alert. Add money to the WhatsApp account ending 741 in Meta (Billing &amp; payments), then update the number below.</div>`:''}`:`<div class="hint" style="margin-top:0">Enter what the WhatsApp account shows in Meta (Billing &amp; payments, the account ending 741). I will subtract each message sent and warn you when it runs low.</div>`}
+  <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:8px"><div><label class="f" style="margin-top:0">Balance in Meta (₹)</label><input class="i" id="wbAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="499.99" value="${set?b.amt:''}"></div><div><label class="f" style="margin-top:0">Warn me below (₹)</label><input class="i" id="wbLow" type="number" inputmode="decimal" min="0" step="1" value="${b.low}"></div><button class="btn sm" id="wbSave">Save</button></div>
+  <div class="hint" id="wbMsg"></div></div>`}
 function waTabHtml(){
   const chips=[['inbox','Inbox'],['send','Send'],['ads','Ads'],['staff','Staff']].map(([k,n])=>`<button class="chip ${WS.sub===k?'on':''}" data-wsub="${k}">${n}</button>`).join(' ');
   let h=`<div class="sec">WhatsApp</div><div class="row" style="gap:8px;justify-content:flex-start;margin-bottom:10px">${chips}</div>`;
-  const w=D.wa;
+  const w=D.wa;h+=waBalHtml();
   if(w&&(!w.hasVerify||!w.hasSecret)&&WS.sub==='inbox')h+=`<div class="card"><b>Inbox needs a one-time setup</b><div class="hint">To receive customer replies, Meta must call your Worker. Add two secrets in Cloudflare (Worker → Settings → Variables and Secrets): <b>WA_VERIFY</b> (any word you choose) and <b>WA_APP_SECRET</b> (Meta app → Settings → Basic → App secret). Then in Meta → WhatsApp → Configuration set the callback URL to <b>${esc(API_URL)}</b> with your verify word, and subscribe to <b>messages</b>. Status: ${w.hasVerify?'✅':'❌'} verify word · ${w.hasSecret?'✅':'❌'} app secret</div></div>`;
   if(WS.sub==='inbox')h+=waInboxHtml();else if(WS.sub==='send')h+=waSendHtml();else if(WS.sub==='staff')h+=waStaffHtml();else h+=waAdsHtml();
   return h}
@@ -1030,6 +1037,7 @@ $('panel').addEventListener('click',async e=>{
   const th=e.target.closest('[data-wt]');if(th){WS.thr=th.dataset.wt;WS.draft='';D.wThr=null;render();waLoad('wThr','admin_wa_thread',{phone:WS.thr});return}
   const id=e.target.id,B=b=>{b.disabled=true;return()=>{b.disabled=false}};
   if(e.target.closest('[data-wsfon]')){wsfRead();WS.stf.on=!WS.stf.on;render();return}
+  if(id==='wbSave'){const u=B(e.target);try{const r=await api({action:'admin_wa_bal_set',amt:$('wbAmt').value,low:$('wbLow').value});if(r.ok){D.wa=Object.assign(D.wa||{},{bal:r.bal});toast('Balance saved');render()}else{$('wbMsg').textContent=r.error||'Could not save';u()}}catch(_){$('wbMsg')&&($('wbMsg').textContent='No connection');u()}return}
   if(id==='wsfAdd'){wsfRead();WS.stf.list.push({name:'',phone:'',on:true});render();return}
   const wd=e.target.closest('[data-wd]');if(wd){wsfRead();WS.stf.list.splice(+wd.dataset.wd,1);render();return}
   if(id==='wsfSave'||id==='wsfTest'||id==='wsfMk'){const u=B(e.target);try{
