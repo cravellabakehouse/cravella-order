@@ -960,14 +960,15 @@ async function waLoad(k,act,extra,put){if(D[k+'B'])return;D[k+'B']=1;try{const r
 function waTabLoad(){if(!D.wa&&!D.waBusy&&nf('wa'))loadWa();
   if(WS.sub==='inbox'&&!WS.thr&&!D.wInb&&nf('wInb'))waLoad('wInb','admin_wa_inbox');
   if(WS.sub!=='inbox'&&!D.wTpl&&nf('wTpl'))waLoad('wTpl','admin_wa_tpl_list');
+  if(WS.sub==='staff'&&!D.wStf&&nf('wStf'))waLoad('wStf','admin_wa_staff_get');
   if(WS.sub==='ads'){if(!D.wOpt&&nf('wOpt'))waLoad('wOpt','admin_wa_optin_get');if(!D.wAds&&nf('wAds'))waLoad('wAds','admin_wa_ads_get')}}
 const waSt=s=>({sent:'✓',delivered:'✓✓',read:'✓✓',failed:'✕'}[s]||'');
 function waTabHtml(){
-  const chips=[['inbox','Inbox'],['send','Send'],['ads','Ads']].map(([k,n])=>`<button class="chip ${WS.sub===k?'on':''}" data-wsub="${k}">${n}</button>`).join(' ');
+  const chips=[['inbox','Inbox'],['send','Send'],['ads','Ads'],['staff','Staff']].map(([k,n])=>`<button class="chip ${WS.sub===k?'on':''}" data-wsub="${k}">${n}</button>`).join(' ');
   let h=`<div class="sec">WhatsApp</div><div class="row" style="gap:8px;justify-content:flex-start;margin-bottom:10px">${chips}</div>`;
   const w=D.wa;
   if(w&&(!w.hasVerify||!w.hasSecret)&&WS.sub==='inbox')h+=`<div class="card"><b>Inbox needs a one-time setup</b><div class="hint">To receive customer replies, Meta must call your Worker. Add two secrets in Cloudflare (Worker → Settings → Variables and Secrets): <b>WA_VERIFY</b> (any word you choose) and <b>WA_APP_SECRET</b> (Meta app → Settings → Basic → App secret). Then in Meta → WhatsApp → Configuration set the callback URL to <b>${esc(API_URL)}</b> with your verify word, and subscribe to <b>messages</b>. Status: ${w.hasVerify?'✅':'❌'} verify word · ${w.hasSecret?'✅':'❌'} app secret</div></div>`;
-  if(WS.sub==='inbox')h+=waInboxHtml();else if(WS.sub==='send')h+=waSendHtml();else h+=waAdsHtml();
+  if(WS.sub==='inbox')h+=waInboxHtml();else if(WS.sub==='send')h+=waSendHtml();else if(WS.sub==='staff')h+=waStaffHtml();else h+=waAdsHtml();
   return h}
 function waInboxHtml(){
   if(WS.thr){const t=D.wThr;
@@ -1009,12 +1010,35 @@ function waAdsHtml(){
   <div class="row" style="margin-top:10px"><span class="hint" style="margin:0" id="wbMsg">${esc(a.msg)}</span><button class="btn sm" id="wbGo" ${a.busy?'disabled':''}>${a.busy?'Sending…':'Send to '+(o?o.yes:'…')}</button></div>
   ${D.wAds&&D.wAds.list.length?`<div class="hist" style="display:block"><div class="m"><b>Past sends</b></div>${D.wAds.list.slice(0,6).map(c=>`<div class="h"><span>${esc(tAgo(c.t))} · ${esc(c.tpl)}</span><b>${c.sent} sent${c.failed?` · ${c.failed} failed`:''}</b></div>`).join('')}</div>`:''}</div>${waTplList()}`}
 const waSel=id=>{const s=$(id),o=s&&s.options[s.selectedIndex];return o&&o.value?{tpl:o.value,lang:o.dataset.lang||'en',nb:+o.dataset.nb||0}:null};
+function waStaffHtml(){
+  const c=D.wStf;if(!c)return `<div class="card"><div class="hint">${D.wStfE?esc(D.wStfE):'Loading…'}</div></div>`;
+  if(!WS.stf)WS.stf={on:c.on,list:c.list.map(x=>Object.assign({},x))};
+  const f=WS.stf,tp=D.wTpl&&D.wTpl.list.find(t=>t.name==='cravella_staff_new_order');
+  const st=tp?`<span class="pill ${tp.status==='APPROVED'?'Confirmed':tp.status==='REJECTED'?'Cancelled':''}">${esc(tp.status.toLowerCase().replace('_',' '))}</span>`:'<span class="pill">not submitted</span>';
+  return `<div class="card"><b>Order alerts to staff</b><div class="hint">Every new order is sent on WhatsApp to the people below, each on their own number. Needs the staff template to be approved by Meta.</div>
+  <div class="row" style="margin:6px 0"><span>Alert template</span>${st}</div>
+  ${tp?'':'<button class="btn ol sm" id="wsfMk">Submit template to Meta</button>'}
+  <div class="sw" style="margin-top:10px"><span>Send order alerts<br><small class="hint">Master switch</small></span>${stg(f.on,'data-wsfon="1"')}</div>
+  <div id="wsfL">${f.list.map((x,i)=>`<div style="display:grid;grid-template-columns:.8fr 1.4fr auto auto;gap:6px;align-items:center;margin-top:8px"><input class="i" data-wn="${i}" placeholder="Name" maxlength="40" value="${esc(x.name)}"><input class="i" data-wp="${i}" type="tel" inputmode="tel" placeholder="98450 12345" maxlength="20" value="${esc(x.phone)}"><label style="font-size:12px"><input type="checkbox" data-wo="${i}" ${x.on!==false?'checked':''}> on</label><button class="btn ol sm" data-wd="${i}" aria-label="Remove">✕</button></div>`).join('')}</div>
+  ${f.list.length<5?'<button class="btn ol sm" id="wsfAdd" style="margin-top:10px">+ Add a person</button>':''}
+  <div class="row" style="margin-top:12px"><span class="hint" style="margin:0" id="wsfMsg"></span><span><button class="btn ol sm" id="wsfTest">Send test</button> <button class="btn sm" id="wsfSave">Save</button></span></div></div>`}
+function wsfRead(){const f=WS.stf;if(!f)return;document.querySelectorAll('#wsfL [data-wn]').forEach(el=>{const i=+el.dataset.wn;if(f.list[i])f.list[i].name=el.value});document.querySelectorAll('#wsfL [data-wp]').forEach(el=>{const i=+el.dataset.wp;if(f.list[i])f.list[i].phone=el.value});document.querySelectorAll('#wsfL [data-wo]').forEach(el=>{const i=+el.dataset.wo;if(f.list[i])f.list[i].on=el.checked})}
 const waCsv=v=>String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
 $('panel').addEventListener('input',e=>{if(e.target.id==='wTxt')WS.draft=e.target.value});
 $('panel').addEventListener('click',async e=>{
   const g=e.target.closest('[data-wsub]');if(g){WS.sub=g.dataset.wsub;WS.thr=null;D.wThr=null;render();return}
   const th=e.target.closest('[data-wt]');if(th){WS.thr=th.dataset.wt;WS.draft='';D.wThr=null;render();waLoad('wThr','admin_wa_thread',{phone:WS.thr});return}
   const id=e.target.id,B=b=>{b.disabled=true;return()=>{b.disabled=false}};
+  if(e.target.closest('[data-wsfon]')){wsfRead();WS.stf.on=!WS.stf.on;render();return}
+  if(id==='wsfAdd'){wsfRead();WS.stf.list.push({name:'',phone:'',on:true});render();return}
+  const wd=e.target.closest('[data-wd]');if(wd){wsfRead();WS.stf.list.splice(+wd.dataset.wd,1);render();return}
+  if(id==='wsfSave'||id==='wsfTest'||id==='wsfMk'){const u=B(e.target);try{
+    if(id==='wsfMk'){const r=await api({action:'admin_wa_tpl_create',name:'cravella_staff_new_order',cat:'UTILITY',body:'New Cravella order {{1}}. Items: {{2}}. Due: {{3}}.'});if(r.ok){toast('Sent to Meta for approval');D.wTpl=null;D.wTplF=0;render();waTabLoad()}else{$('wsfMsg').textContent=r.error||'Could not submit'}u();return}
+    wsfRead();const r=await api({action:'admin_wa_staff_set',on:WS.stf.on,list:WS.stf.list});
+    if(!r.ok){$('wsfMsg').textContent=r.error||'Could not save';u();return}
+    D.wStf=r;WS.stf=null;
+    if(id==='wsfTest'){const t=await api({action:'admin_wa_staff_test'});render();$('wsfMsg').textContent=t.ok?'Test sent to '+t.sent+' number(s)':(t.error||'Could not send');u();return}
+    toast('Saved');render()}catch(_){$('wsfMsg')&&($('wsfMsg').textContent='No connection');u()}return}
   if(id==='wRef'){D.wInb=null;D.wInbF=0;render();waTabLoad();return}
   if(id==='wTplRef'){D.wTpl=null;D.wTplF=0;render();waTabLoad();return}
   if(id==='wReply'){const t=($('wTxt').value||'').trim();if(!t){toast('Type a message');return}const u=B(e.target);try{const r=await api({action:'admin_wa_reply',phone:WS.thr,text:t});if(r.ok){WS.draft='';D.wThr=null;render();waLoad('wThr','admin_wa_thread',{phone:WS.thr})}else{toast(r.error||'Could not send');u()}}catch(_){toast('No connection');u()}return}
