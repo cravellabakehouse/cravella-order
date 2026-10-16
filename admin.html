@@ -554,6 +554,7 @@ function orderCard(o){
   <div class="row"><b>${inr(o.total)}${o.toConfirm?' (price to confirm)':''}</b><span class="m">Advance 50%: ${inr(o.total/2)}</span></div>
   ${o.notes?`<div class="note">${esc(o.notes)}</div>`:''}
   ${o.photos.length?`<div class="ph">${o.photos.filter(u=>/^https:\/\//.test(u)).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">🖼 Photo</a>`).join(' ')}</div>`:''}
+  ${o.pays&&o.pays.length?`<div class="ph">${o.pays.map((p,i)=>`<button class="btn sm" data-pay="${esc(p.m)}">🧾 Payment screenshot${o.pays.length>1?' '+(i+1):''}</button>`).join(' ')}</div>`:''}
   <div class="st">${D.statuses.map(s=>`<button data-s="${esc(s)}" class="${o.status===s?'on':''}">${esc(s)}</button>`).join('')}</div>
   ${o.email?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status (Confirmed opens the editable email instead)</label>`:''}
   ${mailNote(o)}
@@ -567,6 +568,9 @@ function tmHtml(o){
     h+=`<span class="${c}">${dl<0?'⚠ '+x.l.replace(' due','')+' overdue by '+dur(dl):'⏳ '+x.l+' in '+dur(dl)}</span>`});
   return h
 }
+/* ---------- payment screenshots: open from the order or the chat ---------- */
+function payShow(src){const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px';d.innerHTML='<img alt="Payment screenshot" style="max-width:100%;max-height:82vh;border-radius:10px;background:#fff"><button class="btn" style="min-height:44px">Close</button>';d.querySelector('img').src=src;d.onclick=ev=>{if(ev.target===d||ev.target.tagName==='BUTTON')d.remove()};document.body.appendChild(d)}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-pay]');if(!b)return;e.preventDefault();e.stopPropagation();const tx=b.textContent;b.disabled=true;b.textContent='Opening…';try{const r=await api({action:'admin_pay_img',id:b.dataset.pay});if(r&&r.ok)payShow('data:'+r.mime+';base64,'+r.data);else toast((r&&r.error)||'Could not open the picture')}catch(_){toast('No connection')}b.disabled=false;b.textContent=tx},true);
 setInterval(()=>{document.querySelectorAll('.tm[data-id]').forEach(el=>{const o=D.orders.find(x=>x.id===el.dataset.id);if(o)el.innerHTML=tmHtml(o)})},30000);
 
 /* ---------- repeat customers ---------- */
@@ -1026,7 +1030,7 @@ function waInboxHtml(){
   if(WS.thr){const t=D.wThr;
     let h=`<div class="card"><div class="row"><button class="btn ol sm" data-wsub="inbox">← All chats</button><b>${esc(t&&t.name||'')} ${t?'+'+esc(t.phone):''}</b></div>`;
     if(!t)return h+`<div class="hint">${D.wThrE?esc(D.wThrE):'Loading…'}</div></div>`;
-    h+=`<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto">${t.msgs.map(m=>`<div style="align-self:${m.dir==='in'?'flex-start':'flex-end'};max-width:85%;padding:8px 11px;border-radius:12px;background:${m.dir==='in'?'#f4efe3':'#d9efe1'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div class="hint" style="margin:3px 0 0;font-size:11.5px">${esc(tAgo(m.t))} ${m.dir==='out'?waSt(m.status):''}${m.status==='failed'?` · ${esc(m.err)}`:''}</div></div>`).join('')||'<div class="hint">No messages yet.</div>'}</div>`;
+    h+=`<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto">${t.msgs.map(m=>`<div style="align-self:${m.dir==='in'?'flex-start':'flex-end'};max-width:85%;padding:8px 11px;border-radius:12px;background:${m.dir==='in'?'#f4efe3':'#d9efe1'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}${m.kind==='image'&&m.id?`<div><button class="btn sm" data-pay="${esc(m.id)}" style="margin-top:6px">Open picture</button></div>`:''}<div class="hint" style="margin:3px 0 0;font-size:11.5px">${esc(tAgo(m.t))} ${m.dir==='out'?waSt(m.status):''}${m.status==='failed'?` · ${esc(m.err)}`:''}</div></div>`).join('')||'<div class="hint">No messages yet.</div>'}</div>`;
     h+=t.open?`<div class="chips" style="margin:10px 0 0">${WQ.map((q,i)=>`<button class="chip" data-wq="${i}">${q[0]}</button>`).join('')}</div><textarea class="i" id="wTxt" style="min-height:70px;margin-top:10px" maxlength="1000" placeholder="Type a reply">${esc(WS.draft)}</textarea><div class="row" style="margin-top:8px"><span class="hint" style="margin:0">Free replies work for 24 hours after their last message.</span><button class="btn sm" id="wReply">Send</button></div>`:`<div class="hint" style="margin-top:10px">More than 24 hours since this customer wrote, so WhatsApp only allows an approved template now. Use the <b>Send</b> tab.</div>`;
     return h+'</div>'}
   const l=D.wInb;if(!l)return `<div class="card"><div class="hint" style="margin:0">${D.wInbE?esc(D.wInbE):'Loading…'}</div></div>`;
