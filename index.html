@@ -354,7 +354,8 @@ body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media 
 
   <label class="f">Pickup or delivery</label>
   <div class="seg" id="modeSeg"><button data-m="Pickup" class="on">Pickup</button><button data-m="Delivery">Delivery</button></div>
-  <div id="addrBox" style="display:none"><label class="f">Delivery address</label><textarea class="i" id="fAddr" placeholder="House / flat, street, area, landmark"></textarea><div class="hint"><b class="dlvh">Delivery charges extra.</b> We'll confirm the fee on WhatsApp.</div></div>
+  <div class="hint" style="margin-top:6px">Delivery is within Bengaluru only. Pickup is always available.</div>
+  <div id="addrBox" style="display:none"><label class="f">Delivery address</label><textarea class="i" id="fAddr" placeholder="House / flat, street, area, landmark"></textarea><label class="f">Pincode</label><input class="i" id="fPin" inputmode="numeric" autocomplete="postal-code" maxlength="6" placeholder="560001"><div class="hint" id="pinMsg">Bengaluru pincodes only (560001 to 560103).</div><div class="hint"><b class="dlvh">Delivery charges extra.</b> We'll confirm the fee on WhatsApp.</div></div>
 
   <label class="f" id="dateLbl">Date &amp; time</label>
   <div class="two"><input class="i" type="date" id="fDate"><select class="i" id="fTime"></select></div>
@@ -845,6 +846,8 @@ $('fDate').addEventListener('change',()=>{const m=dateIssue($('fDate').value,S.c
 $('fDate2').addEventListener('change',()=>{const m=dateIssue($('fDate2').value,false);if(m){toast(m);$('fDate2').value=''}});
 $('fDate').addEventListener('change',()=>limitTimes($('fDate'),$('fTime'),leadHours()));$('fDate2').addEventListener('change',()=>limitTimes($('fDate2'),$('fTime2'),LEAD.other));
 $('fTime').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
+const pinOk=v=>{v=String(v||'').trim();return /^560\d{3}$/.test(v)&&+v>=560001&&+v<=560103};
+$('fPin').addEventListener('input',e=>{const v=e.target.value.replace(/\D/g,'').slice(0,6);e.target.value=v;const m=$('pinMsg');if(v.length<6){m.textContent='Bengaluru pincodes only (560001 to 560103).';m.style.color='';return}if(pinOk(v)){m.textContent='Good, we deliver there.';m.style.color='#1f6b3d'}else{m.textContent='Sorry, we deliver only within Bengaluru. You can choose Pickup instead.';m.style.color='#b3261e'}});
 $('modeSeg').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;S.mode=b.dataset.m;[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x===b));$('addrBox').style.display=S.mode==='Delivery'?'block':'none';renderReview()});
 
 /* photos: shrink on the phone before upload */
@@ -909,8 +912,9 @@ $('submit').onclick=async()=>{
   const sp=sp0&&!(sp0.date===date&&sp0.time===time)?sp0:null;
   if(S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom})&&!S.photos.length)return fail('For your custom cake, please upload a sample reference photo of the design you like.','photoLbl');
   if(S.mode==='Delivery'&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
+  if(S.mode==='Delivery'&&!pinOk($('fPin').value))return fail('We deliver only within Bengaluru (pincodes 560001 to 560103). Enter a Bengaluru pincode, or choose Pickup.','fPin');
   function fail(m,id){err.textContent=m;const el=$(id);document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));el.classList.add('bad');if(el.tagName==='INPUT'&&el.type!=='date'||el.tagName==='TEXTAREA')el.focus({preventScroll:true});err.scrollIntoView({block:'center',behavior:'smooth'})}
-  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?addr:'',notes:(hasCustom()&&$('fBudget').value.trim()?'Budget: '+$('fBudget').value.trim().slice(0,30)+'. ':'')+notes,photos:S.cakes.length?S.photos:[],
+  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:S.mode==='Delivery'?(addr+', Bengaluru '+$('fPin').value.trim()).slice(0,300):'',notes:(hasCustom()&&$('fBudget').value.trim()?'Budget: '+$('fBudget').value.trim().slice(0,30)+'. ':'')+notes,photos:S.cakes.length?S.photos:[],
     items:itemsPayload(),split:sp,coupon:S.coupon?S.coupon.code:'',clientTotal:Math.round(t.tot)};
   const btn=$('submit');btn.disabled=true;btn.textContent='Sending…';
   const trip=S.mode==='Delivery'?'Delivery: ':'Pickup: ';
@@ -980,12 +984,12 @@ $('dImg').onclick=async()=>{
   b.disabled=false;b.textContent=txt;
 };
 function clearOrder(){S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.mode='Pickup';S.coupon=null;S.split=false;try{$('cpnIn').value='';setCpn('')}catch(_){}
-  ['fNotes','fAddr','fDate','fTime','fName','fPhone','fDate2','fTime2','fBudget'].forEach(i=>{const e=$(i);if(e)e.value=''});
+  ['fNotes','fAddr','fPin','fDate','fTime','fName','fPhone','fDate2','fTime2','fBudget'].forEach(i=>{const e=$(i);if(e)e.value=''});
   document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));
   try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Pickup'));$('addrBox').style.display='none'}catch(_){}
   try{renderThumbs()}catch(_){}
   $('review').classList.remove('on');$('done').classList.remove('on');document.body.style.overflow='';renderAll()}
-$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.coupon=null;S.split=false;$('cpnIn').value='';setCpn('');['fNotes','fAddr','fDate','fTime','fDate2','fTime2','fBudget'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
+$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.coupon=null;S.split=false;$('cpnIn').value='';setCpn('');['fNotes','fAddr','fPin','fDate','fTime','fDate2','fTime2','fBudget'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
   $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
 
 /* ---------- account: sign in with an emailed code, saved details, order history ---------- */
