@@ -819,7 +819,7 @@ function renderReview(){
   else if(t.flag)msgs.push('Some cake weights are estimates; we\'ll confirm the final price.');
   if(S.photos.length&&!S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom}))msgs.push('Custom designs may cost extra; we\'ll confirm after seeing your photo.');
   n.style.display=msgs.length?'block':'none';n.textContent=msgs.join(' ');
-  $('revSign').innerHTML=A.tok?'Signed in as '+esc(A.profile?A.profile.email:'your account')+'. This order will appear in your history.':'<a class="lnk" data-signin>Sign in</a> to save your details and track this order.';
+  $('revSign').innerHTML=A.tok?'Signed in as '+esc(A.profile?whoIs(A.profile):'your account')+'. This order will appear in your history.':'<a class="lnk" data-signin>Sign in</a> to save your details and track this order.';
   const md=minDate(),f=$('fDate');f.min=ymd(md);
   if(f.value&&f.value<f.min)f.value='';limitTimes(f,$('fTime'),leadHours());
   const cs=canSplit();S.split=cs;
@@ -989,7 +989,9 @@ $('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.
   $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
 
 /* ---------- account: sign in with an emailed code, saved details, order history ---------- */
-const A={tok:'',profile:null,orders:null,view:'in',email:'',msg:'',busy:false};
+const A={tok:'',profile:null,orders:null,view:'in',email:'',mob:'',msg:'',busy:false};
+const acTabs=v=>CFG&&CFG.mlogin?`<div style="display:flex;gap:8px;margin-top:18px"><button class="${v==='m'?'go':'btn ol'}" style="flex:1;margin:0;padding:12px" data-act="tomob">💬 WhatsApp</button><button class="${v==='e'?'go':'btn ol'}" style="flex:1;margin:0;padding:12px" data-act="chg">✉️ Email</button></div>`:'';
+const whoIs=p=>/@mobile\.cravella$/.test(p.email||'')?'+91 '+(p.phone||''):(p.email||'');
 try{A.tok=localStorage.getItem('cv_tok')||''}catch(_){}
 const live=()=>!(API_URL.startsWith('__')||API_URL.includes('PASTE'));
 async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)});return res.json()}
@@ -1017,10 +1019,23 @@ function orderHtml(o,i){
 function acRender(){
   const b=$('acBody'),m=A.msg?`<div class="err">${esc(A.msg)}</div>`:'';
   if(A.view==='in'){
-    b.innerHTML=`<h2 class="t" style="margin-top:20px;font-size:23px">Sign in</h2>
+    b.innerHTML=`${acTabs('e')}<h2 class="t" style="margin-top:20px;font-size:23px">Sign in</h2>
     <p class="hint" style="font-size:14px">Enter your email and we'll send a 6-digit code. No password needed. Signing in lets you see your orders and saves your details for next time.</p>
     <label class="f">Email</label><input class="i" id="aEmail" type="email" inputmode="email" autocomplete="email" value="${esc(A.email)}" placeholder="you@example.com">${m}
-    <button class="go" data-act="send" style="width:100%;margin-top:14px;padding:15px;font-size:16px">Send code</button>`;
+    <button class="go" data-act="send" style="width:100%;margin-top:14px;padding:15px;font-size:16px">Send code</button>
+`;
+  }else if(A.view==='min'){
+    b.innerHTML=`${acTabs('m')}<h2 class="t" style="margin-top:20px;font-size:23px">Sign in with WhatsApp</h2>
+    <p class="hint" style="font-size:14px">Enter your mobile number and we'll send a 6-digit code on WhatsApp. Make sure WhatsApp is active on this number.</p>
+    <label class="f">Mobile number</label><input class="i" id="aMob" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" value="${esc(A.mob)}" placeholder="98765 43210">${m}
+    <button class="go" data-act="msend" style="width:100%;margin-top:14px;padding:15px;font-size:16px">Send code on WhatsApp</button>
+`;
+  }else if(A.view==='mcode'){
+    b.innerHTML=`<h2 class="t" style="margin-top:20px;font-size:23px">Enter your code</h2>
+    <p class="hint" style="font-size:14px">We sent a 6-digit code on WhatsApp to <b>+91 ${esc(A.mob)}</b>. It can take a few seconds.</p>
+    <label class="f">6-digit code</label><input class="i" id="aCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="font-size:22px;letter-spacing:.3em;text-align:center">${m}
+    <button class="go" data-act="mverify" style="width:100%;margin-top:14px;padding:15px;font-size:16px">Sign in</button>
+    <p class="hint" style="text-align:center;margin-top:14px"><a class="lnk" data-act="msend">Send a new code</a> · <a class="lnk" data-act="tomob">Use a different number</a></p>`;
   }else if(A.view==='code'){
     b.innerHTML=`<h2 class="t" style="margin-top:20px;font-size:23px">Enter your code</h2>
     <p class="hint" style="font-size:14px">We sent a 6-digit code to <b>${esc(A.email)}</b>. It can take a minute; check your spam folder too.</p>
@@ -1033,7 +1048,7 @@ function acRender(){
     if(A.orders===null)list='<div class="empty">Loading your orders…</div>';
     else if(!A.orders.length)list='<div class="empty">No orders yet. Your orders will show up here.</div>';
     else list=A.orders.map(orderHtml).join('');
-    b.innerHTML=`<p class="hint" style="margin-top:16px">Signed in as <b>${esc(p.email)}</b></p>
+    b.innerHTML=`<p class="hint" style="margin-top:16px">Signed in as <b>${esc(whoIs(p))}</b></p>
     <div class="sec2">Your orders</div>${list}
     <div class="sec2">Your details</div>
     <label class="f">Name</label><input class="i" id="pName" autocomplete="name" maxlength="80" value="${esc(p.name)}">
@@ -1054,8 +1069,14 @@ $('acBody').addEventListener('click',e=>{
     const em=($('aEmail')?$('aEmail').value:A.email).trim();A.email=em;
     const r=await api({action:'otp_request',email:em});
     if(r.ok){A.view='code'}else A.msg=r.error||'Could not send the code.'});
-  if(a==='verify')return acDo(x,async()=>{
-    const r=await api({action:'otp_verify',email:A.email,code:$('aCode').value});
+  if(a==='tomob'){A.view='min';A.msg='';acRender();return}
+  if(a==='msend')return acDo(x.tagName==='BUTTON'?x:null,async()=>{
+    if(!live()){A.msg='Sign-in is not available in this preview.';return}
+    A.mob=($('aMob')?$('aMob').value:A.mob).trim();
+    const r=await api({action:'wa_otp_request',phone:A.mob});
+    if(r.ok){A.view='mcode'}else A.msg=r.error||'Could not send the code.'});
+  if(a==='verify'||a==='mverify')return acDo(x,async()=>{
+    const r=await api(a==='mverify'?{action:'wa_otp_verify',phone:A.mob,code:$('aCode').value}:{action:'otp_verify',email:A.email,code:$('aCode').value});
     if(r.ok){setTok(r.token);A.profile=r.profile;A.orders=null;A.view='home';accBtn();
       const inReview=$('review').classList.contains('on');closeAcct();
       if(!inReview)scrollTo({top:Math.max(0,$('tabs').offsetTop),behavior:'smooth'});
@@ -1075,13 +1096,13 @@ $('acBody').addEventListener('click',e=>{
     if(totals().count){openReview();toast('Added from your earlier order. Please pick a new date.')}}
 });
 $('acBody').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const t=e.target;
-  if(t.id==='aEmail'||t.id==='aCode'){e.preventDefault();const b=$('acBody').querySelector('button.go');if(b)b.click()}});
+  if(t.id==='aEmail'||t.id==='aCode'||t.id==='aMob'){e.preventDefault();const b=$('acBody').querySelector('button.go');if(b)b.click()}});
 function acFoot(){const f=document.querySelector('.ft2');if(!f)return;const c=f.cloneNode(true);c.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));$('acFoot').replaceChildren(c)}
 function acNav(on){document.querySelectorAll('#bn [data-n]').forEach(b=>b.classList.toggle('on',on?b.dataset.n==='orders':b.dataset.n==='home'))}
 async function openAcct(){
   const li=document.querySelector('#logoHome img');if(li&&!$('acLg').src)$('acLg').src=li.src;acFoot();acNav(true);
   $('acct').classList.add('on');document.body.classList.add('acct-open');document.body.style.overflow='hidden';
-  A.msg='';A.view=A.tok?'home':'in';acRender();$('acct').scrollTop=0;
+  A.msg='';A.view=A.tok?'home':(CFG&&CFG.mlogin?'min':'in');acRender();$('acct').scrollTop=0;
   if(A.tok){await loadMe();if(!A.tok)A.view='in';acRender()}
 }
 function closeAcct(){
