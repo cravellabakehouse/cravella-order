@@ -998,6 +998,12 @@ function waBalHtml(){
   ${set?`<div style="font-size:26px;font-weight:700;margin:6px 0">about ${inr(b.amt)} left</div><div class="hint" style="margin-top:0">${b.n} message${b.n===1?'':'s'} sent since you set it${since?' ('+esc(since)+')':''}. This is an estimate, using about ₹0.15 per order update and ₹0.85 per offer message. Messages inside a customer's 24-hour reply window are free, so the real balance is usually a little higher.</div>${low?`<div class="hint" style="color:var(--bad,#b3261e);font-weight:600">Balance is below your ₹${b.low} alert. Add money to the WhatsApp account ending 741 in Meta (Billing &amp; payments), then update the number below.</div>`:''}`:`<div class="hint" style="margin-top:0">Enter what the WhatsApp account shows in Meta (Billing &amp; payments, the account ending 741). I will subtract each message sent and warn you when it runs low.</div>`}
   <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:8px"><div><label class="f" style="margin-top:0">Balance in Meta (₹)</label><input class="i" id="wbAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="499.99" value="${set?b.amt:''}"></div><div><label class="f" style="margin-top:0">Warn me below (₹)</label><input class="i" id="wbLow" type="number" inputmode="decimal" min="0" step="1" value="${b.low}"></div><button class="btn sm" id="wbSave">Save</button></div>
   <div class="hint" id="wbMsg"></div></div>`}
+function waWelHtml(){
+  const w=D.wa;if(!w)return '';const on=!!w.welcome;
+  return `<div class="card" id="waWel"><div class="row"><b>Welcome message with buttons</b><span class="pill ${on?'Confirmed':''}">${on?'on':'off'}</span></div>
+  <div class="hint" style="margin-top:4px">When a new customer messages you, they get a friendly menu with three buttons: Order a cake (sends your order link), Delivery info (Bengaluru only), and Talk to us. It is sent once, and only if you have not already replied in the last 12 hours. These replies are free.</div>
+  <div class="row" style="gap:8px;justify-content:flex-start;margin-top:8px"><button class="btn sm" id="wwTog">${on?'Switch off':'Switch on'}</button></div>
+  <div class="hint" id="wwMsg"></div></div>`}
 function waLoginHtml(){
   const w=D.wa;if(!w)return '';const on=!!w.mlogin;
   return `<div class="card" id="waLogin"><div class="row"><b>Sign in with mobile</b><span class="pill ${on?'Confirmed':''}">${on?'on':'off'}</span></div>
@@ -1012,7 +1018,7 @@ function waHero(){
 function waTabHtml(){
   const chips=[['inbox','💬 Chats'],['ads','📣 Offers'],['staff','🔔 Alerts'],['send','⚙️ Setup']].map(([k,n])=>`<button class="chip ${WS.sub===k?'on':''}" data-wsub="${k}">${n}</button>`).join(' ');
   let h=`<div class="hd"><div><h2>WhatsApp</h2><small>${({inbox:'Reply to customers',ads:'Send offers to customers who agreed',staff:'Alerts when a new order arrives',send:'Balance, messages and sign-in'})[WS.sub]||''}</small></div></div>${waHero()}<div class="chips" style="margin:12px 0">${chips}</div>`;
-  const w=D.wa;if(WS.sub==='send'){h+=waBalHtml();h+=waLoginHtml()}
+  const w=D.wa;if(WS.sub==='send'){h+=waBalHtml();h+=waWelHtml();h+=waLoginHtml()}
   if(w&&(!w.hasVerify||!w.hasSecret)&&WS.sub==='inbox')h+=`<div class="card"><b>Inbox needs a one-time setup</b><div class="hint">To receive customer replies, Meta must call your Worker. Add two secrets in Cloudflare (Worker → Settings → Variables and Secrets): <b>WA_VERIFY</b> (any word you choose) and <b>WA_APP_SECRET</b> (Meta app → Settings → Basic → App secret). Then in Meta → WhatsApp → Configuration set the callback URL to <b>${esc(API_URL)}</b> with your verify word, and subscribe to <b>messages</b>. Status: ${w.hasVerify?'✅':'❌'} verify word · ${w.hasSecret?'✅':'❌'} app secret</div></div>`;
   if(WS.sub==='inbox')h+=waInboxHtml();else if(WS.sub==='send')h+=waSendHtml();else if(WS.sub==='staff')h+=waStaffHtml();else h+=waAdsHtml();
   return h}
@@ -1077,6 +1083,7 @@ $('panel').addEventListener('click',async e=>{
   const th=e.target.closest('[data-wt]');if(th){WS.thr=th.dataset.wt;WS.draft='';D.wThr=null;render();waLoad('wThr','admin_wa_thread',{phone:WS.thr});return}
   const id=e.target.id,B=b=>{b.disabled=true;return()=>{b.disabled=false}};
   if(e.target.closest('[data-wsfon]')){wsfRead();WS.stf.on=!WS.stf.on;render();return}
+  if(id==='wwTog'){const u=B(e.target);try{const r=await api({action:'admin_wa_welcome_set',on:!(D.wa&&D.wa.welcome)});if(r.ok){D.wa.welcome=r.on;toast(r.on?'Welcome message is on':'Welcome message is off');render();return}$('wwMsg').textContent=r.error||'Could not save'}catch(_){$('wwMsg').textContent='No connection'}u();return}
   if(id==='wlTpl'){const u=B(e.target);try{const r=await api({action:'admin_wa_login_tpl'});$('wlMsg').textContent=r.ok?'Submitted to Meta ('+r.status+'). Approval usually takes a few minutes to a day.':(r.error||'Could not submit');D.wTpl=null}catch(_){$('wlMsg').textContent='No connection'}u();return}
   if(id==='wlTog'){const u=B(e.target);try{const r=await api({action:'admin_wa_login_set',on:!(D.wa&&D.wa.mlogin)});if(r.ok){D.wa.mlogin=r.on;toast(r.on?'Mobile sign-in is on':'Mobile sign-in is off');render();return}$('wlMsg').textContent=r.error||'Could not save'}catch(_){$('wlMsg').textContent='No connection'}u();return}
   if(id==='wbSave'){const u=B(e.target);try{const r=await api({action:'admin_wa_bal_set',amt:$('wbAmt').value,low:$('wbLow').value});if(r.ok){D.wa=Object.assign(D.wa||{},{bal:r.bal});toast('Balance saved');render()}else{$('wbMsg').textContent=r.error||'Could not save';u()}}catch(_){$('wbMsg')&&($('wbMsg').textContent='No connection');u()}return}
