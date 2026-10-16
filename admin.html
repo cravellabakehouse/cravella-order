@@ -454,7 +454,7 @@ function todayCard(o,t){
   <div class="row"><span class="id">${esc(p.l)}${esc(p.tm)} · ${esc(o.name)}</span><span class="pill ${esc(sc)}">${esc(o.status)}</span></div>
   <div class="m">${o.mode==='Delivery'?'🚚':'🛍'} ${esc(sumLine(o))} · <b>${inr(o.total)}</b>${o.toConfirm?' (to confirm)':''}</div>
   <div class="tm" data-id="${esc(o.id)}">${tmHtml(o)}</div>
-  <div class="acts">${nx?`<button class="btn big" data-s="${esc(nx[0])}">${nx[1]}</button>`:''}${nx?`<a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,nx[2]))}">💬 WhatsApp</a>`:''}<a class="btn ol sm" href="tel:${esc(o.phone)}">📞 Call</a><button class="btn ol sm" data-open="${esc(o.id)}">Details</button></div></div>`
+  <div class="acts">${nx?`<button class="btn big" data-s="${esc(nx[0])}">${nx[1]}</button>`:''}${nx?`<button class="btn ol sm" data-wasend="${esc(o.id)}|${nx[2]}">💬 Send on WhatsApp</button>`:''}<a class="btn ol sm" href="tel:${esc(o.phone)}">📞 Call</a><button class="btn ol sm" data-open="${esc(o.id)}">Details</button></div></div>`
 }
 const BRK_DEF="We're taking a short break and are not taking any orders right now. We'll be back soon!";
 function homeHtml(){
@@ -535,7 +535,7 @@ function orderCard(o){
   <div class="st">${D.statuses.map(s=>`<button data-s="${esc(s)}" class="${o.status===s?'on':''}">${esc(s)}</button>`).join('')}</div>
   ${o.email?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status (Confirmed opens the editable email instead)</label>`:''}
   ${mailNote(o)}
-  <div class="acts"><button class="btn sm" data-mail="${esc(o.id)}">✉ Email customer</button>${histBtn(o)}<a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'c'))}">WhatsApp: Confirm</a><a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'a'))}">Advance received</a><a class="btn ol sm" target="_blank" rel="noopener" href="${esc(waLink(o,'r'))}">Ready</a></div>${histBox(o)}</div>`
+  <div class="acts"><button class="btn sm" data-mail="${esc(o.id)}">✉ Email customer</button>${histBtn(o)}<button class="btn ol sm" data-wasend="${esc(o.id)}|c">WhatsApp: Confirm + 50% advance</button><button class="btn ol sm" data-wasend="${esc(o.id)}|a">WhatsApp: Advance received</button><button class="btn ol sm" data-wasend="${esc(o.id)}|r">WhatsApp: Ready</button></div>${histBox(o)}</div>`
 }
 /* ---------- countdowns ---------- */
 function tmHtml(o){
@@ -691,6 +691,8 @@ $('panel').addEventListener('click',async e=>{
   const op=e.target.closest('[data-open]');if(op){q=op.dataset.open;filt='all';goTab('orders');if(tab==='orders'){render();scrollTo(0,0)}return}
   const f=e.target.closest('[data-f]');if(f){filt=f.dataset.f;render();return}
   const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
+  const ws=e.target.closest('[data-wasend]');if(ws){const [wid,wk]=ws.dataset.wasend.split('|'),lab=ws.textContent;if(ws.disabled)return;ws.disabled=true;ws.textContent='Sending…';
+    api({action:'admin_wa_order_send',id:wid,kind:wk}).then(r=>{toast(r.ok?'WhatsApp message sent':(r.error||'Could not send'));ws.textContent=r.ok?'✓ Sent':lab;ws.disabled=!!r.ok&&false;if(!r.ok)ws.disabled=false;else setTimeout(()=>{ws.textContent=lab;ws.disabled=false},4000)}).catch(()=>{toast('No connection');ws.textContent=lab;ws.disabled=false});return}
   const cfb=e.target.closest('[data-cf]');if(cfb){cf=cfb.dataset.cf;render();return}
   if(e.target.closest('#cCsv')){custCsv();return}
   const cpb=e.target.closest('[data-cp]');if(cpb&&!e.target.closest('a,button')){openCust(cpb.dataset.cp);return}
