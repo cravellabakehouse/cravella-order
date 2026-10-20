@@ -1153,5 +1153,6 @@ if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'
   const n=purgeOff();renderAll();if(n)toast('Some items in your order are sold out and were removed.')
 }).catch(()=>{});
 </script>
+<script>if(/[?&]ai=1/.test(location.search)){var s=document.createElement('script');s.src='ai.js?v=1';document.body.appendChild(s)}</script>
 </body>
 </html>
