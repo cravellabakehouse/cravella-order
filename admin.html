@@ -490,7 +490,7 @@ function homeHtml(){
   <div class="qf"><input class="i" id="qf" type="search" placeholder="🔎  Find a page, order or customer…" autocomplete="off"><div id="qfRes"></div></div>
   <div id="hSecs">${SECS.map(([sn,sc,sd,keys])=>`<div class="hs" style="--ac:${sc}"><div class="hsh"><b>${sn}</b><small>${sd}</small></div><div class="hg">${keys.map(k=>{const x=T.find(y=>y[0]===k);return x?`<button class="ht" data-hgo="${x[0]}"><i>${x[1]}</i><b>${x[2]}</b><span>${esc(x[3]||PGDESC[k]||'')}</span>${x[4]?`<em>${x[4]}</em>`:''}</button>`:''}).join('')}</div></div>`).join('')}
   <div class="hs" style="--ac:#c1272d"><div class="hsh"><b>Need help?</b><small>Talk to us or the customer</small></div><div class="hg"><a class="ht" href="tel:+919845904310"><i>📞</i><b>Call shop</b><span>98459-04310</span></a></div></div></div>
-  <div class="sec qch" data-qc="1">Quick controls <span>${D.qcClosed?'▸':'▾'}</span></div>${D.qcClosed?'':`${D.site&&D.site.brk.on?'<div class="brkon">🌙 The website is on a break right now. Customers cannot order.</div>':''}<div class="card"><div class="sw"><span>Take a break (site offline)<br><small class="hint">Photos turn black and white, a scrolling message runs, and the page goes frosted. No orders can be placed.</small></span>${D.site?stg(D.site.brk.on,'data-qbrk="1"'):'<span class="hint">Loading…</span>'}</div>${D.site?`<button class="btn ol sm" data-brkedit="1" style="margin-top:8px">✏️ ${D.brkOpen?'Hide message':'Edit message'}</button>${D.brkOpen?`<label class="f">Message customers see</label><textarea class="i" id="brkMsg" rows="2" maxlength="160" placeholder="${esc(BRK_DEF)}">${esc(D.site.brk.t)}</textarea><div class="hint">Leave empty to use the ready-made message. Changes save when you tap outside the box.</div>`:`<div class="hint" style="margin-top:6px">Message: ${esc(D.site.brk.t||BRK_DEF)}</div>`}`:''}</div><div class="card"><div class="sw"><span>Closed for orders today<br><small class="hint">Stops orders for today's date (${esc(fmtD(t))}) only. The site stays open for other dates, and you can reopen any time.</small></span>${D.settings?stg(closed,'data-qclose="1"'):'<span class="hint">Loading…</span>'}</div></div>`}`}
+  <div class="sec qch" data-qc="1">Quick controls <span>${D.qcClosed?'▸':'▾'}</span></div>${D.qcClosed?'':`${D.site&&D.site.brk.on?'<div class="brkon">🌙 The website is on a break right now. Customers cannot order.</div>':''}<div class="card"><div class="sw"><span>Take a break (site offline)<br><small class="hint">Photos turn black and white, a scrolling message runs, and the page goes frosted. No orders can be placed.</small></span>${D.site?stg(brkV().on,'data-qbrk="1"'):'<span class="hint">Loading…</span>'}</div>${D.site?`<button class="btn ol sm" data-brkedit="1" style="margin-top:8px">✏️ ${D.brkOpen?'Hide message':'Edit message'}</button>${D.brkOpen?`<label class="f">Message customers see</label><textarea class="i" id="brkMsg" rows="2" maxlength="160" placeholder="${esc(BRK_DEF)}">${esc(brkV().t)}</textarea><div class="hint">Leave empty to use the ready-made message. Changes go live only when you press Publish.</div>`:`<div class="hint" style="margin-top:6px">Message: ${esc(brkV().t||BRK_DEF)}</div>`}${brkDirty()?`<div style="margin-top:12px;padding:12px;border-radius:12px;background:#fff4d6;border:1px solid #f0d58a"><div style="font-size:13.5px;margin-bottom:10px"><b>Not published yet.</b> Customers still see the website ${D.site.brk.on?'on a break':'open'}. After you publish it will be ${brkV().on?'<b>on a break</b>':'<b>open</b>'}.</div><button class="btn sm" data-brkpub="1">Publish</button> <button class="btn ol sm" data-brkdis="1">Discard</button></div>`:''}`:''}</div><div class="card"><div class="sw"><span>Closed for orders today<br><small class="hint">Stops orders for today's date (${esc(fmtD(t))}) only. The site stays open for other dates, and you can reopen any time.</small></span>${D.settings?stg(closed,'data-qclose="1"'):'<span class="hint">Loading…</span>'}</div></div>`}`}
 function todayHtml(){
   if(!loaded&&!D.orders.length)return '<div class="hd"><div><h2>Today</h2><small>Loading…</small></div></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>';
   const t=todayS(),dd=new Date(Date.now()+864e5),tm=ymd(dd),d3=ymd(new Date(Date.now()+3*864e5));
@@ -709,7 +709,9 @@ $('mailSheet').addEventListener('click',async e=>{
   }
 });
 $('panel').addEventListener('click',async e=>{
-  if(e.target.closest('[data-qbrk]')){if(!D.site){toast('Still loading, try again');return}const m=$('brkMsg');await brkSave(!D.site.brk.on,m?m.value:D.site.brk.t);return}
+  if(e.target.closest('[data-qbrk]')){if(!D.site){toast('Still loading, try again');return}const m=$('brkMsg'),v=brkV();D.brkDraft={on:!v.on,t:m?m.value:v.t};if(!brkDirty())D.brkDraft=null;render();return}
+  if(e.target.closest('[data-brkpub]')){if(!D.site||!D.brkDraft)return;const v=D.brkDraft;await brkSave(v.on,v.t);if(D.brkDraft&&!brkDirty())D.brkDraft=null;render();return}
+  if(e.target.closest('[data-brkdis]')){D.brkDraft=null;render();toast('Change discarded');return}
   if(e.target.closest('[data-qc]')){D.qcClosed=!D.qcClosed;render();return}
   if(e.target.closest('[data-brkedit]')){D.brkOpen=!D.brkOpen;render();if(D.brkOpen){const m=$('brkMsg');if(m)m.focus()}return}
   const hg=e.target.closest('[data-hgo]');if(hg){goTab(hg.dataset.hgo);return}
@@ -857,6 +859,9 @@ async function loadSite(){D.siteBusy=true;try{if(!D.settings)await loadSettings(
 let BRKQ=Promise.resolve();
 function brkSave(on,msg,quiet){BRKQ=BRKQ.then(()=>brkDo(on,msg,quiet)).catch(()=>{});return BRKQ}
 async function brkDo(on,msg,quiet){if(!D.site){toast('Still loading, try again');return}let sv={};try{sv=JSON.parse(D.siteSaved)}catch(_){}const cp=JSON.parse(JSON.stringify(D.site));cp.brk=sv.brk;if(JSON.stringify(cp)!==D.siteSaved){toast('Save or finish your Site layout changes first');return}const keep=D.site.brk;D.site.brk={on:on,t:(msg||'').trim()===BRK_DEF?'':(msg||'').trim()};try{const r=await api({action:'admin_site_save',site:siteOut()});if(r.ok){D.site=siteNorm(r.site);D.siteSaved=JSON.stringify(D.site);if(!quiet)toast(D.site.brk.on?'Website is on a break. Refresh the site to see it.':'Website is back open')}else{D.site.brk=keep;toast(r.error||'Could not save')}}catch(_){D.site.brk=keep;toast('No connection')}if(!quiet||(tab==='home'&&!$('brkMsg')))render()}
+const brkN=t=>{t=(t||'').trim();return t===BRK_DEF?'':t};
+const brkV=()=>D.brkDraft||D.site.brk;
+const brkDirty=()=>!!(D.site&&D.brkDraft)&&(!!D.brkDraft.on!==!!D.site.brk.on||brkN(D.brkDraft.t)!==brkN(D.site.brk.t));
 const siteDirty=()=>!!D.site&&JSON.stringify(D.site)!==D.siteSaved;
 const stg=(on,a)=>`<span class="tg ${on?'on':''}" role="switch" aria-checked="${!!on}" tabindex="0" ${a}></span>`;
 const siName=id=>(SITE_IDS.find(x=>x[0]===id)||[id,id])[1],siIc=id=>(SITE_IDS.find(x=>x[0]===id)||[0,0,'•'])[2];
@@ -1310,7 +1315,7 @@ addEventListener('pageshow',e=>{if(e.persisted&&!tok)showLogin()});
 
 setInterval(()=>{if(document.hidden||!tok||(tab!=='today'&&tab!=='home')||['cpSheet','pwSheet','edSheet','mailSheet','moreSheet'].some(i=>!$(i).classList.contains('hide')))return;loadOrders().then(()=>{if(tab==='today'||tab==='home')render()}).catch(()=>{})},60000);
 boot();
-$('panel').addEventListener('change',e=>{if(e.target.id==='brkMsg'&&D.site&&tab==='home')brkSave(D.site.brk.on,e.target.value,true)});
+$('panel').addEventListener('change',e=>{if(e.target.id==='brkMsg'&&D.site&&tab==='home'){const v=brkV();D.brkDraft={on:v.on,t:e.target.value};if(!brkDirty())D.brkDraft=null;render()}});
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
