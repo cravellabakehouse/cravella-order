@@ -584,13 +584,26 @@ function renderPanel(){
   else{h+=`<div class="sec">Brownies</div>`+MENU.brownies.map(d=>pcCard(d,'brownies')).join('')+`<div class="sec">Blondies</div>`+MENU.blondies.map(d=>pcCard(d,'blondies')).join('')+`<div class="note">Sold by the box of 4. Each + adds one box (4 pieces). Bakes need 1 day's notice.</div>`}
   $('panel').innerHTML=h;
 }
-function renderBar(){
+function renderBar(){saveCart();
   const t=totals();$('bar').classList.toggle('hide',!t.count);document.body.classList.toggle('hasbar',!!t.count);
   $('barA').textContent=t.count+(t.count===1?' item':' items');$('barB').textContent=inr(t.tot);
   $('barGo').textContent=t.count?'Order now ›':'Order now';
   const nb=$('bnN');if(nb){nb.textContent=t.count>99?'99+':t.count;nb.hidden=!t.count}
   const cn=$('cartN');if(cn){const prev=+cn.textContent||0;cn.textContent=t.count>99?'99+':t.count;cn.hidden=!t.count;$('cartBtn').setAttribute('aria-label','Cart, '+t.count+(t.count===1?' item':' items'));if(t.count>prev){const cb=$('cartBtn');cb.classList.remove('pop');void cb.offsetWidth;cb.classList.add('pop')}}
 }
+function saveCart(){if(PV||S.placed||!S.ready)return;try{const has=S.cakes.length||Object.values(S.pc).some(q=>q>0)||Object.values(S.cookie).some(g=>g>0);
+  if(has)localStorage.setItem('cb_cart',JSON.stringify({v:1,ts:Date.now(),cakes:S.cakes,pc:S.pc,cookie:S.cookie,mode:S.mode,mode2:S.mode2,how:S.how}));else localStorage.removeItem('cb_cart')}catch(_){}}
+function saveForm(){try{const f={};['fAddr','fPin','fNotes','fBudget'].forEach(i=>{const e=$(i);if(e&&e.value)f[i]=e.value});Object.keys(f).length?localStorage.setItem('cb_form',JSON.stringify({ts:Date.now(),f})):localStorage.removeItem('cb_form')}catch(_){}}
+function loadCart(){S.ready=true;if(PV)return;try{const c=JSON.parse(localStorage.getItem('cb_cart')||'null');
+  if(c&&c.v===1&&Date.now()-c.ts<7*864e5){
+    (c.cakes||[]).forEach(l=>{if(l&&findCake(l.id)&&+l.q>0)S.cakes.push({id:l.id,cream:l.cream||'',kg:+l.kg,q:Math.min(20,+l.q)})});
+    Object.entries(c.pc||{}).forEach(([id,q])=>{if(+q>0&&findPc(id))S.pc[id]=+q});
+    Object.entries(c.cookie||{}).forEach(([id,g])=>{if(+g>0&&findCookie(id))S.cookie[id]=+g});
+    if(c.mode==='Delivery'){S.mode='Delivery';try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Delivery'))}catch(_){}}
+    if(c.mode2==='Delivery')S.mode2='Delivery';if(c.how==='s')S.how='s'}
+  else localStorage.removeItem('cb_cart')}catch(_){}
+  try{const g=JSON.parse(localStorage.getItem('cb_form')||'null');if(g&&Date.now()-g.ts<7*864e5)Object.entries(g.f||{}).forEach(([i,v])=>{const e=$(i);if(e&&!e.value)e.value=String(v).slice(0,600)});else localStorage.removeItem('cb_form')}catch(_){}
+  ['fAddr','fPin','fNotes','fBudget'].forEach(i=>{const e=$(i);if(e)e.addEventListener('input',saveForm)})}
 function renderAll(keepScroll){const y=scrollY;renderTabs();renderPanel();renderBar();if(keepScroll)scrollTo(0,y)}
 let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1400)}
 
@@ -818,7 +831,7 @@ function minDate2(){return dateOf(LEAD.other)}
 function limitTimes(dEl,tEl,h){const e=leadSlot(h);[...tEl.options].forEach(o=>{if(!o.value)return;o.disabled=dEl.value===e.date&&tmin(o.value)<e.mins});if(tEl.selectedOptions[0]&&tEl.selectedOptions[0].disabled)tEl.value=''}
 function fmtDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
 function setCpn(m,k){const e=$('cpnMsg');e.textContent=m;e.className='cmsg'+(k?' '+k:'')}
-function renderReview(){
+function renderReview(){saveCart();
   const t=totals();
   if(!t.count){closeReview();return}
   $('revLines').innerHTML=t.L.map((l,i)=>`<div class="line" data-i="${i}"><div class="l"><b>${esc(l.name)}</b><small>${esc(l.sub)}</small></div>
@@ -973,6 +986,7 @@ function showDone(id,t,when,name,total,disc,dnote,subt,cp){
   const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches;
   $('dIos').style.display=ios?'block':'none';$('dInstall').style.display=deferred?'block':'none';
   $('done').classList.add('on');document.body.style.overflow='hidden';$('done').scrollTop=0;
+  S.placed=true;try{localStorage.removeItem('cb_cart');localStorage.removeItem('cb_form')}catch(_){}
 }
 let lastOrder=null;
 function orderImage(o){
@@ -1011,13 +1025,13 @@ $('dImg').onclick=async()=>{
   }catch(_){$('dImgNote').textContent='Could not make the picture. Please use the text message option below.'}
   b.disabled=false;b.textContent=txt;
 };
-function clearOrder(){S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.mode='Pickup';S.mode2='Pickup';S.how='t';S.coupon=null;S.split=false;try{$('cpnIn').value='';setCpn('')}catch(_){}
+function clearOrder(){S.placed=false;try{localStorage.removeItem('cb_cart');localStorage.removeItem('cb_form')}catch(_){}S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.mode='Pickup';S.mode2='Pickup';S.how='t';S.coupon=null;S.split=false;try{$('cpnIn').value='';setCpn('')}catch(_){}
   ['fNotes','fAddr','fPin','fDate','fTime','fName','fPhone','fDate2','fTime2','fBudget'].forEach(i=>{const e=$(i);if(e)e.value=''});
   document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));
   try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Pickup'));$('addrBox').style.display='none'}catch(_){}
   try{renderThumbs()}catch(_){}
   $('review').classList.remove('on');$('done').classList.remove('on');document.body.style.overflow='';renderAll()}
-$('dAgain').onclick=()=>{S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.coupon=null;S.split=false;S.how='t';S.mode2='Pickup';$('cpnIn').value='';setCpn('');['fNotes','fAddr','fPin','fDate','fTime','fDate2','fTime2','fBudget'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
+$('dAgain').onclick=()=>{S.placed=false;S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.coupon=null;S.split=false;S.how='t';S.mode2='Pickup';$('cpnIn').value='';setCpn('');['fNotes','fAddr','fPin','fDate','fTime','fDate2','fTime2','fBudget'].forEach(i=>$(i).value='');document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));renderThumbs();
   $('done').classList.remove('on');document.body.style.overflow='';renderAll();scrollTo(0,0)};
 
 /* ---------- account: sign in with an emailed code, saved details, order history ---------- */
@@ -1160,7 +1174,7 @@ try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArr
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;e.stopPropagation();e.preventDefault();
   const id=z.dataset.zoom,all=[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies||[],MENU.cookies),d=all.find(x=>x.id===id),o=d&&imgOf(d);if(!o)return;
   const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
-footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();siteLoad();if(PV)try{parent.postMessage({cbReady:1},'*')}catch(_){}
+loadCart();purgeOff();footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();siteLoad();if(PV)try{parent.postMessage({cbReady:1},'*')}catch(_){}
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
   if(!r||!r.ok||!r.settings)return;CFG=r.settings;applyNames();applyOrder();try{localStorage.setItem('cb_cfg',JSON.stringify(CFG))}catch(_){}
