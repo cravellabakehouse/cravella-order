@@ -376,6 +376,7 @@ body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media 
   <label class="f">Your details</label>
   <input class="i" id="fName" placeholder="Your name" autocomplete="name" maxlength="80">
   <input class="i" id="fPhone" placeholder="WhatsApp / mobile number" inputmode="numeric" autocomplete="tel" maxlength="16" style="margin-top:8px">
+  <input class="i" id="fEmail" type="email" inputmode="email" placeholder="Email for your receipt (optional)" autocomplete="email" maxlength="120" style="margin-top:8px">
   <div class="hint" id="revSign"></div>
   <div id="budgetBox" style="display:none"><label class="f">Your budget for the custom cake (optional)</label><input class="i" id="fBudget" placeholder="e.g. ₹3,500" maxlength="30"></div>
   <label class="f">Message on cake / notes</label>
@@ -600,7 +601,7 @@ function renderBar(){saveCart();
 }
 function saveCart(){if(PV||S.placed||!S.ready)return;try{const has=S.cakes.length||Object.values(S.pc).some(q=>q>0)||Object.values(S.cookie).some(g=>g>0);
   if(has)localStorage.setItem('cb_cart',JSON.stringify({v:1,ts:Date.now(),cakes:S.cakes,pc:S.pc,cookie:S.cookie,mode:S.mode,mode2:S.mode2,how:S.how}));else localStorage.removeItem('cb_cart')}catch(_){}}
-function saveForm(){try{const f={};['fAddr','fPin','fNotes','fBudget'].forEach(i=>{const e=$(i);if(e&&e.value)f[i]=e.value});Object.keys(f).length?localStorage.setItem('cb_form',JSON.stringify({ts:Date.now(),f})):localStorage.removeItem('cb_form')}catch(_){}}
+function saveForm(){try{const f={};['fAddr','fPin','fNotes','fBudget','fEmail'].forEach(i=>{const e=$(i);if(e&&e.value)f[i]=e.value});Object.keys(f).length?localStorage.setItem('cb_form',JSON.stringify({ts:Date.now(),f})):localStorage.removeItem('cb_form')}catch(_){}}
 function loadCart(){S.ready=true;if(PV)return;try{const c=JSON.parse(localStorage.getItem('cb_cart')||'null');
   if(c&&c.v===1&&Date.now()-c.ts<7*864e5){
     (c.cakes||[]).forEach(l=>{if(l&&findCake(l.id)&&+l.q>0)S.cakes.push({id:l.id,cream:l.cream||'',kg:+l.kg,q:Math.min(20,+l.q)})});
@@ -610,7 +611,7 @@ function loadCart(){S.ready=true;if(PV)return;try{const c=JSON.parse(localStorag
     if(c.mode2==='Delivery')S.mode2='Delivery';if(c.how==='s')S.how='s'}
   else localStorage.removeItem('cb_cart')}catch(_){}
   try{const g=JSON.parse(localStorage.getItem('cb_form')||'null');if(g&&Date.now()-g.ts<7*864e5)Object.entries(g.f||{}).forEach(([i,v])=>{const e=$(i);if(e&&!e.value)e.value=String(v).slice(0,600)});else localStorage.removeItem('cb_form')}catch(_){}
-  ['fAddr','fPin','fNotes','fBudget'].forEach(i=>{const e=$(i);if(e)e.addEventListener('input',saveForm)})}
+  ['fAddr','fPin','fNotes','fBudget','fEmail'].forEach(i=>{const e=$(i);if(e)e.addEventListener('input',saveForm)})}
 function renderAll(keepScroll){const y=scrollY;renderTabs();renderPanel();renderBar();if(keepScroll)scrollTo(0,y)}
 let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1400)}
 
@@ -962,7 +963,8 @@ $('submit').onclick=async()=>{
   if(needDel&&addr.length<8)return fail('Please enter your delivery address.','fAddr');
   if(needDel&&!pinOk($('fPin').value))return fail('We deliver only within Bengaluru (pincodes 560001 to 560103). Enter a Bengaluru pincode, or choose Pickup.','fPin');
   function fail(m,id){err.textContent=m;const el=$(id);document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));el.classList.add('bad');if(el.tagName==='INPUT'&&el.type!=='date'||el.tagName==='TEXTAREA')el.focus({preventScroll:true});err.scrollIntoView({block:'center',behavior:'smooth'})}
-  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,date,time,mode:S.mode,address:needDel?(addr+', Bengaluru '+$('fPin').value.trim()).slice(0,300):'',notes:(hasCustom()&&$('fBudget').value.trim()?'Budget: '+$('fBudget').value.trim().slice(0,30)+'. ':'')+notes,photos:S.cakes.length?S.photos:[],
+  {const em=$('fEmail').value.trim();if(em&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em))return fail('Please check your email address, or leave it empty.','fEmail')}
+  const payload={token:A.tok||'',hp:$('fHp').value,name,phone,email:$('fEmail').value.trim().slice(0,120),date,time,mode:S.mode,address:needDel?(addr+', Bengaluru '+$('fPin').value.trim()).slice(0,300):'',notes:(hasCustom()&&$('fBudget').value.trim()?'Budget: '+$('fBudget').value.trim().slice(0,30)+'. ':'')+notes,photos:S.cakes.length?S.photos:[],
     items:itemsPayload(),split:sp,coupon:S.coupon?S.coupon.code:'',clientTotal:Math.round(t.tot)};
   const btn=$('submit');btn.disabled=true;btn.textContent='Sending…';
   const trip=S.mode==='Delivery'?'Delivery: ':'Pickup: ',trip2=sp&&sp.mode==='Delivery'?'Delivery: ':'Pickup: ';
@@ -1033,7 +1035,7 @@ $('dImg').onclick=async()=>{
   b.disabled=false;b.textContent=txt;
 };
 function clearOrder(){S.placed=false;try{localStorage.removeItem('cb_cart');localStorage.removeItem('cb_form')}catch(_){}S.cakes=[];S.pc={};S.cookie={};S.pend={};S.photos=[];S.sel={};S.mode='Pickup';S.mode2='Pickup';S.how='t';S.coupon=null;S.split=false;try{$('cpnIn').value='';setCpn('')}catch(_){}
-  ['fNotes','fAddr','fPin','fDate','fTime','fName','fPhone','fDate2','fTime2','fBudget'].forEach(i=>{const e=$(i);if(e)e.value=''});
+  ['fNotes','fAddr','fPin','fDate','fTime','fName','fPhone','fEmail','fDate2','fTime2','fBudget'].forEach(i=>{const e=$(i);if(e)e.value=''});
   document.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));
   try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Pickup'));$('addrBox').style.display='none'}catch(_){}
   try{renderThumbs()}catch(_){}
@@ -1060,6 +1062,7 @@ async function loadMe(){
 function prefill(){const p=A.profile;if(!p)return;
   if(!$('fName').value&&p.name)$('fName').value=p.name;
   if(!$('fPhone').value&&p.phone)$('fPhone').value=p.phone;
+  if(!$('fEmail').value){const em=/@mobile\.cravella$/.test(p.email||'')?p.email2:p.email;if(em)$('fEmail').value=em}
   if(!$('fAddr').value&&(p.line||p.address))$('fAddr').value=p.line?p.line+(p.landmark?', near '+p.landmark:''):p.address;
   if(!$('fPin').value&&/^\d{6}$/.test(p.pin||''))$('fPin').value=p.pin}
 const STL={New:'Received',Confirmed:'Confirmed','Advance received':'Advance received',Delivered:'Completed',Cancelled:'Cancelled'};
@@ -1208,6 +1211,10 @@ try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArr
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;e.stopPropagation();e.preventDefault();
   const id=z.dataset.zoom,all=[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies||[],MENU.cookies),d=all.find(x=>x.id===id),o=d&&imgOf(d);if(!o)return;
   const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
+(function(){if(PV||!live())return;try{let v='';try{v=localStorage.getItem('cb_vid')||''}catch(_){}
+  if(!/^[a-z0-9]{16,40}$/.test(v)){v=(crypto.randomUUID?crypto.randomUUID().replace(/-/g,''):Math.random().toString(36).slice(2)+Date.now().toString(36)).slice(0,32);try{localStorage.setItem('cb_vid',v)}catch(_){}}
+  const u=new URLSearchParams(location.search),b=JSON.stringify({action:'visit',vid:v,ref:document.referrer||'',utm:u.get('utm_source')||u.get('src')||(u.has('fbclid')?'facebook':'')});
+  if(!(navigator.sendBeacon&&navigator.sendBeacon(API_URL,new Blob([b],{type:'text/plain;charset=utf-8'}))))fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:b,keepalive:true}).catch(()=>{})}catch(_){}})();
 loadCart();purgeOff();footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();siteLoad();if(PV)try{parent.postMessage({cbReady:1},'*')}catch(_){}
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
