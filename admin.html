@@ -534,7 +534,7 @@ function ordersHtml(){
   return h;
 }
 function waLink(o,kind){
-  const first=o.name.split(' ')[0],when=fmtD(o.date)+', '+o.time+(o.split?` (cakes) and ${fmtD(o.split.date)}, ${o.split.time} (other bakes)`:'');
+  const first=o.name.split(' ')[0],when=fmtD(o.date)+', '+o.time+(o.split?` (cakes, ${o.mode}) and ${fmtD(o.split.date)}, ${o.split.time} (other bakes, ${o.split.mode||o.mode})`:'');
   const m={c:`Hi ${first}, thank you for ordering from Cravella Bake House! Your order ${o.id} is confirmed for ${when}. Total: ${inr(o.total)}.\n\nTo book it, please pay a 50% advance of ${inr(Math.round(o.total/2))} by UPI and send us the screenshot here. The balance is paid on ${o.mode==='Delivery'?'delivery':'pickup'}.`,
     a:`Hi ${first}, we have received your advance. Your order ${o.id} is booked for ${when}. Thank you!`,
     r:`Hi ${first}, your Cravella order ${o.id} is ready${o.mode==='Delivery'?' and out for delivery.':' for pickup.'}`}[kind];
@@ -542,7 +542,7 @@ function waLink(o,kind){
 }
 function orderCard(o){
   const sc=o.status==='Advance received'?'Advance':o.status;
-  const when=o.split?`Cakes: ${fmtD(o.date)}, ${esc(o.time)}<br>Other bakes: ${fmtD(o.split.date)}, ${esc(o.split.time)}`:`${fmtD(o.date)}, ${esc(o.time)}`;
+  const when=o.split?`Cakes (${esc(o.mode)}): ${fmtD(o.date)}, ${esc(o.time)}<br>Other bakes (${esc(o.split.mode||o.mode)}): ${fmtD(o.split.date)}, ${esc(o.split.time)}`:`${fmtD(o.date)}, ${esc(o.time)}`;
   return `<div class="card o" data-id="${esc(o.id)}">
   <div class="row"><span class="id">${esc(o.id)} · ${esc(o.name)}${repBadge(o)}</span><span class="pill ${esc(sc)}">${esc(o.status)}</span></div>
   <div class="m">Placed ${esc(o.placed)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>${o.email?' · '+esc(o.email):''}</div>
