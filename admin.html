@@ -491,6 +491,8 @@ function visHtml(){
   <div class="hint" style="margin-top:8px">${v.h24.v} page view${v.h24.v==1?'':'s'} in the last 24 hours · ${v.d30} visitors in 30 days${src?'<br>Where they came from (7 days): '+src:''}</div><button class="btn ol sm" data-hgo="vis" style="margin-top:10px">See who visited ›</button></div>`}
 let vf='all';
 async function loadVtr(){if(D.vtrBusy)return;D.vtrBusy=1;try{const r=await api({action:'admin_visitors'});if(r.ok){D.vtr=r;D.vtrAt=Date.now()}else D.vtrErr=r.error||'Could not load.'}catch(_){D.vtrErr='Could not connect.'}D.vtrBusy=0;if(tab==='vis')render()}
+const durL=s=>s<60?s+' sec':Math.floor(s/60)+' min'+(s%60?' '+(s%60)+' sec':'');
+const netL=n=>{n=String(n||'');return /jio/i.test(n)?'Jio':/airtel|bharti/i.test(n)?'Airtel':/vodafone|idea/i.test(n)?'Vi':/bsnl/i.test(n)?'BSNL':/atria|\bact\b/i.test(n)?'ACT Fibernet':/hathway/i.test(n)?'Hathway':n.replace(/\b(private|pvt|limited|ltd|llc|inc|infocomm|internet|services|broadband|network[s]?)\b\.?/gi,'').replace(/\s{2,}/g,' ').trim()};
 const whenL=ms=>{const d=new Date(ms),t=d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),a=new Date();a.setHours(0,0,0,0);const y=new Date(a.getTime()-864e5);return (d>=a?'Today':d>=y?'Yesterday':d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}))+', '+t};
 const agoL=ms=>{const m=Math.round((Date.now()-ms)/60000);return m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
 function visitorsHtml(){
@@ -500,7 +502,7 @@ function visitorsHtml(){
   const L=v.visits||[],chip=a=>a.map(x=>esc(x[0])+' <b>'+x[1]+'</b>').join(' · ');
   h+=`<div class="kp"><div class="hot"><b>${L.length}</b><span>Visits</span></div><div><b>${v.signedIn}</b><span>Signed-in</span></div><div><b>${v.newRet[0]}/${v.newRet[1]}</b><span>New / returning</span></div><div><b>${(v.carts||[]).length}</b><span>Carts left</span></div></div>
   <div class="card"><div class="m"><b>📍 Places:</b> ${chip(v.cities)||'–'}</div><div class="m" style="margin-top:6px"><b>📱 Devices:</b> ${chip(v.devices)||'–'}</div>
-  <div class="m" style="margin-top:6px"><b>👀 Most looked at:</b> ${chip(v.topViewed)||'–'}</div><div class="m" style="margin-top:6px"><b>🛒 Most added to cart:</b> ${chip(v.topCarted)||'–'}</div>
+  <div class="m" style="margin-top:6px"><b>👀 Most looked at:</b> ${chip(v.topViewed)||'–'}</div><div class="m" style="margin-top:6px"><b>🛒 Most added to cart:</b> ${chip(v.topCarted)||'–'}</div><div class="m" style="margin-top:6px"><b>🔎 Most searched:</b> ${chip((v.topSearched||[]).map(x=>['“'+x[0]+'”',x[1]]))||'–'}</div><div class="m" style="margin-top:6px"><b>⏱ Average time on site:</b> ${v.avgDur?durL(v.avgDur):'–'}</div>
   <div class="hint" style="margin-top:8px">Places are approximate (city level). Names show only for customers who were signed in.</div></div>`;
   if((v.carts||[]).length){h+=`<div class="sec2" style="margin-top:16px"><b>🛒 Left in cart</b> <span class="hint">signed-in customers who didn't order</span></div>`+v.carts.map(c=>{const ph=String(c.phone||'').replace(/\D/g,'').slice(-10),first=String(c.who).split(' ')[0];
     const msg='Hi '+first+', this is Cravella Bake House. We noticed you left '+c.items.map(i=>i.n).join(', ')+' in your cart. Would you like us to help you complete your order? You can order here: order.cravellabakehouse.com';
@@ -509,9 +511,12 @@ function visitorsHtml(){
     ${ph?`<div class="acts" style="margin-top:8px"><a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}?text=${encodeURIComponent(msg)}">WhatsApp nudge</a> <a class="btn ol sm" href="tel:+91${ph}">📞 Call</a></div>`:''}</div>`}).join('')}
   const F=[['all','All'],['in','Signed-in'],['cart','Added to cart'],['new','First visit']],fl=L.filter(x=>vf==='all'||(vf==='in'?!!x.who:vf==='cart'?x.carted.length>0:!x.ret));
   h+=`<div class="sec2" style="margin-top:16px"><b>Recent visits</b></div><div class="chips" style="margin:8px 0">${F.map(([k,n])=>`<button class="chip ${vf===k?'on':''}" data-vf="${k}">${n}</button>`).join('')}</div>`;
-  h+=fl.length?fl.map(x=>{const pl=[x.city,x.region].filter(Boolean).join(', ')+(x.country&&x.country!=='IN'?' ('+esc(x.country)+')':'');const ph=String(x.phone||'').replace(/\D/g,'').slice(-10);
+  h+=fl.length?fl.map(x=>{const pl=[x.city,x.region].filter(Boolean).join(', ')+(x.pin?' '+x.pin:'')+(x.country&&x.country!=='IN'?' ('+esc(x.country)+')':'');const ph=String(x.phone||'').replace(/\D/g,'').slice(-10);
     return `<div class="card"><div class="row"><span>${x.who?'<b>'+esc(x.who)+'</b>':'<b>Visitor</b> <span class="hint">#'+esc(x.tag)+'</span>'}<span class="rep">${x.ret?'Returning':'First visit'}</span></span><span class="hint">${whenL(x.t)}</span></div>
-    <div class="m">📍 ${pl?esc(pl):'Unknown place'} · ${x.dev==='Phone'?'📱':x.dev==='Tablet'?'📱':'💻'} ${esc(x.dev||'')} · from ${esc(x.src||'Direct')}</div>
+    <div class="m">📍 ${pl?esc(pl):'Unknown place'}</div>
+    <div class="m">${x.dev==='Computer'?'💻':'📱'} ${esc(x.model||x.dev||'')}${x.net?' · on '+esc(netL(x.net)):''} · from ${esc(x.src||'Direct')}</div>
+    <div class="m">⏱ ${x.dur?'Spent '+durL(x.dur):'Time not recorded yet'}</div>
+    ${x.searched&&x.searched.length?`<div class="m">Searched: ${x.searched.map(q=>'“'+esc(q)+'”').join(', ')}</div>`:''}
     ${x.tabs.length?`<div class="m">Browsed: ${x.tabs.map(esc).join(', ')}</div>`:''}${x.viewed.length?`<div class="m">Looked at: ${x.viewed.map(esc).join(', ')}</div>`:''}${x.carted.length?`<div class="m"><b>Added to cart:</b> ${x.carted.map(esc).join(', ')}</div>`:''}
     ${x.who&&ph?`<div class="acts" style="margin-top:8px"><a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a> <a class="btn ol sm" href="tel:+91${ph}">📞 Call</a></div>`:''}</div>`}).join(''):`<div class="hint" style="margin:14px 0">${L.length?'No visits match this filter.':'No visits recorded yet. They will appear here as people open your website.'}</div>`;
   return h}
