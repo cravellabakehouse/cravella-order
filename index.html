@@ -1053,7 +1053,8 @@ async function loadMe(){
 function prefill(){const p=A.profile;if(!p)return;
   if(!$('fName').value&&p.name)$('fName').value=p.name;
   if(!$('fPhone').value&&p.phone)$('fPhone').value=p.phone;
-  if(!$('fAddr').value&&p.address)$('fAddr').value=p.address}
+  if(!$('fAddr').value&&(p.line||p.address))$('fAddr').value=p.line?p.line+(p.landmark?', near '+p.landmark:''):p.address;
+  if(!$('fPin').value&&/^\d{6}$/.test(p.pin||''))$('fPin').value=p.pin}
 const STL={New:'Received',Confirmed:'Confirmed','Advance received':'Advance received',Delivered:'Completed',Cancelled:'Cancelled'};
 const stCls=s=>s==='Advance received'?'Advance':s;
 function orderHtml(o,i){
@@ -1062,6 +1063,16 @@ function orderHtml(o,i){
   <div class="w">Placed ${esc(o.placed)} · ${esc(when)}</div>
   <div class="it">${esc(o.lines.join('\n'))}</div>
   <div class="f2"><b>${inr(o.total)}</b>${o.items.length&&o.status!=='Cancelled'?`<button class="add sm" data-act="re" data-i="${i}">Order again</button>`:''}</div></div>`}
+function detForm(p){
+  const mob=/@mobile\.cravella$/.test(p.email||''),line=p.line||(p.reg?'':p.address||''),v=x=>esc(x||'');
+  return `<label class="f">Full name *</label><input class="i" id="pName" autocomplete="name" maxlength="80" value="${v(p.name)}" placeholder="Your name">
+    <label class="f">Mobile number *</label><input class="i" id="pPhone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" value="${v(p.phone)}" placeholder="98765 43210">
+    <label class="f">Email ID${mob?' (optional)':''}</label>${mob?`<input class="i" id="pEmail2" type="email" inputmode="email" autocomplete="email" maxlength="120" value="${v(p.email2)}" placeholder="you@example.com">`:`<input class="i" value="${v(p.email)}" disabled style="opacity:.75"><div class="hint">You sign in with this email.</div>`}
+    <label class="f">Address (house / flat, street, area) *</label><textarea class="i" id="pLine" maxlength="200" autocomplete="street-address" placeholder="Flat 12, 3rd Cross, Sahakar Nagar">${v(line)}</textarea>
+    <label class="f">Landmark</label><input class="i" id="pLand" maxlength="100" value="${v(p.landmark)}" placeholder="Near / opposite …">
+    <div class="two"><div><label class="f">City *</label><input class="i" id="pCity" autocomplete="address-level2" maxlength="50" value="${v(p.city||'Bengaluru')}"></div>
+    <div><label class="f">State *</label><input class="i" id="pState" autocomplete="address-level1" maxlength="50" value="${v(p.state||'Karnataka')}"></div></div>
+    <label class="f">Pincode *</label><input class="i" id="pPin" inputmode="numeric" autocomplete="postal-code" maxlength="6" value="${v(p.pin)}" placeholder="560001">`}
 function acRender(){
   const b=$('acBody'),m=A.msg?`<div class="err">${esc(A.msg)}</div>`:'';
   if(A.view==='in'){
@@ -1088,6 +1099,13 @@ function acRender(){
     <label class="f">6-digit code</label><input class="i" id="aCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="font-size:22px;letter-spacing:.3em;text-align:center">${m}
     <button class="go" data-act="verify" style="width:100%;margin-top:14px;padding:15px;font-size:16px">Sign in</button>
     <p class="hint" style="text-align:center;margin-top:14px"><a class="lnk" data-act="send">Send a new code</a> · <a class="lnk" data-act="chg">Use a different email</a></p>`;
+  }else if(A.view==='reg'){
+    const p=A.profile||{email:'',name:'',phone:'',address:''};
+    b.innerHTML=`<h2 class="t" style="margin-top:20px;font-size:23px">Complete your sign-up</h2>
+    <p class="hint" style="font-size:14px">Just once. We'll use these details to fill in your orders. Fields marked * are required.</p>
+    ${detForm(p)}${m}
+    <button class="go" data-act="save" style="width:100%;margin-top:14px;padding:15px;font-size:16px">Create my account</button>
+    <p class="hint" style="text-align:center;margin-top:14px"><a class="lnk" data-act="skip">Skip for now</a></p>`;
   }else{
     const p=A.profile||{email:'',name:'',phone:'',address:''};
     let list;
@@ -1097,9 +1115,7 @@ function acRender(){
     b.innerHTML=`<p class="hint" style="margin-top:16px">Signed in as <b>${esc(whoIs(p))}</b></p>
     <div class="sec2">Your orders</div>${list}
     <div class="sec2">Your details</div>
-    <label class="f">Name</label><input class="i" id="pName" autocomplete="name" maxlength="80" value="${esc(p.name)}">
-    <label class="f">Mobile number</label><input class="i" id="pPhone" inputmode="numeric" autocomplete="tel" maxlength="16" value="${esc(p.phone)}">
-    <label class="f">Delivery address</label><textarea class="i" id="pAddr" maxlength="300" placeholder="House / flat, street, area, landmark">${esc(p.address)}</textarea>${m}
+    ${detForm(p)}${m}
     <button class="go" data-act="save" style="width:100%;margin-top:14px;padding:14px;font-size:16px">Save my details</button>
     <button class="btn ol" data-act="out">Sign out</button>`;
   }
@@ -1116,6 +1132,7 @@ $('acBody').addEventListener('click',e=>{
     const r=await api({action:'otp_request',email:em});
     if(r.ok){A.view='code'}else A.msg=r.error||'Could not send the code.'});
   if(a==='tomob'){A.view='min';A.msg='';acRender();return}
+  if(a==='skip'){A.view='home';A.msg='';closeAcct();toast('Signed in. You can add your details any time under My account.');loadMe();return}
   if(a==='msend')return acDo(x.tagName==='BUTTON'?x:null,async()=>{
     if(!live()){A.msg='Sign-in is not available in this preview.';return}
     A.mob=($('aMob')?$('aMob').value:A.mob).trim();
@@ -1123,14 +1140,19 @@ $('acBody').addEventListener('click',e=>{
     if(r.ok){A.view='mcode'}else A.msg=r.error||'Could not send the code.'});
   if(a==='verify'||a==='mverify')return acDo(x,async()=>{
     const r=await api(a==='mverify'?{action:'wa_otp_verify',phone:A.mob,code:$('aCode').value}:{action:'otp_verify',email:A.email,code:$('aCode').value});
-    if(r.ok){setTok(r.token);A.profile=r.profile;A.orders=null;A.view='home';accBtn();
+    if(r.ok){setTok(r.token);A.profile=r.profile;A.orders=null;accBtn();
+      if(!r.profile.reg&&!r.profile.name){A.view='reg';return}
+      A.view='home';
       const inReview=$('review').classList.contains('on');closeAcct();
       if(!inReview)scrollTo({top:Math.max(0,$('tabs').offsetTop),behavior:'smooth'});
       toast('Signed in. Choose what you would like to order.');loadMe().then(()=>{accBtn();if($('review').classList.contains('on'))prefill()})}
     else A.msg=r.error||'That code is not right.'});
   if(a==='save')return acDo(x,async()=>{
-    const r=await api({action:'save_profile',token:A.tok,name:$('pName').value,phone:$('pPhone').value,address:$('pAddr').value});
-    if(r.ok){A.profile=r.profile;accBtn();toast('Details saved')}else if(r.error==='auth'){setTok('');A.view='in';A.msg='Please sign in again.'}else A.msg=r.error});
+    const g=i=>$(i)?$(i).value:'';
+    const r=await api({action:'save_profile',token:A.tok,name:g('pName'),phone:g('pPhone'),email2:g('pEmail2'),line:g('pLine'),landmark:g('pLand'),city:g('pCity'),state:g('pState'),pin:g('pPin')});
+    if(r.ok){A.profile=r.profile;accBtn();
+      if(A.view==='reg'){A.view='home';const inReview=$('review').classList.contains('on');closeAcct();if(inReview)prefill();else scrollTo({top:Math.max(0,$('tabs').offsetTop),behavior:'smooth'});toast('Welcome to Cravella! Your account is ready.');loadMe()}
+      else toast('Details saved')}else if(r.error==='auth'){setTok('');A.view='in';A.msg='Please sign in again.'}else A.msg=r.error});
   if(a==='out')return acDo(x,async()=>{const t=A.tok;setTok('');A.profile=null;A.orders=null;A.view='in';A.email='';accBtn();clearOrder();try{sessionStorage.removeItem('cb_contact')}catch(_){}try{await api({action:'logout',token:t})}catch(_){}});
   if(a==='re'){const o=A.orders[+x.dataset.i];if(!o)return;
     S.cakes=[];S.pc={};S.cookie={};S.pend={};
