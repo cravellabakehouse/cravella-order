@@ -476,6 +476,19 @@ function todayCard(o,t){
   <div class="acts">${nx?`<button class="btn big" data-s="${esc(nx[0])}">${nx[1]}</button>`:''}${nx?`<button class="btn ol sm" data-wasend="${esc(o.id)}|${nx[2]}">💬 Send on WhatsApp</button>`:''}<a class="btn ol sm" href="tel:${esc(o.phone)}">📞 Call</a><button class="btn ol sm" data-open="${esc(o.id)}">Details</button></div></div>`
 }
 const BRK_DEF="We're taking a short break and are not taking any orders right now. We'll be back soon!";
+async function loadVis(){if(D.visBusy)return;D.visBusy=1;try{const r=await api({action:'admin_visits'});if(r.ok){D.vis=r;D.visAt=Date.now()}}catch(_){}D.visBusy=0;if(tab==='home')render()}
+function visHtml(){
+  if(!D.visBusy&&(!D.vis||Date.now()-(D.visAt||0)>120000))loadVis();
+  const v=D.vis;if(!v)return `<div class="card"><b>👀 Website visitors</b><div class="hint" style="margin-top:6px">Loading…</div></div>`;
+  const d=v.days||[],td=d.length?d[d.length-1].u:0,yd=d.length>1?d[d.length-2].u:0,mx=Math.max(1,...d.map(x=>x.u));
+  const lbl=s=>new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  const bars=d.map((x,i)=>`<div title="${lbl(x.day)}: ${x.u} visitor${x.u==1?'':'s'}, ${x.v} page view${x.v==1?'':'s'}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;min-width:0"><span style="font-size:10px;color:var(--mut)">${x.u||''}</span><i style="display:block;width:100%;max-width:18px;height:${Math.max(2,Math.round(x.u/mx*52))}px;border-radius:4px 4px 0 0;background:${i===d.length-1?'#b5532a':'#e7c9a6'}"></i></div>`).join('');
+  const src=(v.src7||[]).map(x=>esc(x.src)+' '+x.u).join(' · ');
+  return `<div class="card"><div class="row"><b>👀 Website visitors</b><span class="hint">unique people</span></div>
+  <div class="kp" style="margin-top:8px"><div class="hot"><b>${v.h24.u}</b><span>Last 24 hours</span></div><div><b>${td}</b><span>Today</span></div><div><b>${yd}</b><span>Yesterday</span></div><div><b>${v.d7}</b><span>Last 7 days</span></div></div>
+  <div style="display:flex;gap:4px;align-items:flex-end;height:74px;margin-top:10px">${bars}</div>
+  <div class="row" style="font-size:10.5px;color:var(--mut);margin-top:2px"><span>${d.length?lbl(d[0].day):''}</span><span>Today</span></div>
+  <div class="hint" style="margin-top:8px">${v.h24.v} page view${v.h24.v==1?'':'s'} in the last 24 hours · ${v.d30} visitors in 30 days${src?'<br>Where they came from (7 days): '+src:''}</div></div>`}
 function homeHtml(){
   const t=todayS(),live=D.orders.filter(o=>!['Cancelled','Delivered'].includes(o.status)),dueOn=(o,d)=>o.date===d||(o.split&&o.split.date===d);
   const nw=live.filter(o=>o.status==='New').length,dn=D.orders.filter(o=>o.status!=='Cancelled'&&dueOn(o,t)).length;
@@ -487,6 +500,7 @@ function homeHtml(){
   return `<div class="hd"><div><h2>Home</h2><small>${esc(dayName)}</small></div><button class="btn ol sm" id="refresh">↻ Refresh</button></div>
   <div class="hrow"><a class="hbig" href="./index.html" target="_blank" rel="noopener"><i>🌐</i><span><b>Open my website</b><small>See it as customers do</small></span></a>${homeBal()}</div>
   <div class="kp"><div class="${nw?'hot':''}"><b>${nw}</b><span>To confirm</span></div><div><b>${dn}</b><span>Due today</span></div><div><b>${live.length}</b><span>Active</span></div><div><b>${low===null?'–':low}</b><span>Low stock</span></div></div>
+  ${visHtml()}
   <div class="qf"><input class="i" id="qf" type="search" placeholder="🔎  Find a page, order or customer…" autocomplete="off"><div id="qfRes"></div></div>
   <div id="hSecs">${SECS.map(([sn,sc,sd,keys])=>`<div class="hs" style="--ac:${sc}"><div class="hsh"><b>${sn}</b><small>${sd}</small></div><div class="hg">${keys.map(k=>{const x=T.find(y=>y[0]===k);return x?`<button class="ht" data-hgo="${x[0]}"><i>${x[1]}</i><b>${x[2]}</b><span>${esc(x[3]||PGDESC[k]||'')}</span>${x[4]?`<em>${x[4]}</em>`:''}</button>`:''}).join('')}</div></div>`).join('')}
   <div class="hs" style="--ac:#c1272d"><div class="hsh"><b>Need help?</b><small>Talk to us or the customer</small></div><div class="hg"><a class="ht" href="tel:+919845904310"><i>📞</i><b>Call shop</b><span>98459-04310</span></a></div></div></div>
@@ -760,7 +774,7 @@ $('panel').addEventListener('click',async e=>{
   const wo=e.target.closest('[data-wa-on]');if(wo){const on=wo.dataset.waOn==='1';if(on&&!confirm('Turn on automatic WhatsApp messages to customers?'))return;wo.disabled=true;try{const r=await api({action:'admin_wa_set',on});if(r.ok){D.wa=Object.assign(D.wa||{},{on:r.on,phone:r.phone});toast(r.on?'WhatsApp messages on':'WhatsApp messages off')}else toast(r.error||'Could not change')}catch(_){toast('No connection')}const y=scrollY;render();scrollTo(0,y);return}
   if(e.target.closest('#waTest')){const to=($('waTo').value||'').trim();if(!to){toast('Enter a phone number');return}const b=$('waTest');b.disabled=true;b.textContent='Sending…';try{const r=await api({action:'admin_wa_test',to});toast(r.ok?'Test sent. Check WhatsApp.':(r.error||'Could not send'))}catch(_){toast('No connection')}await loadWa();return}
   const hb=e.target.closest('[data-hist]');if(hb){const x=document.getElementById(hb.dataset.hist);if(x)x.classList.toggle('hide');return}
-  if(e.target.closest('#refresh')){await loadOrders();render();toast('Updated');return}
+  if(e.target.closest('#refresh')){D.visAt=0;await loadOrders();render();toast('Updated');return}
   const sb=e.target.closest('[data-s]');if(sb){
     const card=sb.closest('.o'),id=card.dataset.id,st=sb.dataset.s,o=D.orders.find(x=>x.id===id);if(!o||o.status===st)return;
     if(st==='Cancelled'&&!confirm('Cancel order '+id+'?'))return;
