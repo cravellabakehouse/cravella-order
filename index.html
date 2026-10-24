@@ -93,6 +93,11 @@ input.i,textarea.i,select.i{width:100%;font:inherit;font-size:16px;color:var(--i
 textarea.i{min-height:78px;resize:vertical}
 input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outline-offset:0}
 .two{display:grid;grid-template-columns:1.2fr 1fr;gap:8px}
+.pform select.i{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.pform .phw{display:flex;align-items:stretch}.pform .phw span{display:flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-right:0;border-radius:12px 0 0 12px;background:rgba(0,0,0,.03);font-weight:700;color:var(--mut)}.pform .phw .i{border-radius:0 12px 12px 0}
+.pform.locked .i,.pform .i:disabled{background:#f3efe7;color:#5f554a;border-color:#e6dccb;cursor:not-allowed;opacity:1;-webkit-text-fill-color:#5f554a}
+.pform.locked select.i{background-image:none}
+.pform.locked .phw span{background:#ece6db}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .seg button{padding:11px;border:1px solid var(--line);border-radius:12px;font-weight:600;background:var(--card)}
 .seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -1103,16 +1108,36 @@ function orderHtml(o,i){
   <div class="w">${esc(when).replace(/&lt;br&gt;/g,'<br>')}</div>
   <table class="oit"><thead><tr><th>Item</th><th class="q">Qty</th><th class="p">Price</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>
   <div class="f2"><span class="hint">Order ID: ${esc(o.id)}</span>${o.items.length&&o.status!=='Cancelled'?`<button class="add sm" data-act="re" data-i="${i}">Order again</button>`:''}</div></div>`}
-function detForm(p){
-  const mob=/@mobile\.cravella$/.test(p.email||''),line=p.line||(p.reg?'':p.address||''),v=x=>esc(x||'');
-  return `<label class="f">Full name *</label><input class="i" id="pName" autocomplete="name" maxlength="80" value="${v(p.name)}" placeholder="Your name">
-    <label class="f">Mobile number *</label><input class="i" id="pPhone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" value="${v(p.phone)}" placeholder="98765 43210">
-    <label class="f">Email ID${mob?' (optional)':''}</label>${mob?`<input class="i" id="pEmail2" type="email" inputmode="email" autocomplete="email" maxlength="120" value="${v(p.email2)}" placeholder="you@example.com">`:`<input class="i" value="${v(p.email)}" disabled style="opacity:.75"><div class="hint">You sign in with this email.</div>`}
-    <label class="f">Address (house / flat, street, area) *</label><textarea class="i" id="pLine" maxlength="200" autocomplete="street-address" placeholder="Flat 12, 3rd Cross, Sahakar Nagar">${v(line)}</textarea>
-    <label class="f">Landmark</label><input class="i" id="pLand" maxlength="100" value="${v(p.landmark)}" placeholder="Near / opposite …">
-    <div class="two"><div><label class="f">City *</label><input class="i" id="pCity" autocomplete="address-level2" maxlength="50" value="${v(p.city||'Bengaluru')}"></div>
-    <div><label class="f">State *</label><input class="i" id="pState" autocomplete="address-level1" maxlength="50" value="${v(p.state||'Karnataka')}"></div></div>
-    <label class="f">Pincode *</label><input class="i" id="pPin" inputmode="numeric" autocomplete="postal-code" maxlength="6" value="${v(p.pin)}" placeholder="560001">`}
+const IN_GEO={'Karnataka':['Bengaluru','Mysuru','Mangaluru','Hubballi','Dharwad','Belagavi','Kalaburagi','Davanagere','Ballari','Tumakuru','Shivamogga','Udupi','Hassan','Mandya','Chikkamagaluru','Bidar','Vijayapura','Raichur','Kolar','Chitradurga'],
+'Andhra Pradesh':['Visakhapatnam','Vijayawada','Guntur','Tirupati','Nellore','Kurnool','Kakinada','Rajahmundry','Anantapur'],'Arunachal Pradesh':['Itanagar','Naharlagun','Pasighat'],'Assam':['Guwahati','Silchar','Dibrugarh','Jorhat','Tezpur'],
+'Bihar':['Patna','Gaya','Bhagalpur','Muzaffarpur','Darbhanga'],'Chhattisgarh':['Raipur','Bhilai','Bilaspur','Korba','Durg'],'Goa':['Panaji','Margao','Vasco da Gama','Mapusa'],'Gujarat':['Ahmedabad','Surat','Vadodara','Rajkot','Gandhinagar','Bhavnagar','Jamnagar'],
+'Haryana':['Gurugram','Faridabad','Panipat','Ambala','Karnal','Hisar'],'Himachal Pradesh':['Shimla','Dharamshala','Manali','Solan','Mandi'],'Jharkhand':['Ranchi','Jamshedpur','Dhanbad','Bokaro'],
+'Kerala':['Kochi','Thiruvananthapuram','Kozhikode','Thrissur','Kannur','Kollam','Palakkad'],'Madhya Pradesh':['Indore','Bhopal','Jabalpur','Gwalior','Ujjain'],'Maharashtra':['Mumbai','Pune','Nagpur','Nashik','Thane','Navi Mumbai','Aurangabad','Kolhapur','Solapur'],
+'Manipur':['Imphal'],'Meghalaya':['Shillong'],'Mizoram':['Aizawl'],'Nagaland':['Kohima','Dimapur'],'Odisha':['Bhubaneswar','Cuttack','Rourkela','Puri','Sambalpur'],'Punjab':['Ludhiana','Amritsar','Jalandhar','Patiala','Mohali'],
+'Rajasthan':['Jaipur','Jodhpur','Udaipur','Kota','Ajmer','Bikaner'],'Sikkim':['Gangtok'],'Tamil Nadu':['Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Hosur','Vellore','Tirunelveli'],
+'Telangana':['Hyderabad','Secunderabad','Warangal','Karimnagar','Nizamabad'],'Tripura':['Agartala'],'Uttar Pradesh':['Lucknow','Noida','Ghaziabad','Kanpur','Varanasi','Agra','Prayagraj','Meerut'],
+'Uttarakhand':['Dehradun','Haridwar','Rishikesh','Haldwani','Nainital'],'West Bengal':['Kolkata','Howrah','Siliguri','Durgapur','Asansol'],
+'Andaman and Nicobar Islands':['Port Blair'],'Chandigarh':['Chandigarh'],'Dadra and Nagar Haveli and Daman and Diu':['Daman','Silvassa','Diu'],'Delhi':['New Delhi','Delhi'],'Jammu and Kashmir':['Srinagar','Jammu'],'Ladakh':['Leh','Kargil'],'Lakshadweep':['Kavaratti'],'Puducherry':['Puducherry','Karaikal']};
+function cityOpts(st,cur){const L=IN_GEO[st]||[],other=cur&&L.indexOf(cur)<0;return L.map(c=>`<option${c===cur?' selected':''}>${esc(c)}</option>`).join('')+`<option value="__o"${other?' selected':''}>Other city…</option>`}
+function cityHint(){const c=$('pCity'),h=$('pCityHint'),pin=$('pPin'),ph=$('pPinHint');if(!c||!h)return;const city=c.value==='__o'?(($('pCityO')||{}).value||''):c.value;
+  if($('pCityO'))$('pCityO').style.display=c.value==='__o'?'block':'none';
+  h.textContent=/^(bengaluru|bangalore)$/i.test(city.trim())?'':'We deliver only within Bengaluru right now. Pickup from our kitchen in Yelahanka is open to everyone.';
+  if(pin&&ph)ph.textContent=(/^(bengaluru|bangalore)$/i.test(city.trim())&&/^\d{6}$/.test(pin.value)&&!/^56[0-2]/.test(pin.value))?'This pincode looks outside Bengaluru. Please check it.':''}
+function detForm(p,locked){
+  const mob=/@mobile\.cravella$/.test(p.email||''),line=p.line||(p.reg?'':p.address||''),v=x=>esc(x||''),D=locked?' disabled':'';
+  const st=IN_GEO[p.state]?p.state:'Karnataka',ct=p.city||'Bengaluru',inL=(IN_GEO[st]||[]).indexOf(ct)>=0;
+  return `<div class="pform${locked?' locked':''}">
+    <label class="f">Full name *</label><input class="i" id="pName" autocomplete="name" maxlength="80" value="${v(p.name)}" placeholder="Your name"${D}>
+    <label class="f">Mobile number *</label><div class="phw"><span>+91</span><input class="i" id="pPhone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" value="${v(p.phone)}" placeholder="98765 43210"${D}></div>
+    <label class="f">Email ID${mob?' (optional)':''}</label>${mob?`<input class="i" id="pEmail2" type="email" inputmode="email" autocomplete="email" maxlength="120" value="${v(p.email2)}" placeholder="${locked?'Not added':'you@example.com'}"${D}>`:`<input class="i" value="${v(p.email)}" disabled><div class="hint">You sign in with this email.</div>`}
+    <label class="f">Address (house / flat, street, area) *</label><textarea class="i" id="pLine" maxlength="200" autocomplete="street-address" placeholder="Flat 12, 3rd Cross, Sahakar Nagar"${D}>${v(line)}</textarea>
+    <label class="f">Landmark</label><input class="i" id="pLand" maxlength="100" value="${v(p.landmark)}" placeholder="Near / opposite …"${D}>
+    <div class="two"><div><label class="f">State *</label><select class="i" id="pState" autocomplete="address-level1"${D}>${Object.keys(IN_GEO).sort().map(s=>`<option${s===st?' selected':''}>${esc(s)}</option>`).join('')}</select></div>
+    <div><label class="f">City *</label><select class="i" id="pCity" autocomplete="address-level2"${D}>${cityOpts(st,ct)}</select>
+    <input class="i" id="pCityO" maxlength="50" placeholder="Type your city" value="${inL?'':v(ct)}" style="margin-top:8px;display:${inL?'none':'block'}"${D}></div></div>
+    <div class="hint" id="pCityHint" style="color:#a24a00">${/^(bengaluru|bangalore)$/i.test(ct)?'':'We deliver only within Bengaluru right now. Pickup from our kitchen in Yelahanka is open to everyone.'}</div>
+    <label class="f">Pincode *</label><input class="i" id="pPin" inputmode="numeric" autocomplete="postal-code" maxlength="6" value="${v(p.pin)}" placeholder="560064"${D}>
+    <div class="hint" id="pPinHint" style="color:#a24a00"></div></div>`}
 function acRender(){
   const b=$('acBody'),m=A.msg?`<div class="err">${esc(A.msg)}</div>`:'';
   if(A.view==='in'){
@@ -1154,15 +1179,17 @@ function acRender(){
     else list=A.orders.map(orderHtml).join('');
     b.innerHTML=`<p class="hint" style="margin-top:16px">Signed in as <b>${esc(whoIs(p))}</b></p>
     <div class="sec2">Your orders</div>${list}
-    <div class="sec2">Your details</div>
-    ${detForm(p)}${m}
-    <button class="go" data-act="save" style="width:100%;margin-top:14px;padding:14px;font-size:16px">Save my details</button>
+    <div class="sec2" style="display:flex;justify-content:space-between;align-items:center">Your details${p.reg&&!A.edit?'<button class="btn ol sm" data-act="edit" style="font-size:13.5px;width:auto;flex:none;margin:0;padding:8px 16px">✏️ Edit</button>':''}</div>
+    ${detForm(p,p.reg&&!A.edit)}${m}
+    ${p.reg&&!A.edit?'<div class="hint" style="margin-top:8px">These details fill in your orders automatically. Tap Edit to change them.</div>':`<button class="go" data-act="save" style="width:100%;margin-top:14px;padding:14px;font-size:16px">Save my details</button>${p.reg?'<button class="btn ol" data-act="canceledit" style="margin-top:8px">Cancel</button>':''}`}
     <button class="btn ol" data-act="out">Sign out</button>`;
   }
 }
 async function acDo(btn,fn){if(A.busy)return;A.busy=true;const t=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='Please wait…'}A.msg='';
   try{await fn()}catch(_){A.msg='Could not connect. Please check your internet and try again.'}
   A.busy=false;acRender()}
+$('acBody').addEventListener('change',e=>{const t=e.target;if(t.id==='pState'){const c=$('pCity');if(c){c.innerHTML=cityOpts(t.value,(IN_GEO[t.value]||[])[0]||'');}cityHint()}else if(t.id==='pCity'){cityHint();if(t.value==='__o'){const o=$('pCityO');if(o)o.focus()}}});
+$('acBody').addEventListener('input',e=>{if(e.target.id==='pPin'||e.target.id==='pCityO')cityHint()});
 $('acBody').addEventListener('click',e=>{
   const x=e.target.closest('[data-act]');if(!x)return;const a=x.dataset.act;
   if(a==='chg'){A.view='in';A.msg='';acRender();return}
@@ -1172,6 +1199,8 @@ $('acBody').addEventListener('click',e=>{
     const r=await api({action:'otp_request',email:em});
     if(r.ok){A.view='code'}else A.msg=r.error||'Could not send the code.'});
   if(a==='tomob'){A.view='min';A.msg='';acRender();return}
+  if(a==='edit'){A.edit=true;A.msg='';acRender();const f=$('pName');if(f)f.focus();return}
+  if(a==='canceledit'){A.edit=false;A.msg='';acRender();return}
   if(a==='skip'){A.view='home';A.msg='';closeAcct();toast('Signed in. You can add your details any time under My account.');loadMe();return}
   if(a==='msend')return acDo(x.tagName==='BUTTON'?x:null,async()=>{
     if(!live()){A.msg='Sign-in is not available in this preview.';return}
@@ -1189,8 +1218,8 @@ $('acBody').addEventListener('click',e=>{
     else A.msg=r.error||'That code is not right.'});
   if(a==='save')return acDo(x,async()=>{
     const g=i=>$(i)?$(i).value:'';
-    const r=await api({action:'save_profile',token:A.tok,name:g('pName'),phone:g('pPhone'),email2:g('pEmail2'),line:g('pLine'),landmark:g('pLand'),city:g('pCity'),state:g('pState'),pin:g('pPin')});
-    if(r.ok){A.profile=r.profile;accBtn();
+    const r=await api({action:'save_profile',token:A.tok,name:g('pName'),phone:g('pPhone'),email2:g('pEmail2'),line:g('pLine'),landmark:g('pLand'),city:g('pCity')==='__o'?g('pCityO'):g('pCity'),state:g('pState'),pin:g('pPin')});
+    if(r.ok){A.profile=r.profile;A.edit=false;accBtn();
       if(A.view==='reg'){A.view='home';const inReview=$('review').classList.contains('on');closeAcct();if(inReview)prefill();else scrollTo({top:Math.max(0,$('tabs').offsetTop),behavior:'smooth'});toast('Welcome to Cravella! Your account is ready.');loadMe()}
       else toast('Details saved')}else if(r.error==='auth'){setTok('');A.view='in';A.msg='Please sign in again.'}else A.msg=r.error});
   if(a==='out')return acDo(x,async()=>{const t=A.tok;setTok('');A.profile=null;A.orders=null;A.view='in';A.email='';accBtn();clearOrder();try{sessionStorage.removeItem('cb_contact')}catch(_){}try{await api({action:'logout',token:t})}catch(_){}});
