@@ -503,6 +503,21 @@ function visHtml(){
   <div class="row" style="font-size:10.5px;color:var(--mut);margin-top:2px"><span>${d.length?lbl(d[0].day):''}</span><span>Today</span></div>
   <div class="hint" style="margin-top:8px">${v.h24.v} page view${v.h24.v==1?'':'s'} in the last 24 hours · ${v.d30} visitors in 30 days${src?'<br>Where they came from (7 days): '+src:''}</div><button class="btn ol sm" data-hgo="vis" style="margin-top:10px">See who visited ›</button></details>`}
 let vf='all',vr={k:'7d'},vOpen=false;
+function chatAlertHtml(){const n=D.waUn||0,np=('Notification' in window)?Notification.permission:'na';
+  return (n?`<div class="card" style="border-color:#25d366;background:#effcf3"><div class="row"><b>💬 ${n} WhatsApp chat${n==1?'':'s'} waiting for your reply</b><button class="btn sm" data-hgo="wa">Open chats</button></div></div>`:'')+
+  (np==='default'?`<div class="card"><div class="row"><span class="m">🔔 Get a pop-up and sound here when a customer messages on WhatsApp</span><button class="btn ol sm" data-chatperm="1">Turn on</button></div></div>`:'')}
+function chatBeep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=chatBeep.c||(chatBeep.c=new C());[0,.18].forEach(d=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,c.currentTime+d);g.gain.exponentialRampToValueAtTime(.25,c.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+d+.15);o.connect(g);g.connect(c.destination);o.start(c.currentTime+d);o.stop(c.currentTime+d+.16)})}catch(_){}}
+async function waPoll(first){if(!tok||document.hidden&&!first)return;try{const r=await api({action:'admin_wa_unread'});if(!r||!r.ok)return;
+  const prevN=D.waUn,prevL=D.waLatest||0;let seen=0;try{seen=+localStorage.getItem('cb_wal')||0}catch(_){}
+  D.waUn=r.n;D.waLatest=r.latest;
+  if(r.latest&&r.latest>Math.max(prevL,seen)){
+    if(first||!prevL){if(r.n)toast('💬 '+r.n+' WhatsApp chat'+(r.n==1?'':'s')+' waiting for a reply')}
+    else{chatBeep();toast('💬 New WhatsApp message from a customer');
+      try{if('Notification' in window&&Notification.permission==='granted'){const nt=new Notification('New WhatsApp message',{body:'A customer just messaged Cravella. Tap to reply.',icon:'icon-192.png',tag:'cb-chat'});nt.onclick=()=>{window.focus();goTab('wa');nt.close()}}}catch(_){}}
+    try{localStorage.setItem('cb_wal',String(r.latest))}catch(_){}}
+  if(prevN!==r.n&&tab==='home')render()}catch(_){}}
+setTimeout(()=>waPoll(true),2500);setInterval(()=>waPoll(false),40000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)waPoll(false)});
 (function(){const tick=()=>{const c=$('clk');if(!c)return;const d=new Date();c.textContent=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})};tick();setInterval(tick,15000)})();
 const csvQ=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
 function dlCsv(name,rows){const b=new Blob(['﻿'+rows.map(r=>r.map(csvQ).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
@@ -566,12 +581,12 @@ function homeHtml(){
   const low=D.stock?D.stock.filter(x=>x.low>0&&x.qty<=x.low).length:null,nc=Object.keys(custMap()).length;
   const fxT=D.site&&D.site.fx&&SITE_TH.find(x=>x[0]===D.site.fx.theme),dayName=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   const T=[['today','📅','Today',nw?nw+' to confirm':dn+' due today',nw],['orders','📋','Orders',live.length+' active',0],['bake','🍰','Bake','What to bake',0],['stock','📦','Stock',low===null?'…':(low?low+' running low':'All good'),low||0],['recipes','📖','Recipes','',0],['menu','🍽️','Menu',D.items.length?D.items.length+' items':'',0],['cust','👥','Customers',nc+' people',0],['wa','<svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#25D366"/><path d="M16 7.5a8.5 8.5 0 0 0-7.3 12.8L7.5 24.5l4.3-1.1A8.5 8.5 0 1 0 16 7.5z" fill="#fff"/><path d="M12.6 12.2c.3-.6.6-.6.9-.6h.5c.2 0 .4.1.5.4l.8 1.8c.1.2 0 .4-.1.5l-.5.6c-.1.1-.1.3 0 .4.5.9 1.4 1.700 2.400 2.200.2.1.3.1.4 0l.6-.7c.1-.2.3-.2.5-.1l1.700.8c.2.1.3.2.3.4 0 .7-.5 1.400-1.300 1.700-.6.2-1.400.1-2.400-.3a9 9 0 0 1-3.900-3.400c-.7-1-.9-1.900-.7-2.600.1-.3.3-.6.8-.7z" fill="#25D366"/></svg>','WhatsApp','Chats & ads',0],['offers','🎁','Offers','',0],['gal','🖼️','Gallery','',0],['site','🧩','Site layout',fxT&&fxT[0]!=='none'?fxT[1]+' '+fxT[2]:'',0],['settings','⚙️','Settings','',0]];
-  T.push(['vis','👀','Visitors',D.vis?D.vis.h24.u+' in last 24 h':'Who visited',0]);const closed=D.settings&&D.settings.closed.includes(t);
+  {const tw=T.find(x=>x[0]==='wa');if(tw&&D.waUn){tw[4]=D.waUn;tw[3]=D.waUn+(D.waUn==1?' chat waiting':' chats waiting')}}T.push(['vis','👀','Visitors',D.vis?D.vis.h24.u+' in last 24 h':'Who visited',0]);const closed=D.settings&&D.settings.closed.includes(t);
   if(!D.wa&&!D.waBusy&&nf('wa'))loadWa();
   return `<div class="hd"><div><h2>Home</h2><small>${esc(dayName)}</small></div><button class="btn ol sm" id="refresh">↻ Refresh</button></div>
   <div class="hrow"><a class="hbig" href="./index.html" target="_blank" rel="noopener"><i>🌐</i><span><b>Open my website</b><small>See it as customers do</small></span></a>${homeBal()}</div>
   <div class="kp"><div class="${nw?'hot':''}"><b>${nw}</b><span>To confirm</span></div><div><b>${dn}</b><span>Due today</span></div><div><b>${live.length}</b><span>Active</span></div><div><b>${low===null?'–':low}</b><span>Low stock</span></div></div>
-  ${visHtml()}
+  ${chatAlertHtml()}${visHtml()}
   <div class="qf"><input class="i" id="qf" type="search" placeholder="🔎  Find a page, order or customer…" autocomplete="off"><div id="qfRes"></div></div>
   <div id="hSecs">${SECS.map(([sn,sc,sd,keys])=>`<div class="hs" style="--ac:${sc}"><div class="hsh"><b>${sn}</b><small>${sd}</small></div><div class="hg">${keys.map(k=>{const x=T.find(y=>y[0]===k);return x?`<button class="ht" data-hgo="${x[0]}"><i>${x[1]}</i><b>${x[2]}</b><span>${esc(x[3]||PGDESC[k]||'')}</span>${x[4]?`<em>${x[4]}</em>`:''}</button>`:''}).join('')}</div></div>`).join('')}
   <div class="hs" style="--ac:#c1272d"><div class="hsh"><b>Need help?</b><small>Talk to us or the customer</small></div><div class="hg"><a class="ht" href="tel:+919845904310"><i>📞</i><b>Call shop</b><span>98459-04310</span></a></div></div></div>
@@ -831,6 +846,7 @@ $('panel').addEventListener('click',async e=>{
   if(e.target.closest('[data-brkedit]')){D.brkOpen=!D.brkOpen;render();if(D.brkOpen){const m=$('brkMsg');if(m)m.focus()}return}
   const hg=e.target.closest('[data-hgo]');if(hg){goTab(hg.dataset.hgo);return}
   const vfb=e.target.closest('[data-vf]');if(vfb){vf=vfb.dataset.vf;render();return}
+  if(e.target.closest('[data-chatperm]')){try{const p=await Notification.requestPermission();toast(p==='granted'?'Chat alerts turned on for this device':'Pop-ups are blocked; you will still see the badge and hear a sound');chatBeep()}catch(_){}render();return}
   if(e.target.closest('[data-vexp]')){vOpen=!vOpen;render();return}
   if(e.target.closest('[data-vcsv]')){if(!D.vtr||!D.vtr.visits.length){toast('No visits in this period');return}dlCsv('cravella-visitors-'+vrRange()[2].replace(/[^a-z0-9]+/gi,'-')+'-'+new Date().toISOString().slice(0,10)+'.csv',vtrRows());return}
   const vcs=e.target.closest('[data-varcsv]');if(vcs){try{const r=await api({action:'admin_vis_archive_get',id:+vcs.dataset.varcsv});if(r.ok)dlCsv('cravella-visitor-log-'+new Date(+vcs.dataset.varcsv).toISOString().slice(0,10)+'.csv',logRows(r.txt));else toast(r.error||'Could not download')}catch(_){toast('Could not connect')}return}
