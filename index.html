@@ -236,6 +236,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 @keyframes eggFlash{0%,100%{transform:translateY(-50%) rotate(-5deg) scale(1);box-shadow:0 6px 18px rgba(0,0,0,.25),0 0 0 0 rgba(255,211,102,.0)}50%{transform:translateY(-50%) rotate(-5deg) scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,.25),0 0 22px 6px rgba(255,211,102,.85)}}
 @media (prefers-reduced-motion:reduce){.hero .egg{animation:none}}
 .hero.sm.hasEgg>h2,.hero.sm.hasEgg>p{padding-right:150px}
+.hero h2.sub{margin:6px 0 14px}.hero.sm h2.sub{margin:4px 0 0}
 .hero.hasEgg>i{display:none}
 .hero:not(.sm) .egg{top:16px;transform:rotate(-5deg);animation-name:eggFlash2}
 @keyframes eggFlash2{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(-5deg) scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,.25),0 0 22px 6px rgba(255,211,102,.85)}}
@@ -802,7 +803,7 @@ function homeHtml(){
   const T=(q,d)=>q.t?esc(q.t):d;
   const P={
    gallery:q=>galHtml(q.t?esc(q.t):esc(G.t||'Custom theme cakes'),1),
-   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero hasEgg${galOn?' sm':''}${(!GAL.length&&FX().props&&festOn())?' fxp':''}"${hs?' style="'+hs+'"':''}><span class="egg" aria-label="100% Eggless"><b>100%</b>Eggless</span><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
+   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero hasEgg${galOn?' sm':''}${(!GAL.length&&FX().props&&festOn())?' fxp':''}"${hs?' style="'+hs+'"':''}><span class="egg" aria-label="100% Eggless"><b>100%</b>Eggless</span><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><h2 class="sub"${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</h2><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
    cakes:q=>car(T(q,'Cakes'),'cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join('')),
    cupcakes:q=>car(T(q,'Cupcakes · box of 6'),'cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join('')),
    muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
