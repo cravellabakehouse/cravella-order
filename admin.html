@@ -488,6 +488,7 @@ function todayCard(o,t){
 }
 const BRK_DEF="We're taking a short break and are not taking any orders right now. We'll be back soon!";
 async function loadVis(){if(D.visBusy)return;D.visBusy=1;try{const r=await api({action:'admin_visits'});if(r.ok){D.vis=r;D.visAt=Date.now()}}catch(_){}D.visBusy=0;if(tab==='home')render()}
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.id==='visCard'){try{localStorage.setItem('cb_visc',d.open?'1':'0')}catch(_){}const h=d.querySelector('summary .hint');if(h&&D.vis)h.innerHTML=d.open?'unique people':'<b>'+D.vis.h24.u+'</b> in last 24 h · <b>'+D.vis.d7+'</b> in 7 days'}},true);
 function visHtml(){
   if(!D.visBusy&&(!D.vis||Date.now()-(D.visAt||0)>120000))loadVis();
   const v=D.vis;if(!v)return `<div class="card"><b>👀 Website visitors</b><div class="hint" style="margin-top:6px">Loading…</div></div>`;
@@ -495,11 +496,12 @@ function visHtml(){
   const lbl=s=>new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   const bars=d.map((x,i)=>`<div title="${lbl(x.day)}: ${x.u} visitor${x.u==1?'':'s'}, ${x.v} page view${x.v==1?'':'s'}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;min-width:0"><span style="font-size:10px;color:var(--mut)">${x.u||''}</span><i style="display:block;width:100%;max-width:18px;height:${Math.max(2,Math.round(x.u/mx*52))}px;border-radius:4px 4px 0 0;background:${i===d.length-1?'#b5532a':'#e7c9a6'}"></i></div>`).join('');
   const src=(v.src7||[]).map(x=>esc(x.src)+' '+x.u).join(' · ');
-  return `<div class="card"><div class="row"><b>👀 Website visitors</b><span class="hint">unique people</span></div>
+  let vo=true;try{vo=localStorage.getItem('cb_visc')!=='0'}catch(_){}
+  return `<details class="card" id="visCard"${vo?' open':''}><summary class="vsh"><div class="row"><b>👀 Website visitors</b><span class="hint">${vo?'unique people':'<b>'+v.h24.u+'</b> in last 24 h · <b>'+v.d7+'</b> in 7 days'}</span></div></summary>
   <div class="kp" style="margin-top:8px"><div class="hot"><b>${v.h24.u}</b><span>Last 24 hours</span></div><div><b>${td}</b><span>Today</span></div><div><b>${yd}</b><span>Yesterday</span></div><div><b>${v.d7}</b><span>Last 7 days</span></div></div>
   <div style="display:flex;gap:4px;align-items:flex-end;height:74px;margin-top:10px">${bars}</div>
   <div class="row" style="font-size:10.5px;color:var(--mut);margin-top:2px"><span>${d.length?lbl(d[0].day):''}</span><span>Today</span></div>
-  <div class="hint" style="margin-top:8px">${v.h24.v} page view${v.h24.v==1?'':'s'} in the last 24 hours · ${v.d30} visitors in 30 days${src?'<br>Where they came from (7 days): '+src:''}</div><button class="btn ol sm" data-hgo="vis" style="margin-top:10px">See who visited ›</button></div>`}
+  <div class="hint" style="margin-top:8px">${v.h24.v} page view${v.h24.v==1?'':'s'} in the last 24 hours · ${v.d30} visitors in 30 days${src?'<br>Where they came from (7 days): '+src:''}</div><button class="btn ol sm" data-hgo="vis" style="margin-top:10px">See who visited ›</button></details>`}
 let vf='all',vr={k:'7d'},vOpen=false;
 (function(){const tick=()=>{const c=$('clk');if(!c)return;const d=new Date();c.textContent=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})};tick();setInterval(tick,15000)})();
 const csvQ=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
