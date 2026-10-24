@@ -489,15 +489,32 @@ function visHtml(){
   <div style="display:flex;gap:4px;align-items:flex-end;height:74px;margin-top:10px">${bars}</div>
   <div class="row" style="font-size:10.5px;color:var(--mut);margin-top:2px"><span>${d.length?lbl(d[0].day):''}</span><span>Today</span></div>
   <div class="hint" style="margin-top:8px">${v.h24.v} page view${v.h24.v==1?'':'s'} in the last 24 hours · ${v.d30} visitors in 30 days${src?'<br>Where they came from (7 days): '+src:''}</div><button class="btn ol sm" data-hgo="vis" style="margin-top:10px">See who visited ›</button></div>`}
-let vf='all';
-async function loadVtr(){if(D.vtrBusy)return;D.vtrBusy=1;try{const r=await api({action:'admin_visitors'});if(r.ok){D.vtr=r;D.vtrAt=Date.now()}else D.vtrErr=r.error||'Could not load.'}catch(_){D.vtrErr='Could not connect.'}D.vtrBusy=0;if(tab==='vis')render()}
+let vf='all',vr={k:'7d'};
+function vrRange(){const n=Date.now(),ds=x=>{const d=new Date(x);d.setHours(0,0,0,0);return d.getTime()},t0=ds(n);
+  if(vr.k==='today')return [t0,n+60000,'today'];if(vr.k==='yday')return [t0-864e5,t0,'yesterday'];if(vr.k==='prev')return [t0-13*864e5,t0-6*864e5,'previous week'];
+  if(vr.k==='week'){const s=ds(vr.d||n);return [s,s+7*864e5,'week from '+new Date(s).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})]}
+  return [t0-6*864e5,n+60000,'last 7 days']}
+async function loadArc(){try{const r=await api({action:'admin_vis_archives'});if(r.ok)D.varc=r.list}catch(_){}if(tab==='vis')render()}
+function dlText(name,txt){const b=new Blob([txt],{type:'text/plain;charset=utf-8'}),u=URL.createObjectURL(b),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+function vtrText(){const v=D.vtr;if(!v)return '';const rg=vrRange(),f=ms=>new Date(ms).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});
+  const L=['Cravella Bake House - website visitor log','Downloaded '+f(Date.now())+' · '+rg[2],'Visitors (one entry per person per day): '+v.visits.length+' | Signed-in: '+v.signedIn,''];
+  v.visits.forEach(x=>{const pl=[x.city,x.region].filter(Boolean).join(', ')+(x.pin?' '+x.pin:'');
+    L.push('- '+f(x.t)+(x.last-x.t>60000?' (last seen '+new Date(x.last).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})+')':'')+' | '+(x.who?x.who+(x.phone?' +91 '+x.phone:''):'Visitor #'+x.tag)+' | '+(x.ret?'returning':'first visit')+' | '+(pl||'unknown place')+' | '+(x.model||x.dev||'-')+(x.net?' on '+netL(x.net):'')+' | from '+(x.src||'Direct')+' | '+(x.dur?durL(x.dur):'time n/a')+' | opened '+x.pages+' time'+(x.pages==1?'':'s'));
+    const p=[];if(x.searched.length)p.push('Searched: '+x.searched.join(', '));if(x.tabs.length)p.push('Browsed: '+x.tabs.join(', '));if(x.viewed.length)p.push('Looked at: '+x.viewed.join(', '));if(x.carted.length)p.push('Added to cart: '+x.carted.join(', '));if(p.length)L.push('    '+p.join(' | '))});
+  return L.join('\n')}
+async function loadVtr(){if(D.vtrBusy)return;D.vtrBusy=1;try{const rg=vrRange();const r=await api({action:'admin_visitors',from:rg[0],to:rg[1]});if(r.ok){D.vtr=r;D.vtrAt=Date.now()}else D.vtrErr=r.error||'Could not load.'}catch(_){D.vtrErr='Could not connect.'}D.vtrBusy=0;if(tab==='vis')render()}
 const durL=s=>s<60?s+' sec':Math.floor(s/60)+' min'+(s%60?' '+(s%60)+' sec':'');
 const netL=n=>{n=String(n||'');return /jio/i.test(n)?'Jio':/airtel|bharti/i.test(n)?'Airtel':/vodafone|idea/i.test(n)?'Vi':/bsnl/i.test(n)?'BSNL':/atria|\bact\b/i.test(n)?'ACT Fibernet':/hathway/i.test(n)?'Hathway':n.replace(/\b(private|pvt|limited|ltd|llc|inc|infocomm|internet|services|broadband|network[s]?)\b\.?/gi,'').replace(/\s{2,}/g,' ').trim()};
 const whenL=ms=>{const d=new Date(ms),t=d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}),a=new Date();a.setHours(0,0,0,0);const y=new Date(a.getTime()-864e5);return (d>=a?'Today':d>=y?'Yesterday':d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}))+', '+t};
 const agoL=ms=>{const m=Math.round((Date.now()-ms)/60000);return m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
 function visitorsHtml(){
   if(!D.vtrBusy&&(!D.vtr||Date.now()-(D.vtrAt||0)>60000))loadVtr();
-  let h=`<div class="hd"><div><h2>Visitors</h2><small>Who visited your website · last 7 days</small></div><button class="btn ol sm" data-vref="1">↻ Refresh</button></div>`;
+  const rg=vrRange();
+  let h=`<div class="hd"><div><h2>Visitors</h2><small>Who visited your website · ${rg[2]}</small></div><button class="btn ol sm" data-vref="1">↻ Refresh</button></div>
+  <div class="chips" style="margin:6px 0">${[['today','Today'],['yday','Yesterday'],['7d','Last 7 days'],['prev','Previous week']].map(([k,n])=>`<button class="chip ${vr.k===k?'on':''}" data-vr="${k}">${n}</button>`).join('')}<label class="chip ${vr.k==='week'?'on':''}" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">Week from <input type="date" id="vrDate" value="${vr.d?new Date(vr.d-new Date(vr.d).getTimezoneOffset()*60000).toISOString().slice(0,10):''}" style="border:0;background:transparent;font:inherit;color:inherit;max-width:140px"></label></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;justify-content:flex-start;margin:4px 0 8px"><button class="btn ol sm" data-vlog="1">⬇ Download log (.txt)</button><button class="btn ol sm" data-varc="1">🗂 Saved logs${D.varc?' ('+D.varc.length+')':''}</button><button class="btn ol sm" data-vrst="1" style="color:#b42318;border-color:#f1b5ae">Reset visitor data</button></div>
+  ${D.vrst?`<div class="card" style="border-color:#f1b5ae;background:#fff5f4"><b>Reset visitor data?</b><div class="m" style="margin:6px 0">All visits, searches and counts will be saved as a text log under <b>Saved logs</b>, then cleared, so counting starts fresh. Carts left by customers are kept. Type <b>RESET</b> to confirm.</div><div class="row" style="gap:8px"><input class="i" id="vrstIn" placeholder="RESET" autocomplete="off" style="max-width:160px"><button class="btn sm" data-vrstgo="1">Save log &amp; reset</button><button class="btn ol sm" data-vrstno="1">Cancel</button></div></div>`:''}
+  ${D.varcOpen?`<div class="card"><div class="row"><b>🗂 Saved logs</b><button class="btn ol sm" data-varcx="1">Close</button></div>${!D.varc?'<div class="hint" style="margin-top:6px">Loading…</div>':D.varc.length?D.varc.map(a=>`<div class="row" style="margin-top:8px;gap:8px"><span class="m">Saved ${whenL(a.t)} · ${a.n} visitors · ${Math.max(1,Math.round(a.size/1024))} KB<br><span class="hint">${new Date(a.from).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${new Date(a.to).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</span></span><button class="btn ol sm" data-varcdl="${a.id}">⬇ Download</button></div>`).join(''):'<div class="hint" style="margin-top:6px">No saved logs yet. A log is saved every time you reset.</div>'}</div>`:''}`;
   const v=D.vtr;if(!v)return h+`<div class="hint" style="margin:14px 0">${D.vtrErr?esc(D.vtrErr):'Loading…'}</div>`;
   const L=v.visits||[],chip=a=>a.map(x=>esc(x[0])+' <b>'+x[1]+'</b>').join(' · ');
   h+=`<div class="kp"><div class="hot"><b>${L.length}</b><span>Visits</span></div><div><b>${v.signedIn}</b><span>Signed-in</span></div><div><b>${v.newRet[0]}/${v.newRet[1]}</b><span>New / returning</span></div><div><b>${(v.carts||[]).length}</b><span>Carts left</span></div></div>
@@ -512,10 +529,10 @@ function visitorsHtml(){
   const F=[['all','All'],['in','Signed-in'],['cart','Added to cart'],['new','First visit']],fl=L.filter(x=>vf==='all'||(vf==='in'?!!x.who:vf==='cart'?x.carted.length>0:!x.ret));
   h+=`<div class="sec2" style="margin-top:16px"><b>Recent visits</b></div><div class="chips" style="margin:8px 0">${F.map(([k,n])=>`<button class="chip ${vf===k?'on':''}" data-vf="${k}">${n}</button>`).join('')}</div>`;
   h+=fl.length?fl.map(x=>{const pl=[x.city,x.region].filter(Boolean).join(', ')+(x.pin?' '+x.pin:'')+(x.country&&x.country!=='IN'?' ('+esc(x.country)+')':'');const ph=String(x.phone||'').replace(/\D/g,'').slice(-10);
-    return `<div class="card"><div class="row"><span>${x.who?'<b>'+esc(x.who)+'</b>':'<b>Visitor</b> <span class="hint">#'+esc(x.tag)+'</span>'}<span class="rep">${x.ret?'Returning':'First visit'}</span></span><span class="hint">${whenL(x.t)}</span></div>
+    return `<div class="card"><div class="row"><span>${x.who?'<b>'+esc(x.who)+'</b>':'<b>Visitor</b> <span class="hint">#'+esc(x.tag)+'</span>'}<span class="rep">${x.ret?'Returning':'First visit'}</span></span><span class="hint">${whenL(x.t)}${x.last&&x.last-x.t>60000?' – '+new Date(x.last).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):''}</span></div>
     <div class="m">📍 ${pl?esc(pl):'Unknown place'}</div>
     <div class="m">${x.dev==='Computer'?'💻':'📱'} ${esc(x.model||x.dev||'')}${x.net?' · on '+esc(netL(x.net)):''} · from ${esc(x.src||'Direct')}</div>
-    <div class="m">⏱ ${x.dur?'Spent '+durL(x.dur):'Time not recorded yet'}</div>
+    <div class="m">⏱ ${x.dur?'Spent '+durL(x.dur):'Time not recorded yet'}${x.pages>1?' · opened the site '+x.pages+' times that day':''}</div>
     ${x.searched&&x.searched.length?`<div class="m">Searched: ${x.searched.map(q=>'“'+esc(q)+'”').join(', ')}</div>`:''}
     ${x.tabs.length?`<div class="m">Browsed: ${x.tabs.map(esc).join(', ')}</div>`:''}${x.viewed.length?`<div class="m">Looked at: ${x.viewed.map(esc).join(', ')}</div>`:''}${x.carted.length?`<div class="m"><b>Added to cart:</b> ${x.carted.map(esc).join(', ')}</div>`:''}
     ${x.who&&ph?`<div class="acts" style="margin-top:8px"><a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a> <a class="btn ol sm" href="tel:+91${ph}">📞 Call</a></div>`:''}</div>`}).join(''):`<div class="hint" style="margin:14px 0">${L.length?'No visits match this filter.':'No visits recorded yet. They will appear here as people open your website.'}</div>`;
@@ -791,6 +808,15 @@ $('panel').addEventListener('click',async e=>{
   if(e.target.closest('[data-brkedit]')){D.brkOpen=!D.brkOpen;render();if(D.brkOpen){const m=$('brkMsg');if(m)m.focus()}return}
   const hg=e.target.closest('[data-hgo]');if(hg){goTab(hg.dataset.hgo);return}
   const vfb=e.target.closest('[data-vf]');if(vfb){vf=vfb.dataset.vf;render();return}
+  const vrb=e.target.closest('[data-vr]');if(vrb){vr={k:vrb.dataset.vr};D.vtr=null;loadVtr();render();return}
+  if(e.target.closest('[data-vlog]')){if(!D.vtr||!D.vtr.visits.length){toast('No visits in this period');return}dlText('cravella-visitors-'+vrRange()[2].replace(/[^a-z0-9]+/gi,'-')+'-'+new Date().toISOString().slice(0,10)+'.txt',vtrText());return}
+  if(e.target.closest('[data-varc]')){D.varcOpen=1;D.varc=null;render();loadArc();return}
+  if(e.target.closest('[data-varcx]')){D.varcOpen=0;render();return}
+  if(e.target.closest('[data-vrst]')){D.vrst=1;render();return}
+  if(e.target.closest('[data-vrstno]')){D.vrst=0;render();return}
+  if(e.target.closest('[data-vrstgo]')){const v=($('vrstIn')||{}).value||'';if(v.trim().toUpperCase()!=='RESET'){toast('Type RESET to confirm');return}
+    try{const r=await api({action:'admin_vis_reset',confirm:'RESET'});if(r.ok){D.vrst=0;D.vtr=null;D.vis=null;D.varcOpen=1;D.varc=null;toast('Log saved ('+r.visits+' visitors) and data reset');loadArc();loadVtr();render()}else toast(r.error||'Could not reset')}catch(_){toast('Could not connect')}return}
+  const vdl=e.target.closest('[data-varcdl]');if(vdl){try{const r=await api({action:'admin_vis_archive_get',id:+vdl.dataset.varcdl});if(r.ok)dlText('cravella-visitor-log-'+new Date(+vdl.dataset.varcdl).toISOString().slice(0,10)+'.txt',r.txt);else toast(r.error||'Could not download')}catch(_){toast('Could not connect')}return}
   if(e.target.closest('[data-vref]')){D.vtrAt=0;loadVtr();toast('Refreshing…');return}
   if(e.target.closest('[data-qclose]')){if(!D.settings){toast('Still loading, try again');return}if(dirty){toast('Save your Menu or Settings changes first');return}const t=todayS(),st=D.settings,was=st.closed.includes(t),nc=was?st.closed.filter(x=>x!==t):st.closed.concat([t]).sort();try{const r=await api({action:'admin_settings_save',unavailable:st.unavailable,closed:nc,capCake:st.capCake,capOther:st.capOther,banner:st.banner});if(r.ok){D.settings=r.settings;toast(was?'Orders open for today':'Closed for orders today');render()}else toast(r.error||'Could not save')}catch(_){toast('No connection')}return}
   const op=e.target.closest('[data-open]');if(op){q=op.dataset.open;filt='all';goTab('orders');if(tab==='orders'){render();scrollTo(0,0)}return}
@@ -830,6 +856,7 @@ $('panel').addEventListener('input',e=>{
   if(e.target.id==='search'){q=e.target.value;const pos=e.target.selectionStart;render();const s=$('search');s.focus();s.setSelectionRange(pos,pos)}
   if(e.target.id==='cSort'){cs=e.target.value;render();return}
   if(e.target.id==='aSort'){asrt=e.target.value;render();return}
+  if(e.target.id==='vrDate'){if(e.target.value){vr={k:'week',d:Date.parse(e.target.value+'T00:00:00')};D.vtr=null;loadVtr();render()}return}
   if(e.target.id==='aSearch'){aq=e.target.value;const pos=e.target.selectionStart;render();const s=$('aSearch');s.focus();s.setSelectionRange(pos,pos)}
   if(e.target.id==='cSearch'){cq=e.target.value;const pos=e.target.selectionStart;render();const s=$('cSearch');s.focus();s.setSelectionRange(pos,pos)}
   if(['capCake','capOther','banner'].includes(e.target.id)){D.settings[e.target.id]=e.target.id==='banner'?e.target.value:Math.max(0,parseInt(e.target.value)||0);dirty=true}
