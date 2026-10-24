@@ -166,6 +166,13 @@ body.acct-open .bar{z-index:25}body.acct-open .bn{z-index:24}
 .o .w{font-size:13px;color:var(--mut);margin-top:4px}
 .o .it{font-size:14px;margin-top:8px;white-space:pre-line}
 .o .f2{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.oit{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+.oit th{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);text-align:left;padding:0 0 4px}
+.oit td{padding:7px 0;border-top:1px dashed var(--line);vertical-align:top}
+.oit .q{text-align:center;padding-left:8px;padding-right:8px;white-space:nowrap}
+.oit .p{text-align:right;white-space:nowrap}
+.oit tfoot td{border-top:1px solid var(--line);padding:5px 0;color:var(--mut)}
+.oit tfoot tr.tt td{color:var(--ink);font-weight:700;font-size:15px}
 .st{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#eee;color:#444;white-space:nowrap}
 .st.New{background:#fff1c9;color:#7a5a00}.st.Confirmed{background:#d9efe1;color:#1f6b3d}.st.Advance{background:#d6e8f7;color:#1c4f7c}.st.Delivered{background:#2f7d4f;color:#fff}.st.Cancelled{background:#f6d6d2;color:#8a2b20}
 .lnk{color:var(--acc);font-weight:700;text-decoration:underline;cursor:pointer}
@@ -1058,11 +1065,16 @@ function prefill(){const p=A.profile;if(!p)return;
 const STL={New:'Received',Confirmed:'Confirmed','Advance received':'Advance received',Delivered:'Completed',Cancelled:'Cancelled'};
 const stCls=s=>s==='Advance received'?'Advance':s;
 function orderHtml(o,i){
-  const when=(o.mode==='Delivery'?'Delivery: ':'Pickup: ')+(o.date?fmtDate(o.date):'')+(o.time?', '+o.time:'')+(o.split?' · Other bakes: '+fmtDate(o.split.date)+', '+o.split.time:'');
-  return `<div class="o"><div class="h"><b>${esc(o.id)}</b><span class="st ${esc(stCls(o.status))}">${esc(STL[o.status]||o.status)}</span></div>
-  <div class="w">Placed ${esc(o.placed)} · ${esc(when)}</div>
-  <div class="it">${esc(o.lines.join('\n'))}</div>
-  <div class="f2"><b>${inr(o.total)}</b>${o.items.length&&o.status!=='Cancelled'?`<button class="add sm" data-act="re" data-i="${i}">Order again</button>`:''}</div></div>`}
+  const md=m=>m==='Delivery'?'Delivery':'Pickup',slot=(m,d,t)=>md(m)+': '+(d?fmtDate(d):'')+(t?', '+t:'');
+  const when=o.split?'Cakes – '+slot(o.mode,o.date,o.time)+'<br>Other bakes – '+slot(o.split.mode||o.mode,o.split.date,o.split.time):slot(o.mode,o.date,o.time);
+  const rows=(o.rows&&o.rows.length?o.rows:o.lines.map(l=>({name:l,qty:'',amount:null})));
+  const body=rows.map(r=>`<tr><td>${esc(r.name)}</td><td class="q">${esc(r.qty)}</td><td class="p">${r.amount!=null?inr(r.amount):''}</td></tr>`).join('');
+  const foot=(o.discount>0?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount${o.discNote?' ('+esc(o.discNote)+')':''}</td><td class="p">−${inr(o.discount)}</td></tr>`:'')+`<tr class="tt"><td colspan="2">Total</td><td class="p">${inr(o.total)}</td></tr>`;
+  return `<div class="o"><div class="h"><b>Order ${esc(o.id)}</b><span class="st ${esc(stCls(o.status))}">${esc(STL[o.status]||o.status)}</span></div>
+  <div class="w">Ordered on ${esc(o.placed)}</div>
+  <div class="w">${esc(when).replace(/&lt;br&gt;/g,'<br>')}</div>
+  <table class="oit"><thead><tr><th>Item</th><th class="q">Qty</th><th class="p">Price</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>
+  <div class="f2"><span class="hint">Order ID: ${esc(o.id)}</span>${o.items.length&&o.status!=='Cancelled'?`<button class="add sm" data-act="re" data-i="${i}">Order again</button>`:''}</div></div>`}
 function detForm(p){
   const mob=/@mobile\.cravella$/.test(p.email||''),line=p.line||(p.reg?'':p.address||''),v=x=>esc(x||'');
   return `<label class="f">Full name *</label><input class="i" id="pName" autocomplete="name" maxlength="80" value="${v(p.name)}" placeholder="Your name">
