@@ -585,6 +585,35 @@ function histBox(o){const a=CM[keyOf(o)]||[];return a.length>1?`<div class="hist
 function mailNote(o){const m=D.mails[String(o.id).toLowerCase()];return m?`<div class="hint">✉ Emailed ${m.n} time${m.n>1?'s':''} · last ${new Date(m.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</div>`:''}
 /* ---------- customer insights ---------- */
 let cf='all',cs='recent',cOpen='',CE={tags:[]};
+let cv='orders',aq='',asrt='new';
+const cvSw=()=>`<div class="chips" style="margin:10px 0 2px"><button class="chip ${cv==='orders'?'on':''}" data-cv="orders">Customers who ordered</button><button class="chip ${cv==='acc'?'on':''}" data-cv="acc">Signed-up accounts${D.acc?' '+D.acc.length:''}</button></div>`;
+async function loadAcc(force){if(D.accBusy||(!force&&D.acc&&Date.now()-D.accAt<60000))return;D.accBusy=1;
+  try{const r=await api({action:'admin_accounts'});if(r.ok){D.acc=r.list||[];D.accAt=Date.now()}else D.accErr=r.error||'Could not load accounts.'}catch(_){D.accErr='Could not connect.'}
+  D.accBusy=0;if(tab==='cust'&&cv==='acc'&&!cOpen)render()}
+const accAddr=a=>a.line?a.line+(a.landmark?', near '+a.landmark:'')+(a.city?', '+a.city:'')+(a.state?', '+a.state:'')+(a.pin?' '+a.pin:''):a.address;
+function accHtml(){
+  if(!D.acc){loadAcc();return cvSw()+`<div class="hint" style="margin:14px 0">${D.accErr?esc(D.accErr):'Loading accounts…'}</div>`}
+  loadAcc();
+  const all=D.acc,s=aq.trim().toLowerCase(),wk=Date.now()-7*864e5;
+  let L=all.filter(a=>!s||[a.name,a.phone,a.email,a.line,a.landmark,a.city,a.state,a.pin,a.address].join(' ').toLowerCase().includes(s));
+  L.sort(asrt==='spent'?(x,y)=>y.spent-x.spent:asrt==='orders'?(x,y)=>y.orders-x.orders:asrt==='last'?(x,y)=>y.last-x.last:asrt==='name'?(x,y)=>(x.name||'~').localeCompare(y.name||'~'):(x,y)=>y.created-x.created);
+  let h=cvSw()+`<div class="stat"><div><b>${all.length}</b><span>Accounts</span></div><div><b>${all.filter(a=>a.created>=wk).length}</b><span>New this week</span></div><div><b>${all.filter(a=>!a.orders).length}</b><span>Not ordered yet</span></div></div>
+  <div class="stat"><div><b>${all.filter(a=>a.reg).length}</b><span>Completed sign-up form</span></div><div><b>${all.filter(a=>a.via==='WhatsApp').length} / ${all.filter(a=>a.via==='Email').length}</b><span>WhatsApp / email sign-in</span></div></div>
+  <input class="i" id="aSearch" placeholder="Search name, mobile, email, address, city or pincode" value="${esc(aq)}">
+  <div class="row" style="margin:8px 0;gap:8px;flex-wrap:wrap"><select class="i" id="aSort" style="width:auto;padding:7px 10px">${[['new','Sort: newest sign-up'],['last','Sort: last sign-in'],['spent','Sort: most spent'],['orders','Sort: most orders'],['name','Sort: name A–Z']].map(([k,n])=>`<option value="${k}"${asrt===k?' selected':''}>${n}</option>`).join('')}</select>
+  <span><button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
+  <div class="hint" style="margin-bottom:6px">${L.length} of ${all.length} accounts</div>`;
+  h+=L.length?L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10);
+    return `<div class="card"><div class="row"><span class="id" style="font-weight:700">${a.name?esc(a.name):'<span class="hint">No name yet</span>'}</span><b>${inr(a.spent)}</b></div>
+    <div class="m">📱 ${ph?'+91 '+esc(ph):'–'} · ✉ ${a.email?esc(a.email):'–'} <span class="hint">(signs in with ${a.via})</span></div>
+    <div class="m">📍 ${accAddr(a)?esc(accAddr(a)):'<span class="hint">No address yet</span>'}</div>
+    <div class="m">Signed up ${dShort(a.created)} · last sign-in ${dShort(a.last)} · ${a.orders} order${a.orders==1?'':'s'}${a.lastOrder?' · last order '+dShort(a.lastOrder):''}${a.reg?'':' · <span class="rep">Sign-up form not filled</span>'}</div>
+    ${ph?`<div class="acts" style="margin-top:8px"><a class="btn ol sm" href="tel:+91${ph}">📞 Call</a> <a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a></div>`:''}</div>`}).join(''):`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
+  return h}
+function accCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',dt=ms=>ms?new Date(ms).toLocaleString('en-IN'):'';
+  const rows=[['Name','Mobile','Email','Signs in with','Address','Landmark','City','State','Pincode','Full address','Signed up','Last sign-in','Orders','Total spent (Rs)','Last order','Sign-up form filled']].concat((D.acc||[]).map(a=>[a.name,a.phone,a.email,a.via,a.line,a.landmark,a.city,a.state,a.pin,accAddr(a),dt(a.created),dt(a.last),a.orders,a.spent,dt(a.lastOrder),a.reg?'Yes':'No']));
+  const b=new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),l=document.createElement('a');
+  l.href=u;l.download='cravella-customers-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 const PRESET=['VIP','Allergy','Birthday cakes','Corporate','Friend/Family','Eggless only','Sugar-free'];
 const crmOf=k=>(D.crm&&D.crm[k])||{};
 const nf=k=>!(D[k+'F']&&Date.now()-D[k+'F']<15000);   // after a failed load, wait 15s before auto-retrying (stops request loops)
@@ -615,12 +644,13 @@ function cInfo(k){
 const SEG={vip:['⭐ VIP','vip'],active:['Active','act'],due:['Due to reorder','due'],lapsed:['Lapsed','lap'],new:['New','new'],cancelled:['Cancelled only','lap']};
 const segTag=s=>`<span class="rep sg-${SEG[s][1]}">${SEG[s][0]}</span>`;
 function custHtml(){
+  if(cv==='acc')return accHtml();
   const all=Object.keys(CM).map(cInfo),s=cq.trim().toLowerCase(),cnt=f=>all.filter(c=>f==='all'||(f==='repeat'?c.ok.length>1:c.seg===f)).length;
   let L=all.filter(c=>(cf==='all'||(cf==='repeat'?c.ok.length>1:c.seg===cf))&&(!s||(c.a.map(o=>o.name+' '+o.phone+' '+o.email).join(' ')+' '+JSON.stringify(crmOf(c.k))).toLowerCase().includes(s)));
   L.sort(cs==='spend'?(x,y)=>y.sp-x.sp:cs==='orders'?(x,y)=>y.ok.length-x.ok.length:cs==='gap'?(x,y)=>(y.since-x.since):(x,y)=>y.lastMs-x.lastMs);
   const rev=all.reduce((t,c)=>t+c.sp,0),rp=all.filter(c=>c.ok.length>1).length,gp=all.filter(c=>c.avgGap).map(c=>c.avgGap),ag=gp.length?gp.reduce((t,x)=>t+x,0)/gp.length:0;
   const CH=[['all','All'],['vip','⭐ VIP'],['repeat','Repeat'],['due','Due to reorder'],['lapsed','Lapsed'],['new','New']];
-  let h=`<div class="stat"><div><b>${all.length}</b><span>Customers</span></div><div><b>${all.length?Math.round(rp*100/all.length):0}%</b><span>Repeat rate</span></div><div><b>${ag?Math.round(ag)+'d':'–'}</b><span>Avg days between orders</span></div></div>
+  let h=cvSw()+`<div class="stat"><div><b>${all.length}</b><span>Customers</span></div><div><b>${all.length?Math.round(rp*100/all.length):0}%</b><span>Repeat rate</span></div><div><b>${ag?Math.round(ag)+'d':'–'}</b><span>Avg days between orders</span></div></div>
   <div class="stat"><div><b>${inr(rev)}</b><span>Lifetime sales</span></div><div><b>${all.length?inr(rev/all.length):'–'}</b><span>Per customer</span></div></div>
   <input class="i" id="cSearch" placeholder="Search name, phone, email, tag or note" value="${esc(cq)}">
   <div class="chips" style="margin:8px 0">${CH.map(([k,n])=>`<button class="chip ${cf===k?'on':''}" data-cf="${k}">${n} ${cnt(k)}</button>`).join('')}</div>
@@ -722,6 +752,9 @@ $('panel').addEventListener('click',async e=>{
   const ws=e.target.closest('[data-wasend]');if(ws){const [wid,wk]=ws.dataset.wasend.split('|'),lab=ws.textContent;if(ws.disabled)return;ws.disabled=true;ws.textContent='Sending…';
     api({action:'admin_wa_order_send',id:wid,kind:wk}).then(r=>{toast(r.ok?'WhatsApp message sent':(r.error||'Could not send'));ws.textContent=r.ok?'✓ Sent':lab;ws.disabled=!!r.ok&&false;if(!r.ok)ws.disabled=false;else setTimeout(()=>{ws.textContent=lab;ws.disabled=false},4000)}).catch(()=>{toast('No connection');ws.textContent=lab;ws.disabled=false});return}
   const cfb=e.target.closest('[data-cf]');if(cfb){cf=cfb.dataset.cf;render();return}
+  const cvb=e.target.closest('[data-cv]');if(cvb){cv=cvb.dataset.cv;render();if(cv==='acc')loadAcc(true);return}
+  if(e.target.closest('[data-accref]')){D.acc=D.acc||null;loadAcc(true);toast('Refreshing…');return}
+  if(e.target.closest('[data-acsv]')){if(D.acc&&D.acc.length)accCsv();else toast('No accounts to download yet');return}
   if(e.target.closest('#cCsv')){custCsv();return}
   const cpb=e.target.closest('[data-cp]');if(cpb&&!e.target.closest('a,button')){openCust(cpb.dataset.cp);return}
   const wo=e.target.closest('[data-wa-on]');if(wo){const on=wo.dataset.waOn==='1';if(on&&!confirm('Turn on automatic WhatsApp messages to customers?'))return;wo.disabled=true;try{const r=await api({action:'admin_wa_set',on});if(r.ok){D.wa=Object.assign(D.wa||{},{on:r.on,phone:r.phone});toast(r.on?'WhatsApp messages on':'WhatsApp messages off')}else toast(r.error||'Could not change')}catch(_){toast('No connection')}const y=scrollY;render();scrollTo(0,y);return}
@@ -749,6 +782,8 @@ $('panel').addEventListener('click',async e=>{
 $('panel').addEventListener('input',e=>{
   if(e.target.id==='search'){q=e.target.value;const pos=e.target.selectionStart;render();const s=$('search');s.focus();s.setSelectionRange(pos,pos)}
   if(e.target.id==='cSort'){cs=e.target.value;render();return}
+  if(e.target.id==='aSort'){asrt=e.target.value;render();return}
+  if(e.target.id==='aSearch'){aq=e.target.value;const pos=e.target.selectionStart;render();const s=$('aSearch');s.focus();s.setSelectionRange(pos,pos)}
   if(e.target.id==='cSearch'){cq=e.target.value;const pos=e.target.selectionStart;render();const s=$('cSearch');s.focus();s.setSelectionRange(pos,pos)}
   if(['capCake','capOther','banner'].includes(e.target.id)){D.settings[e.target.id]=e.target.id==='banner'?e.target.value:Math.max(0,parseInt(e.target.value)||0);dirty=true}
 });
