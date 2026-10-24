@@ -231,6 +231,16 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .hero{position:relative;overflow:hidden;margin:10px 0 4px;padding:20px;border-radius:22px;background:linear-gradient(120deg,#1c3470,#0f1d44);border:1px solid var(--line);min-height:150px}
 .hero h2{font-size:26px;line-height:1.1;max-width:260px}.hero p{color:var(--mut);font-size:13px;margin:8px 0 14px;max-width:200px}
 .hero i{position:absolute;right:12px;top:10px;font-size:88px;font-style:normal;opacity:.95}
+.hero .egg{position:absolute;right:16px;top:50%;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 14px 9px;border-radius:14px;background:linear-gradient(135deg,#fff3a6,#ffd366 55%,#f5b83d);color:#2a0f55;border:2px solid #fff;font:900 13px/1 'Hanken Grotesk',system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;transform:translateY(-50%) rotate(-5deg);box-shadow:0 6px 18px rgba(0,0,0,.25);animation:eggFlash 1.4s ease-in-out infinite;pointer-events:none}
+.hero .egg b{display:block;font-size:30px;line-height:1;letter-spacing:0;margin-bottom:3px}
+@keyframes eggFlash{0%,100%{transform:translateY(-50%) rotate(-5deg) scale(1);box-shadow:0 6px 18px rgba(0,0,0,.25),0 0 0 0 rgba(255,211,102,.0)}50%{transform:translateY(-50%) rotate(-5deg) scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,.25),0 0 22px 6px rgba(255,211,102,.85)}}
+@media (prefers-reduced-motion:reduce){.hero .egg{animation:none}}
+.hero.sm.hasEgg>h2,.hero.sm.hasEgg>p{padding-right:150px}
+.hero.hasEgg>i{display:none}
+.hero:not(.sm) .egg{top:16px;transform:rotate(-5deg);animation-name:eggFlash2}
+@keyframes eggFlash2{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(-5deg) scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,.25),0 0 22px 6px rgba(255,211,102,.85)}}
+.hero.sm .egg{padding:5px 12px 6px;font-size:10px;border-radius:11px;right:14px}.hero.sm .egg b{font-size:22px;margin-bottom:2px}
+@media (max-width:520px){.hero:not(.sm).hasEgg>h2{padding-right:96px}.hero .egg{right:10px;padding:6px 9px 7px;font-size:10px;border-radius:11px}.hero .egg b{font-size:21px}.hero.sm.hasEgg>h2,.hero.sm.hasEgg>p{padding-right:96px}}
 .hero button{background:var(--acc);color:var(--acc-ink);font-weight:800;font-size:13px;padding:8px 14px;border-radius:99px}
 .hs{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px}
 .hs span{font:800 12.5px 'Hanken Grotesk';letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
@@ -792,7 +802,7 @@ function homeHtml(){
   const T=(q,d)=>q.t?esc(q.t):d;
   const P={
    gallery:q=>galHtml(q.t?esc(q.t):esc(G.t||'Custom theme cakes'),1),
-   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero${galOn?' sm':''}${(!GAL.length&&FX().props&&festOn())?' fxp':''}"${hs?' style="'+hs+'"':''}><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
+   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero hasEgg${galOn?' sm':''}${(!GAL.length&&FX().props&&festOn())?' fxp':''}"${hs?' style="'+hs+'"':''}><span class="egg" aria-label="100% Eggless"><b>100%</b>Eggless</span><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><p${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</p><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
    cakes:q=>car(T(q,'Cakes'),'cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join('')),
    cupcakes:q=>car(T(q,'Cupcakes · box of 6'),'cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join('')),
    muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
