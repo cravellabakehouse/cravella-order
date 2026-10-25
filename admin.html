@@ -959,10 +959,15 @@ function bakeRes(){
 }
 
 /* ---------- menu availability ---------- */
+function giftPhHtml(){const pv=(D.ph||{})['gift-diwali'];return `<div class="sec">Diwali Gift Box photo</div><div class="card" style="padding:12px 14px;display:flex;gap:12px;align-items:center">${pv?`<img src="${API_URL}?mp=gift-diwali&v=${pv}" alt="" style="width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none">`:'<span style="width:64px;height:64px;border-radius:12px;background:#eee3d3;flex:none;display:grid;place-items:center;font-size:22px">🎁</span>'}<span style="min-width:0"><b>${pv?'Your high-res photo is live':'Using the built-in photo'}</b><br><span class="hint" style="margin:0">Upload a clear, full-size photo. It is not cropped and shows when customers tap the box picture.</span><br><label style="font-size:13px;color:#c0581f;font-weight:700;cursor:pointer">${pv?'Change photo':'Upload high-res photo'}<input type="file" accept="image/*" data-phg hidden></label>${pv?` <button data-phgx style="all:unset;font-size:12px;color:#888;cursor:pointer;margin-left:10px">Use built-in photo</button>`:''}</span></div>`}
+function bigPhoto(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('bad'))};im.onload=()=>{URL.revokeObjectURL(u);let m=1400,q=.86,d='';for(let k=0;k<8;k++){const r=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext('2d').drawImage(im,0,0,c.width,c.height);d=c.toDataURL('image/jpeg',q);d=d.slice(d.indexOf(',')+1);if(d.length<390000)break;if(q>.7)q-=.06;else m=Math.round(m*.85)}ok(d)};im.src=u})}
+document.addEventListener('change',async e=>{const t=e.target;if(!t.matches||!t.matches('[data-phg]')||!t.files||!t.files[0])return;const f=t.files[0];t.value='';let d;try{d=await bigPhoto(f)}catch(_){toast('Could not read that photo');return}
+  toast('Uploading photo…');try{const r=await api({action:'admin_photo_set',id:'gift-diwali',data:d});if(r.ok){D.ph=r.photos;render();toast('Photo saved. It is live on the website.')}else toast(r.error||'Could not save the photo')}catch(_){toast('No connection')}});
+document.addEventListener('click',async e=>{if(!e.target.closest('[data-phgx]'))return;try{const r=await api({action:'admin_photo_del',id:'gift-diwali'});if(r.ok){D.ph=r.photos;render();toast('Back to the built-in photo')}}catch(_){toast('No connection')}});
 function menuHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
   if(!D.ph&&!D.phBusy){D.phBusy=1;fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{D.ph=m||{};if(tab==='menu')render()}).catch(()=>{D.ph={};D.phBusy=0})}
-  let h=`<div class="hint" style="margin-top:12px">Switch an item off when it is sold out. Customers will see it as unavailable and cannot order it. Tap Save changes at the bottom.</div>`,g='';
+  let h=`<div class="hint" style="margin-top:12px">Switch an item off when it is sold out. Customers will see it as unavailable and cannot order it. Tap Save changes at the bottom.</div>`+giftPhHtml(),g='';
   const dels=s.del||[];
   D.items.filter(it=>!dels.includes(it.id)).forEach(it=>{
     if(it.group!==g){if(g)h+='</div>';g=it.group;h+=`<div class="sec">${esc(g)}</div><div class="card" style="padding:4px 14px">`}
