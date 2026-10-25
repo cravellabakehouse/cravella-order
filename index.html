@@ -476,7 +476,7 @@ function lines(){
   for(const id in S.cookie){const g=S.cookie[id];if(!g)continue;const d=findCookie(id);
     out.push({ref:['cookie',id],name:d.name+' Cookies',sub:gLabel(g),q:g,amount:cookieAmount(d,g),kind:'other'})}
   for(const id in S.gift){const q=S.gift[id];if(!q)continue;const d=findGift(id);if(!d)continue;
-    out.push({ref:['gift',id],name:d.name,sub:q+' boxes · min '+d.min+(dwOff(d)?' · '+dwOff(d)+'% Diwali offer':''),q,amount:q*dwPrice(d),kind:'other'})}
+    out.push({ref:['gift',id],name:d.name,sub:q+' boxes (sets of '+d.min+')'+(dwOff(d)?' · '+dwOff(d)+'% Diwali offer':''),q,amount:q*dwPrice(d),kind:'other'})}
   return out;
 }
 function kindName(id){return id.startsWith('cup')?'Cupcakes':id.startsWith('muf')?'Muffins':id.startsWith('brn')?'Brownies':'Blondies'}
@@ -640,14 +640,14 @@ function loadCart(){S.ready=true;if(PV)return;try{const c=JSON.parse(localStorag
     (c.cakes||[]).forEach(l=>{if(l&&findCake(l.id)&&+l.q>0)S.cakes.push({id:l.id,cream:l.cream||'',kg:+l.kg,q:Math.min(20,+l.q)})});
     Object.entries(c.pc||{}).forEach(([id,q])=>{if(+q>0&&findPc(id))S.pc[id]=+q});
     Object.entries(c.cookie||{}).forEach(([id,g])=>{if(+g>0&&findCookie(id))S.cookie[id]=+g});
-    Object.entries(c.gift||{}).forEach(([id,q])=>{const d=findGift(id);if(d&&+q>=d.min)S.gift[id]=Math.min(500,+q)});
+    Object.entries(c.gift||{}).forEach(([id,q])=>{const d=findGift(id);if(d&&+q>=d.min)S.gift[id]=Math.min(500,Math.floor(+q/d.min)*d.min)});
     if(c.mode==='Delivery'){S.mode='Delivery';try{[...$('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.m==='Delivery'))}catch(_){}}
     if(c.mode2==='Delivery')S.mode2='Delivery';if(c.how==='s')S.how='s'}
   else localStorage.removeItem('cb_cart')}catch(_){}
   try{const g=JSON.parse(localStorage.getItem('cb_form')||'null');if(g&&Date.now()-g.ts<7*864e5)Object.entries(g.f||{}).forEach(([i,v])=>{const e=$(i);if(e&&!e.value)e.value=String(v).slice(0,600)});else localStorage.removeItem('cb_form')}catch(_){}
   ['fAddr','fPin','fNotes','fBudget','fEmail'].forEach(i=>{const e=$(i);if(e)e.addEventListener('input',saveForm)})}
 document.addEventListener('click',e=>{if(e.target.closest('[data-gzoom]')){dwZoom();return}const a=e.target.closest('[data-gadd],[data-gp],[data-gm]');if(!a||!a.closest('.dwc'))return;const d=GIFTS[0],q=S.gift[d.id]||0;
-  if(a.hasAttribute('data-gadd')){S.gift[d.id]=d.min;toast(d.min+' Diwali Gift Boxes added')}else if(a.hasAttribute('data-gp'))S.gift[d.id]=Math.min(500,q+1);else{S.gift[d.id]=q-1<d.min?0:q-1;if(!S.gift[d.id])delete S.gift[d.id]}renderAll(true)});
+  if(a.hasAttribute('data-gadd')){S.gift[d.id]=d.min;toast(d.min+' Diwali Gift Boxes added')}else if(a.hasAttribute('data-gp'))S.gift[d.id]=Math.min(500,q+d.min);else{S.gift[d.id]=q-d.min<d.min?0:q-d.min;if(!S.gift[d.id])delete S.gift[d.id]}renderAll(true)});
 function renderAll(keepScroll){const y=scrollY;renderTabs();renderPanel();renderBar();if(keepScroll)scrollTo(0,y)}
 let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1400)}
 
@@ -832,9 +832,9 @@ function homeHtml(){
    reviews:()=>reviewsHtml()};
   return secs.filter(q=>q.on!==false).map(q=>P[q.id](q)).join('')}
 function dwItems(d){return `<ul class="dwl">${d.items.map(i=>`<li><span>${i[0]}</span><div><b>${esc(i[1])}</b>${i[2]?` <small>(${esc(i[2])})</small>`:''}</div><em>${esc(i[3])}</em></li>`).join('')}</ul>`}
-function diwaliHtml(){const d=GIFTS[0],q=S.gift[d.id]||0;return `<div class="hs"><span>Diwali special</span></div><div class="dwc"><button class="dwi" data-gzoom aria-label="View full photo"><img src="${DW_IMG}" alt="Cravella Diwali gift box" loading="lazy"><i>⤢</i>${dwOff(d)?`<s class="dwoff">${dwOff(d)}% OFF</s>`:''}</button><div class="dwt"><b class="dwh">🪔 ${esc(d.name)}</b><p class="dwtag">${esc(d.tag)}</p>${dwItems(d)}${dwOff(d)?`<p class="dwofl">🎉 Diwali offer: ${dwOff(d)}% off till 15 Nov</p>`:''}<div class="dwr"><b>${dwOff(d)?`<del>${inr(d.price)}</del> `:''}${inr(dwPrice(d))} <span>/ box · min ${d.min}</span></b>${q?`<div class="step"><button data-gm aria-label="One box less">−</button><span>${q}</span><button class="p" data-gp aria-label="One box more">+</button></div>`:`<button class="add" data-gadd>Add ${d.min}</button>`}</div></div></div>`}
+function diwaliHtml(){const d=GIFTS[0],q=S.gift[d.id]||0;return `<div class="hs"><span>Diwali special</span></div><div class="dwc"><button class="dwi" data-gzoom aria-label="View full photo"><img src="${DW_IMG}" alt="Cravella Diwali gift box" loading="lazy"><i>⤢</i>${dwOff(d)?`<s class="dwoff">${dwOff(d)}% OFF</s>`:''}</button><div class="dwt"><b class="dwh">🪔 ${esc(d.name)}</b><p class="dwtag">${esc(d.tag)}</p>${dwItems(d)}${dwOff(d)?`<p class="dwofl">🎉 Diwali offer: ${dwOff(d)}% off till 15 Nov</p>`:''}<div class="dwr"><b>${dwOff(d)?`<del>${inr(d.price)}</del> `:''}${inr(dwPrice(d))} <span>/ box · sets of ${d.min}</span></b>${q?`<div class="step"><button data-gm aria-label="5 boxes less">−</button><span>${q}</span><button class="p" data-gp aria-label="5 boxes more">+</button></div>`:`<button class="add" data-gadd>Add ${d.min}</button>`}</div></div></div>`}
 function dwZoom(){const d=GIFTS[0];let o=document.getElementById('dwlb');if(!o){o=document.createElement('div');o.id='dwlb';o.className='dwlb';document.body.appendChild(o);o.addEventListener('click',e=>{if(e.target===o||e.target.closest('[data-dwx]')){o.classList.remove('on');document.body.style.overflow=''}})}
-  o.innerHTML=`<div class="dwbox" role="dialog" aria-label="${esc(d.name)}"><button class="dwx" data-dwx aria-label="Close">×</button><img src="${DW_IMG}" alt="Cravella Diwali gift box"><div class="dwbt"><b class="dwh">🪔 ${esc(d.name)}</b><p class="dwtag">${esc(d.tag)}</p>${dwItems(d)}<p class="dwbp">${dwOff(d)?`<span class="dwoff2">${dwOff(d)}% OFF till 15 Nov</span><br><del>${inr(d.price)}</del> `:''}<b>${inr(dwPrice(d))}</b> / box · minimum ${d.min} boxes · 1 day's notice</p></div></div>`;o.classList.add('on');document.body.style.overflow='hidden'}
+  o.innerHTML=`<div class="dwbox" role="dialog" aria-label="${esc(d.name)}"><button class="dwx" data-dwx aria-label="Close">×</button><img src="${DW_IMG}" alt="Cravella Diwali gift box"><div class="dwbt"><b class="dwh">🪔 ${esc(d.name)}</b><p class="dwtag">${esc(d.tag)}</p>${dwItems(d)}<p class="dwbp">${dwOff(d)?`<span class="dwoff2">${dwOff(d)}% OFF till 15 Nov</span><br><del>${inr(d.price)}</del> `:''}<b>${inr(dwPrice(d))}</b> / box · order in sets of ${d.min} (${d.min}, ${d.min*2}, ${d.min*3}…) · 1 day's notice</p></div></div>`;o.classList.add('on');document.body.style.overflow='hidden'}
 function searchHtml(q){
   const k=q.toLowerCase().trim();let h='',n=0;
   const hit=(d,kind)=>(d.name+' '+(d.desc||'')+' '+kind).toLowerCase().includes(k);
@@ -926,7 +926,7 @@ $('revLines').addEventListener('click',e=>{
   const [k,r]=l.ref;
   if(k==='cake'){const c=S.cakes[r];c.q+=up?1:-1;if(c.q<=0)S.cakes.splice(r,1);else if(c.q>20)c.q=20}
   else if(k==='pc'){const d=findPc(r);S.pc[r]=Math.max(0,Math.min(d.size*20,S.pc[r]+(up?d.size:-d.size)));if(!S.pc[r])delete S.pc[r]}
-  else if(k==='gift'){const d=findGift(r),n=S.gift[r]+(up?1:-1);S.gift[r]=n<d.min?0:Math.min(500,n);if(!S.gift[r])delete S.gift[r]}
+  else if(k==='gift'){const d=findGift(r),n=S.gift[r]+(up?d.min:-d.min);S.gift[r]=n<d.min?0:Math.min(500,n);if(!S.gift[r])delete S.gift[r]}
   else{S.cookie[r]=Math.max(0,S.cookie[r]+(up?250:-250));if(!S.cookie[r])delete S.cookie[r]}
   renderAll(true);renderReview();
 });
