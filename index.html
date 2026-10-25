@@ -476,7 +476,7 @@ function lines(){
   for(const id in S.cookie){const g=S.cookie[id];if(!g)continue;const d=findCookie(id);
     out.push({ref:['cookie',id],name:d.name+' Cookies',sub:gLabel(g),q:g,amount:cookieAmount(d,g),kind:'other'})}
   for(const id in S.gift){const q=S.gift[id];if(!q)continue;const d=findGift(id);if(!d)continue;
-    out.push({ref:['gift',id],name:d.name,sub:q+' boxes · min '+d.min+(dwOff(d)?' · '+dwOff(d)+'% Diwali offer':''),q,amount:q*dwPrice(d),kind:'other'})}
+    out.push({ref:['gift',id],name:d.name,sub:q+' boxes · min '+d.min+(dwOff(d)?' · '+dwOff(d)+'% Diwali offer':''),q,amount:q*d.price,goff:Math.round(q*d.price*dwOff(d)/100),gfull:q*d.price,kind:'other'})}
   return out;
 }
 function kindName(id){return id.startsWith('cup')?'Cupcakes':id.startsWith('muf')?'Muffins':id.startsWith('brn')?'Brownies':'Blondies'}
@@ -492,7 +492,7 @@ function calcDisc(sub){
   else if(c&&sub>=c.min){const ca=Math.min(sub,Math.round(c.kind==='flat'?c.value:sub*c.value/100));if(ca>amt){amt=ca;note='Coupon '+c.code;used=true}}
   return{amt,note,used}
 }
-const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),d=calcDisc(sub);return{L,sub,disc:d.amt,dnote:d.note,dused:d.used,tot:sub-d.amt,count:L.length,flag:L.some(l=>l.flag)}};
+const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),gf=L.reduce((a,l)=>a+(l.gfull||0),0),go=L.reduce((a,l)=>a+(l.goff||0),0),d=calcDisc(sub-gf),da=d.amt+go,dn=go?'Diwali Gift Box 10% off (−'+inr(go)+')'+(d.note?' + '+d.note:''):d.note;return{L,sub,disc:da,dnote:dn,dused:d.used,tot:sub-da,count:L.length,flag:L.some(l=>l.flag)}};
 const hasCustom=()=>S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom});
 function advText(t){if(!hasCustom())return '';const a=Math.round(t.tot/2);return 'Custom / theme cake: we\'ll check your reference against your budget and discuss it with you on WhatsApp. 50% advance ('+inr(a)+') to book, and the balance 50% on '+(S.mode==='Delivery'?'delivery':'pickup')+'. The final amount is confirmed after we agree the design.'}
 function itemsPayload(){return[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.cream,kg:l.kg,q:l.q})),...Object.entries(S.pc).map(([id,q])=>({t:'pc',id,q})),...Object.entries(S.cookie).map(([id,g])=>({t:'cookie',id,q:g})),...Object.entries(S.gift).filter(([,q])=>q>0).map(([id,q])=>({t:'gift',id,q}))]}
