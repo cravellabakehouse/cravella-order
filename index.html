@@ -594,7 +594,7 @@ function renderPanel(){
   if(S.tab==='home'){$('panel').innerHTML=homeHtml();return}
   if(S.tab==='cakes'){
     let g='';MENU.cakes.filter(c=>!c.custom).forEach(c=>{if(c.group!==g){g=c.group;h+=`<div class="sec">${g}</div>`}h+=cakeCard(c)});
-    h+=`<div class="note">Cakes need 2 days' notice. Want a custom or theme cake? See the Custom cake tab.</div>`;
+    h+=`<div class="note">Cakes need 1 day's notice. Custom and theme cakes need 2 days. See the Custom cake tab.</div>`;
   }else if(S.tab==='custom'){
     const c=MENU.cakes.find(x=>x.custom);
     h+=galHtml('Custom theme cakes')+`<div class="sec">Custom / theme cake</div><div class="card"><div class="t">Designed just for you</div><div class="d">Starts from ${inr(c.creams[0].prices[0])} per kg. Share a reference of your choice and we'll check if it's possible within your budget.</div>
@@ -813,7 +813,7 @@ function homeHtml(){
   const T=(q,d)=>q.t?esc(q.t):d;
   const P={
    gallery:q=>galHtml(q.t?esc(q.t):esc(G.t||'Custom theme cakes'),1),
-   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero hasEgg${galOn?' sm':''}${(!GAL.length&&FX().props&&festOn())?' fxp':''}"${hs?' style="'+hs+'"':''}><span class="egg" aria-label="100% Eggless"><b>100%</b>Eggless</span><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><h2 class="sub"${ts}>${esc(H.s||"Cakes need 2 days' notice. Bakes need 1 day.")}</h2><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
+   hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero hasEgg${galOn?' sm':''}${(!GAL.length&&FX().props&&festOn())?' fxp':''}"${hs?' style="'+hs+'"':''}><span class="egg" aria-label="100% Eggless"><b>100%</b>Eggless</span><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><h2 class="sub"${ts}>${esc(H.s||"Cakes and bakes need 1 day's notice. Theme cakes need 2 days.")}</h2><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
    cakes:q=>car(T(q,'Cakes'),'cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join('')),
    cupcakes:q=>car(T(q,'Cupcakes · box of 6'),'cupcakes',MENU.cupcakes.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','cupcakes','🧁',i+2)).join('')),
    muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
@@ -863,7 +863,7 @@ function leadSlot(h){const d=new Date(Date.now()+19800000+h*3600000),mins=d.getU
   if(!TIMES.some(t=>tmin(t)>=mins))return{date:new Date(d.getTime()+86400000).toISOString().slice(0,10),mins:0};return{date:d.toISOString().slice(0,10),mins}}
 function slotOk(date,time,h){const e=leadSlot(h);return date>e.date||(date===e.date&&tmin(time)>=e.mins)}
 function dateOf(h){const e=leadSlot(h).date.split('-');return new Date(+e[0],e[1]-1,+e[2])}
-function leadHours(){return S.cakes.length?LEAD.cake:LEAD.other}
+function leadHours(){return hasCustom()?LEAD.cake:LEAD.other}
 function minDate(){return dateOf(leadHours())}
 function minDate2(){return dateOf(LEAD.other)}
 function limitTimes(dEl,tEl,h){const e=leadSlot(h);[...tEl.options].forEach(o=>{if(!o.value)return;o.disabled=dEl.value===e.date&&tmin(o.value)<e.mins});if(tEl.selectedOptions[0]&&tEl.selectedOptions[0].disabled)tEl.value=''}
@@ -904,7 +904,7 @@ function renderReview(){saveCart();
   {const nd=S.mode==='Delivery'||(sep&&S.mode2==='Delivery');$('addrBox').style.display=nd?'block':'none';$('revDelRow').style.display=nd?'flex':'none'}
   if(sep){const m2=minDate2(),f2=$('fDate2');f2.min=ymd(m2);if(f2.value&&f2.value<f2.min)f2.value='';limitTimes(f2,$('fTime2'),LEAD.other);
     $('dateHint2').textContent='Earliest date: '+m2.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+' (bakes need 1 day\'s notice).'}
-  $('dateHint').textContent='Earliest date: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+(S.cakes.length?' (cakes need 2 days\' notice)':'');
+  $('dateHint').textContent='Earliest date: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+(hasCustom()?' (custom and theme cakes need 2 days\' notice)':'');
 }
 function openReview(){$('review').classList.add('on');document.body.style.overflow='hidden';renderReview();prefill();$('review').scrollTop=0;if(A.tok&&!A.profile)loadMe().then(prefill)}
 function closeReview(){$('review').classList.remove('on');document.body.style.overflow=''}
