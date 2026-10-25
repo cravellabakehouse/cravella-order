@@ -492,7 +492,7 @@ function calcDisc(sub){
   else if(c&&sub>=c.min){const ca=Math.min(sub,Math.round(c.kind==='flat'?c.value:sub*c.value/100));if(ca>amt){amt=ca;note='Coupon '+c.code;used=true}}
   return{amt,note,used}
 }
-const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),gf=L.reduce((a,l)=>a+(l.gfull||0),0),go=L.reduce((a,l)=>a+(l.goff||0),0),d=calcDisc(sub-gf),da=d.amt+go,dn=go?'Diwali Gift Box 10% off (−'+inr(go)+')'+(d.note?' + '+d.note:''):d.note;return{L,sub,disc:da,dnote:dn,dused:d.used,tot:sub-da,count:L.length,flag:L.some(l=>l.flag)}};
+const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),gf=L.reduce((a,l)=>a+(l.gfull||0),0),go=L.reduce((a,l)=>a+(l.goff||0),0),d=calcDisc(sub-gf),da=d.amt+go,dn=go?'Diwali Gift Box 10% off (−'+inr(go)+')'+(d.note?' + '+d.note:''):d.note;return{L,sub,gf,disc:da,dnote:dn,dused:d.used,tot:sub-da,count:L.length,flag:L.some(l=>l.flag)}};
 const hasCustom=()=>S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom});
 function advText(t){if(!hasCustom())return '';const a=Math.round(t.tot/2);return 'Custom / theme cake: we\'ll check your reference against your budget and discuss it with you on WhatsApp. 50% advance ('+inr(a)+') to book, and the balance 50% on '+(S.mode==='Delivery'?'delivery':'pickup')+'. The final amount is confirmed after we agree the design.'}
 function itemsPayload(){return[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.cream,kg:l.kg,q:l.q})),...Object.entries(S.pc).map(([id,q])=>({t:'pc',id,q})),...Object.entries(S.cookie).map(([id,g])=>({t:'cookie',id,q:g})),...Object.entries(S.gift).filter(([,q])=>q>0).map(([id,q])=>({t:'gift',id,q}))]}
@@ -892,7 +892,7 @@ function renderReview(){saveCart();
   const ad=advText(t);$('revAdv').style.display=ad?'block':'none';$('revAdv').textContent=ad;
   $('photoBox').style.display=S.cakes.length?'block':'none';
   $('budgetBox').style.display=hasCustom()?'block':'none';$('photoLbl').textContent=hasCustom()?'Reference photo (required for custom cake)':'Reference photo (optional)';
-  const nx=nextTier(t.sub),hn=$('revHint');hn.style.display=nx?'block':'none';if(nx)hn.textContent='Add '+inr(nx.from-t.sub)+' more to get '+nx.pct+'% off your order.';
+  const nx=t.sub-t.gf>0?nextTier(t.sub-t.gf):null,hn=$('revHint');hn.style.display=nx?'block':'none';if(nx)hn.textContent='Add '+inr(nx.from-(t.sub-t.gf))+' more to get '+nx.pct+'% off your order.';
   $('cpnBox').style.display=(DC.coupons||FESTO())?'block':'none';
   const fe=FESTO(),fh=$('revFest');fh.style.display=fe&&fe.live&&t.sub>=fe.min?'block':'none';if(fe)fh.textContent='🎁 This order earns you a '+fe.pct+'% coupon for your next order. You will get the code after you place it.';
   if(S.coupon&&!t.dused&&t.disc)setCpn('Coupon '+S.coupon.code+' is saved, but your automatic discount is better.','ok');
