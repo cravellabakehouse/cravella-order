@@ -160,6 +160,21 @@ body{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
 .toast{bottom:calc(112px + env(safe-area-inset-bottom))}
 @media (min-width:760px){.nav button{font-size:18px}.nav button i{font-size:30px}}
 @media (max-width:380px){.nav button{font-size:15px}.nav button i{font-size:25px}.nav .in{gap:4px}}
+/* order card: rows and columns */
+.o .oinfo{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0 6px}
+.o .oinfo>div{background:rgba(255,248,236,.7);border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0}
+.o .oinfo .wide{grid-column:1/-1}
+.o .oinfo small{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
+.o .oinfo b{font-weight:600;font-size:14.5px;word-break:break-word}
+.o .otb{width:100%;border-collapse:separate;border-spacing:0;margin:10px 0 4px;font-size:14.5px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.o .otb th{background:#fbf3e4;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);text-align:left;padding:8px 10px}
+.o .otb td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+.o .otb tbody tr:nth-child(even) td{background:rgba(255,248,236,.55)}
+.o .otb .q{text-align:center;white-space:nowrap;width:1%}.o .otb .p{text-align:right;white-space:nowrap;width:1%}
+.o .otb tfoot td{background:#fffaf1;color:var(--mut)}
+.o .otb tfoot tr.tt td{color:var(--ink);font-weight:800;font-size:16px;background:#fbf3e4}
+.o .otb tfoot tr.adv td{font-size:13px}
+@media (max-width:420px){.o .otb{font-size:13.5px}.o .otb td,.o .otb th{padding:7px 8px}}
 </style>
 </head>
 <body>
@@ -652,23 +667,30 @@ function waLink(o,kind){
     r:`Hi ${first}, your Cravella order ${o.id} is ready${o.mode==='Delivery'?' and out for delivery.':' for pickup.'}`}[kind];
   return 'https://wa.me/91'+o.phone.replace(/\D/g,'').slice(-10)+'?text='+encodeURIComponent(m)
 }
+function lineRow(l){const m=/^(.*) \u2013 \u20B9(\d+(?:\.\d+)?)$/.exec(l),d=m?m[1]:l,a=m?+m[2]:null;let x;
+  if((x=/^(.*) × (\d+) \((.*)\)$/.exec(d)))return {n:x[1],q:x[3]+' · '+x[2]+' pcs',a};
+  if((x=/^(.*?) · (.*)$/.exec(d)))return {n:x[1],q:x[2].replace(/ × (\d+)/,' × $1'),a};
+  return {n:d,q:'',a}}
 function orderCard(o){
   const sc=o.status==='Advance received'?'Advance':o.status;
   const when=o.split?`Cakes (${esc(o.mode)}): ${fmtD(o.date)}, ${esc(o.time)}<br>Other bakes (${esc(o.split.mode||o.mode)}): ${fmtD(o.split.date)}, ${esc(o.split.time)}`:`${fmtD(o.date)}, ${esc(o.time)}`;
   return `<div class="card o" data-id="${esc(o.id)}">
   <div class="row"><span class="id">${esc(o.id)} · ${esc(o.name)}${repBadge(o)}</span><span class="pill ${esc(sc)}">${esc(o.status)}</span></div>
-  <div class="m">Placed ${esc(o.placed)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>${o.email?' · '+esc(o.email):''}</div>
+  <div class="oinfo">
+    <div><small>Placed</small><b>${esc(o.placed)}</b></div>
+    <div><small>Phone</small><b><a href="tel:${esc(o.phone)}">${esc(o.phone)}</a> · <a href="https://wa.me/91${esc(String(o.phone).replace(/\D/g,'').slice(-10))}" target="_blank" rel="noopener">WhatsApp</a></b></div>
+    ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<div><small>Email</small><b>${esc(o.email)}</b></div>`:''}
+    <div class="wide"><small>${o.mode==='Delivery'?'🚚 Delivery':'🛍 Pickup'}</small><b>${when}</b></div>
+    ${o.address?`<div class="wide"><small>📍 Address</small><b>${esc(o.address)}</b></div>`:''}
+  </div>
   <div class="tm" data-id="${esc(o.id)}">${tmHtml(o)}</div>
-  <div class="when">${o.mode==='Delivery'?'🚚 Delivery':'🛍 Pickup'} · ${when}</div>
-  ${o.address?`<div class="m">${esc(o.address)}</div>`:''}
-  <div class="lines">${esc(o.lines.join('\n'))}</div>
-  ${o.discount?`<div class="m">Subtotal ${inr(o.subtotal)} · Discount −${inr(o.discount)}</div>`:''}
-  <div class="row"><b>${inr(o.total)}${o.toConfirm?' (price to confirm)':''}</b><span class="m">Advance 50%: ${inr(o.total/2)}</span></div>
+  <table class="otb"><thead><tr><th>Item</th><th class="q">Qty</th><th class="p">Price</th></tr></thead><tbody>${o.lines.filter(Boolean).map(l=>{const r=lineRow(l);return `<tr><td>${esc(r.n)}</td><td class="q">${esc(r.q)}</td><td class="p">${r.a!=null?inr(r.a):''}</td></tr>`}).join('')}</tbody>
+  <tfoot>${o.discount?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount</td><td class="p">−${inr(o.discount)}</td></tr>`:''}<tr class="tt"><td colspan="2">Total${o.toConfirm?' <span class="hint">(price to confirm)</span>':''}</td><td class="p">${inr(o.total)}</td></tr><tr class="adv"><td colspan="2">Advance 50%</td><td class="p">${inr(o.total/2)}</td></tr></tfoot></table>
   ${o.notes?`<div class="note">${esc(o.notes)}</div>`:''}
   ${o.photos.length?`<div class="ph">${o.photos.filter(u=>/^https:\/\//.test(u)).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">🖼 Photo</a>`).join(' ')}</div>`:''}
   ${o.pays&&o.pays.length?`<div class="ph">${o.pays.map((p,i)=>`<button class="btn sm" data-pay="${esc(p.m)}">🧾 Payment screenshot${o.pays.length>1?' '+(i+1):''}</button>`).join(' ')}</div>`:''}
   <div class="st">${D.statuses.map(s=>`<button data-s="${esc(s)}" class="${o.status===s?'on':''}">${esc(s)}</button>`).join('')}</div>
-  ${o.email?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status (Confirmed opens the editable email instead)</label>`:''}
+  ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status (Confirmed opens the editable email instead)</label>`:''}
   ${mailNote(o)}
   <div class="acts"><button class="btn sm" data-mail="${esc(o.id)}">✉ Email customer</button>${histBtn(o)}<button class="btn ol sm" data-wasend="${esc(o.id)}|c">WhatsApp: Confirm + 50% advance</button><button class="btn ol sm" data-wasend="${esc(o.id)}|a">WhatsApp: Advance received</button><button class="btn ol sm" data-wasend="${esc(o.id)}|r">WhatsApp: Ready</button></div>${histBox(o)}</div>`
 }
