@@ -368,6 +368,7 @@ body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media 
   <div class="hr"></div>
   <div class="line"><span>Subtotal</span><b id="revSub"></b></div>
   <div class="line dsc" id="revDiscRow" style="display:none"><span id="revDiscL"></span><b id="revDisc"></b></div>
+  <div class="line" id="revGstRow" style="display:none"><span id="revGstL"></span><b id="revGst"></b></div>
   <div class="line" id="revDelRow" style="color:var(--mut)"><span>Delivery</span><b class="dlvh">Charges extra · confirmed by us</b></div>
   <div class="line"><span class="tot">Estimated total</span><span class="tot" id="revTot"></span></div>
   <div class="hint" id="revHint" style="display:none;color:var(--ok);font-weight:600"></div>
@@ -418,7 +419,7 @@ body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media 
   <div class="ok">✓</div>
   <h2 style="text-align:center;font-size:23px">Request received!</h2>
   <p class="d" style="text-align:center;margin:8px 10px 18px;font-size:14px">Thank you, <span id="dName"></span>. We'll confirm your order and the final price on WhatsApp shortly. Advance is paid by UPI after confirmation.</p>
-  <div class="card"><div class="sec" style="margin-top:0" id="dId"></div><div id="dLines"></div><div class="hr"></div><div class="line"><span>Pickup / delivery</span><b id="dWhen" style="text-align:right"></b></div><div class="line dsc" id="dDiscRow" style="display:none"><span id="dDiscL"></span><b id="dDisc"></b></div><div class="line"><span>Estimated total</span><b id="dTot"></b></div><div class="hint" id="dAdv" style="display:none;margin-top:10px;font-weight:600"></div></div>
+  <div class="card"><div class="sec" style="margin-top:0" id="dId"></div><div id="dLines"></div><div class="hr"></div><div class="line"><span>Pickup / delivery</span><b id="dWhen" style="text-align:right"></b></div><div class="line dsc" id="dDiscRow" style="display:none"><span id="dDiscL"></span><b id="dDisc"></b></div><div class="line" id="dGstRow" style="display:none"><span id="dGstL"></span><b id="dGst"></b></div><div class="line"><span>Estimated total</span><b id="dTot"></b></div><div class="hint" id="dAdv" style="display:none;margin-top:10px;font-weight:600"></div></div>
   <div class="card" id="dCpn" style="display:none;text-align:center;border:2px dashed #e0a800"></div>
   <button class="btn wa" id="dImg">💬 Send order picture on WhatsApp</button>
   <div class="hint" id="dImgNote" style="text-align:center;margin:-4px 0 8px">Choose WhatsApp, then our chat "Cravella", and press send.</div>
@@ -492,7 +493,8 @@ function calcDisc(sub){
   else if(c&&sub>=c.min){const ca=Math.min(sub,Math.round(c.kind==='flat'?c.value:sub*c.value/100));if(ca>amt){amt=ca;note='Coupon '+c.code;used=true}}
   return{amt,note,used}
 }
-const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),gf=L.reduce((a,l)=>a+(l.gfull||0),0),go=L.reduce((a,l)=>a+(l.goff||0),0),d=calcDisc(sub-gf),da=d.amt+go,dn=go?'Diwali Gift Box 10% off (−'+inr(go)+')'+(d.note?' + '+d.note:''):d.note;return{L,sub,gf,disc:da,dnote:dn,dused:d.used,tot:sub-da,count:L.length,flag:L.some(l=>l.flag)}};
+const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),gf=L.reduce((a,l)=>a+(l.gfull||0),0),go=L.reduce((a,l)=>a+(l.goff||0),0),d=calcDisc(sub-gf),da=d.amt+go,dn=go?'Diwali Gift Box 10% off (−'+inr(go)+')'+(d.note?' + '+d.note:''):d.note;const gr=GSTR(),gst=gr?Math.round((sub-da)*gr/100):0;return{L,sub,gf,disc:da,dnote:dn,dused:d.used,gst,gr,tot:sub-da+gst,count:L.length,flag:L.some(l=>l.flag)}};
+function GSTR(){try{const g=CFG&&CFG.gst;return g&&g.on?(+g.rate||18):0}catch(_){return 0}}
 const hasCustom=()=>S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom});
 function advText(t){if(!hasCustom())return '';const a=Math.round(t.tot/2);return 'Custom / theme cake: we\'ll check your reference against your budget and discuss it with you on WhatsApp. 50% advance ('+inr(a)+') to book, and the balance 50% on '+(S.mode==='Delivery'?'delivery':'pickup')+'. The final amount is confirmed after we agree the design.'}
 function itemsPayload(){return[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.cream,kg:l.kg,q:l.q})),...Object.entries(S.pc).map(([id,q])=>({t:'pc',id,q})),...Object.entries(S.cookie).map(([id,g])=>({t:'cookie',id,q:g})),...Object.entries(S.gift).filter(([,q])=>q>0).map(([id,q])=>({t:'gift',id,q}))]}
@@ -895,6 +897,7 @@ function renderReview(){saveCart();
   if(S.coupon&&t.sub<S.coupon.min){setCpn('Coupon '+S.coupon.code+' needs an order of at least '+inr(S.coupon.min)+'.','bad');S.coupon=null;const t2=totals();Object.assign(t,t2)}
   $('revSub').textContent=inr(t.sub);$('revTot').textContent=inr(t.tot);
   $('revDiscRow').style.display=t.disc?'flex':'none';$('revDiscL').textContent='Discount · '+t.dnote;$('revDisc').textContent='−'+inr(t.disc);
+  $('revGstRow').style.display=t.gst?'flex':'none';$('revGstL').textContent='GST '+t.gr+'%';$('revGst').textContent=inr(t.gst);
   const ad=advText(t);$('revAdv').style.display=ad?'block':'none';$('revAdv').textContent=ad;
   $('photoBox').style.display=S.cakes.length?'block':'none';
   $('budgetBox').style.display=hasCustom()?'block':'none';$('photoLbl').textContent=hasCustom()?'Reference photo (required for custom cake)':'Reference photo (optional)';
@@ -992,7 +995,7 @@ $('cpnIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault()
 /* ---------- submit ---------- */
 function cleanPhone(v){let d=String(v).replace(/\D/g,'');if(d.length===12&&d.startsWith('91'))d=d.slice(2);if(d.length===11&&d.startsWith('0'))d=d.slice(1);return d}
 function summaryText(id,t,when,name){
-  return `Hi Cravella Bake House, I placed an order request${id?' ('+id+')':''}.\n\n`+t.L.map(l=>`• ${l.name} – ${l.sub} – ${inr(l.amount)}`).join('\n')+(t.disc?`\n\nSubtotal: ${inr(t.sub)}\nDiscount (${t.dnote}): −${inr(t.disc)}`:'')+`\n\nEstimated total: ${inr(t.tot)}\n${when}\nName: ${name}`;
+  return `Hi Cravella Bake House, I placed an order request${id?' ('+id+')':''}.\n\n`+t.L.map(l=>`• ${l.name} – ${l.sub} – ${inr(l.amount)}`).join('\n')+(t.disc?`\n\nSubtotal: ${inr(t.sub)}\nDiscount (${t.dnote}): −${inr(t.disc)}`:'')+(t.gst?`${t.disc?'':'\n'}\nGST ${t.gr}%: ${inr(t.gst)}`:'')+`\n\nEstimated total: ${inr(t.tot)}\n${when}\nName: ${name}`;
 }
 $('submit').onclick=async()=>{
   const t=totals(),err=$('err');err.textContent='';
@@ -1041,6 +1044,7 @@ function showDone(id,t,when,name,total,disc,dnote,subt,cp){
   $('dLines').innerHTML=t.L.map(l=>`<div class="line"><div class="l">${esc(l.name)}<small>${esc(l.sub)}</small></div><b>${inr(l.amount)}</b></div>`).join('');
   disc=disc!=null?disc:t.disc;dnote=dnote||t.dnote;subt=subt!=null?subt:t.sub;
   $('dDiscRow').style.display=disc?'flex':'none';$('dDiscL').textContent='Discount · '+dnote;$('dDisc').textContent='−'+inr(disc);
+  $('dGstRow').style.display=t.gst?'flex':'none';$('dGstL').textContent='GST '+t.gr+'%';$('dGst').textContent=inr(t.gst);
   $('dWhen').textContent=when;$('dWhen').style.whiteSpace='pre-line';$('dTot').textContent=inr(total!=null?total:t.tot);
   $('dWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText(id,t,when,name));
   const dc=$('dCpn');if(cp){const q=x=>{const a=x.split('-');return +a[2]+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][a[1]-1]};dc.style.display='block';dc.innerHTML='<div class="gift">🎁 Festive gift for your next order</div><div class="gcode">'+esc(cp.code)+'</div><div>'+cp.pct+'% extra off on your next order of '+inr(cp.min)+' or more. Valid '+q(cp.from)+' to '+q(cp.till)+', with this mobile number. Please screenshot or note this code.</div>'}else dc.style.display='none';
@@ -1056,7 +1060,7 @@ function orderImage(o){
   const W=1080,P=64,c=document.createElement('canvas'),x=c.getContext('2d'),F='"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
   const wrap=(txt,max,font)=>{x.font=font;const w=String(txt).split(' '),out=[];let cur='';w.forEach(k=>{const n=cur?cur+' '+k:k;if(x.measureText(n).width>max&&cur){out.push(cur);cur=k}else cur=n});if(cur)out.push(cur);return out};
   const rows=o.t.L.map(l=>({a:wrap(l.name,640,'700 34px '+F),b:wrap(l.sub,640,'28px '+F),amt:inr(l.amount)}));
-  let H=360+(o.disc?150:0);rows.forEach(r=>{H+=r.a.length*44+r.b.length*38+78});
+  let H=360+(o.disc?150:0)+(o.t.gst?60:0);rows.forEach(r=>{H+=r.a.length*44+r.b.length*38+78});
   const whenL=o.when.split('\n').flatMap(w=>wrap(w,W-2*P,'700 32px '+F));H+=whenL.length*42+210;
   c.width=W;c.height=H;
   x.fillStyle='#fbf4ea';x.fillRect(0,0,W,H);x.fillStyle='#3b2416';x.fillRect(0,0,W,12);
@@ -1069,7 +1073,8 @@ function orderImage(o){
   y+=20;x.fillStyle='#3b2416';x.font='700 32px '+F;whenL.forEach(t=>{x.fillText(t,P,y);y+=42});
   if(o.disc){y+=24;x.font='28px '+F;x.fillStyle='#7a5a44';x.fillText('Subtotal',P,y);x.textAlign='right';x.fillText(inr(o.subt),W-P,y);x.textAlign='left';
     y+=48;x.fillStyle='#1f7a4d';x.font='700 30px '+F;x.fillText('Discount · '+o.dnote,P,y);x.textAlign='right';x.fillText('−'+inr(o.disc),W-P,y);x.textAlign='left';x.fillStyle='#3b2416'}
-  y+=(o.disc?72:30);x.font='700 46px '+F;x.fillText('Estimated total',P,y);x.textAlign='right';x.fillText(inr(o.total),W-P,y);x.textAlign='center';
+  if(o.t.gst){y+=(o.disc?52:30);x.font='28px '+F;x.fillStyle='#7a5a44';x.fillText('GST '+o.t.gr+'%',P,y);x.textAlign='right';x.fillText(inr(o.t.gst),W-P,y);x.textAlign='left';x.fillStyle='#3b2416'}
+  y+=(o.disc||o.t.gst?72:30);x.font='700 46px '+F;x.fillText('Estimated total',P,y);x.textAlign='right';x.fillText(inr(o.total),W-P,y);x.textAlign='center';
   y+=70;x.fillStyle='#7a5a44';x.font='26px '+F;x.fillText('Eggless · Baked to order · WhatsApp 81477 33224',W/2,y);
   y+=40;x.fillText('FSSAI Lic. No. 21225177003525',W/2,y);
   return new Promise(r=>c.toBlob(r,'image/png'));
@@ -1126,7 +1131,7 @@ function orderHtml(o,i){
   const when=o.split?'Cakes – '+slot(o.mode,o.date,o.time)+'<br>Other bakes – '+slot(o.split.mode||o.mode,o.split.date,o.split.time):slot(o.mode,o.date,o.time);
   const rows=(o.rows&&o.rows.length?o.rows:o.lines.map(l=>({name:l,qty:'',amount:null})));
   const body=rows.map(r=>`<tr><td>${esc(r.name)}</td><td class="q">${esc(r.qty)}</td><td class="p">${r.amount!=null?inr(r.amount):''}</td></tr>`).join('');
-  const foot=(o.discount>0?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount${o.discNote?' ('+esc(o.discNote)+')':''}</td><td class="p">−${inr(o.discount)}</td></tr>`:'')+`<tr class="tt"><td colspan="2">Total</td><td class="p">${inr(o.total)}</td></tr>`;
+  const foot=(o.discount>0?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount${o.discNote?' ('+esc(o.discNote)+')':''}</td><td class="p">−${inr(o.discount)}</td></tr>`:'')+(o.gst?`<tr><td colspan="2">GST ${o.gstRate||18}%</td><td class="p">${inr(o.gst)}</td></tr>`:'')+`<tr class="tt"><td colspan="2">Total</td><td class="p">${inr(o.total)}</td></tr>`;
   return `<div class="o"><div class="h"><b>Order ${esc(o.id)}</b><span class="st ${esc(stCls(o.status))}">${esc(STL[o.status]||o.status)}</span></div>
   <div class="w">Ordered on ${esc(o.placed)}</div>
   <div class="w">${esc(when).replace(/&lt;br&gt;/g,'<br>')}</div>
