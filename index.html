@@ -494,7 +494,7 @@ function calcDisc(sub){
   return{amt,note,used}
 }
 const totals=()=>{const L=lines(),sub=L.reduce((a,l)=>a+l.amount,0),gf=L.reduce((a,l)=>a+(l.gfull||0),0),go=L.reduce((a,l)=>a+(l.goff||0),0),d=calcDisc(sub-gf),da=d.amt+go,dn=go?'Diwali Gift Box 10% off (−'+inr(go)+')'+(d.note?' + '+d.note:''):d.note;const gr=GSTR(),gst=gr?Math.round((sub-da)*gr/100):0;return{L,sub,gf,disc:da,dnote:dn,dused:d.used,gst,gr,tot:sub-da+gst,count:L.length,flag:L.some(l=>l.flag)}};
-function GSTR(){try{const g=CFG&&CFG.gst;return g&&g.on?(+g.rate||18):0}catch(_){return 0}}
+function GSTR(){try{const g=CFG&&CFG.gst;return g&&g.on?(+g.rate||5):0}catch(_){return 0}}
 const hasCustom=()=>S.cakes.some(l=>{const c=findCake(l.id);return c&&c.custom});
 function advText(t){if(!hasCustom())return '';const a=Math.round(t.tot/2);return 'Custom / theme cake: we\'ll check your reference against your budget and discuss it with you on WhatsApp. 50% advance ('+inr(a)+') to book, and the balance 50% on '+(S.mode==='Delivery'?'delivery':'pickup')+'. The final amount is confirmed after we agree the design.'}
 function itemsPayload(){return[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.cream,kg:l.kg,q:l.q})),...Object.entries(S.pc).map(([id,q])=>({t:'pc',id,q})),...Object.entries(S.cookie).map(([id,g])=>({t:'cookie',id,q:g})),...Object.entries(S.gift).filter(([,q])=>q>0).map(([id,q])=>({t:'gift',id,q}))]}
@@ -1131,7 +1131,7 @@ function orderHtml(o,i){
   const when=o.split?'Cakes – '+slot(o.mode,o.date,o.time)+'<br>Other bakes – '+slot(o.split.mode||o.mode,o.split.date,o.split.time):slot(o.mode,o.date,o.time);
   const rows=(o.rows&&o.rows.length?o.rows:o.lines.map(l=>({name:l,qty:'',amount:null})));
   const body=rows.map(r=>`<tr><td>${esc(r.name)}</td><td class="q">${esc(r.qty)}</td><td class="p">${r.amount!=null?inr(r.amount):''}</td></tr>`).join('');
-  const foot=(o.discount>0?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount${o.discNote?' ('+esc(o.discNote)+')':''}</td><td class="p">−${inr(o.discount)}</td></tr>`:'')+(o.gst?`<tr><td colspan="2">GST ${o.gstRate||18}%</td><td class="p">${inr(o.gst)}</td></tr>`:'')+`<tr class="tt"><td colspan="2">Total</td><td class="p">${inr(o.total)}</td></tr>`;
+  const foot=(o.discount>0?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount${o.discNote?' ('+esc(o.discNote)+')':''}</td><td class="p">−${inr(o.discount)}</td></tr>`:'')+(o.gst?`<tr><td colspan="2">GST ${o.gstRate||5}%</td><td class="p">${inr(o.gst)}</td></tr>`:'')+`<tr class="tt"><td colspan="2">Total</td><td class="p">${inr(o.total)}</td></tr>`;
   return `<div class="o"><div class="h"><b>Order ${esc(o.id)}</b><span class="st ${esc(stCls(o.status))}">${esc(STL[o.status]||o.status)}</span></div>
   <div class="w">Ordered on ${esc(o.placed)}</div>
   <div class="w">${esc(when).replace(/&lt;br&gt;/g,'<br>')}</div>
