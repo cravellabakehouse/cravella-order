@@ -924,7 +924,12 @@ function renderReview(){saveCart();
     $('dateHint2').textContent='Earliest date: '+m2.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+' (bakes need 1 day\'s notice).'}
   $('dateHint').textContent='Earliest date: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+(hasCustom()?' (custom and theme cakes need 2 days\' notice)':'');
 }
-function openReview(){$('review').classList.add('on');document.body.style.overflow='hidden';renderReview();prefill();$('review').scrollTop=0;if(A.tok&&!A.profile)loadMe().then(prefill)}
+const TS_KEY='0x4AAAAAAFmRHnzD_PyfWRI3';let TS={l:0,id:null,tok:'',w:[]};
+function tsLoad(){if(TS.l||PV||!/^0x/.test(TS_KEY))return;TS.l=1;window.tsReady=()=>{try{const b=document.createElement('div');b.id='tsBox';b.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden';document.body.appendChild(b);TS.id=turnstile.render(b,{sitekey:TS_KEY,callback:t=>{TS.tok=t;TS.w.splice(0).forEach(f=>f(t))},'expired-callback':()=>{TS.tok='';try{turnstile.reset(TS.id)}catch(_){}},'error-callback':()=>{TS.tok=''}})}catch(_){}};
+  const s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=tsReady';s.async=true;s.defer=true;document.head.appendChild(s)}
+function tsToken(ms){if(TS.tok)return Promise.resolve(TS.tok);if(!TS.l)return Promise.resolve('');return new Promise(res=>{const tm=setTimeout(()=>res(''),ms);TS.w.push(t=>{clearTimeout(tm);res(t)})})}
+function tsUsed(){TS.tok='';try{if(TS.id!=null)turnstile.reset(TS.id)}catch(_){}}
+function openReview(){tsLoad();$('review').classList.add('on');document.body.style.overflow='hidden';renderReview();prefill();$('review').scrollTop=0;if(A.tok&&!A.profile)loadMe().then(prefill)}
 function closeReview(){$('review').classList.remove('on');document.body.style.overflow=''}
 $('barGo').onclick=goOrder;$('cartBtn').onclick=goOrder;$('revBack').onclick=closeReview;
 $('revLines').addEventListener('click',e=>{
@@ -1021,7 +1026,7 @@ $('submit').onclick=async()=>{
   try{
     let r;
     if(API_URL.startsWith('__')||API_URL.includes('PASTE')){await new Promise(x=>setTimeout(x,700));r={ok:true,id:'DEMO-0001',total:t.tot,subtotal:t.sub,discount:t.disc,discNote:t.dnote}}
-    else{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});r=await res.json()}
+    else{payload.ts=await tsToken(6000);const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});tsUsed();r=await res.json()}
     if(!r.ok){const e=new Error(r.error||'failed');e.server=!!r.error;throw e}
     if(A.tok){A.orders=null;loadMe()}
     showDone(r.id,t,when,name,r.total,r.discount,r.discNote,r.subtotal,r.coupon);
