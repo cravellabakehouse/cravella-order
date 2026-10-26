@@ -206,6 +206,7 @@ body{background:#fbf6ee}.ng{display:grid;grid-template-columns:repeat(3,minmax(0
 .hvsh{font-size:13px;font-weight:800;color:#7a6250;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.05em}.hvss{display:flex;flex-wrap:wrap;gap:8px}.hvs{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:#fff;border:1px solid #ecdfcf;font-size:14px;font-weight:700;color:#3b2416}.hvs svg{width:16px;height:16px;flex:none}.hvs b{color:#b4532a}.hvf{display:flex;align-items:center;gap:10px;margin-top:14px}.hvf .hint{margin:0}.hvbtn{all:unset;cursor:pointer;margin-left:auto;padding:10px 18px;border-radius:12px;border:1.5px solid #b4532a;color:#b4532a;font-weight:800;font-size:14.5px}.hvbtn:hover{background:#fff3ea}
 @media (max-width:900px){.hk{grid-template-columns:repeat(2,minmax(0,1fr))}.hvg{grid-template-columns:repeat(3,minmax(0,1fr))}.hvk.big{grid-column:1/-1}}
 @media (max-width:640px){.hx{grid-template-columns:1fr}.hxw{min-height:96px;padding:16px}.hxp{width:34%}.hxi{width:46px;height:46px}.hbal{padding:12px 14px}.hbt b{font-size:22px}.hvh b{white-space:nowrap}.hvh .hint{font-size:12px;text-align:right}.hxt b{font-size:18px}.hca{flex-wrap:wrap}.hcb{width:100%;text-align:center}.hkc{padding:12px;gap:10px}.hki{width:40px;height:40px}.hkt b{font-size:24px}.hkc .hxc{display:none}.hvc{gap:5px;height:130px}.hvb em{font-size:11px}.hvk b{font-size:24px}.hvk.big b{font-size:30px}.hvf{flex-wrap:wrap}.hvbtn{margin-left:0;width:100%;text-align:center;box-sizing:border-box}}
+.st{padding:4px 16px}.st-r{display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--line);flex-wrap:wrap}.st>.st-r:first-child,.st-dc>.st-r{border-top:0}.st-l{flex:1;min-width:150px;display:flex;flex-direction:column;gap:2px}.st-l b{font-size:15.5px;font-weight:700;color:#2a1a10}.st-l small{font-size:13px;color:var(--mut);line-height:1.35}.st-c{display:flex;gap:8px;align-items:center;flex:0 1 330px;min-width:0}.st-c .i{margin:0;flex:1;min-width:0}.st-n label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;flex:1}.st-n .i{width:100%;box-sizing:border-box}.st-f{flex-basis:100%;margin:0}.st-ok{color:#1f7a4d;font-weight:700}.st-off{color:#9a8a78;font-weight:700}.st-d{border-top:1px solid var(--line);padding:10px 0 12px}.st-d>summary{cursor:pointer;font-size:13.5px;font-weight:700;color:#7a4a2a;list-style:none}.st-d>summary::-webkit-details-marker,.st-dc>summary::-webkit-details-marker{display:none}.st-d>summary::before{content:'› ';display:inline-block;transition:transform .15s}.st-d[open]>summary::before{transform:rotate(90deg)}.st-dc>summary{cursor:pointer;list-style:none}.st-dc{padding-bottom:4px}.st-dc[open]{padding-bottom:14px}.st-x{font-size:22px;color:#9a7f69;transition:transform .15s}.st-dc[open] .st-x{transform:rotate(90deg)}@media (max-width:560px){.st-c{flex-basis:100%}.st-w .st-l{flex-basis:100%}}
 </style>
 </head>
 <body>
@@ -546,7 +547,7 @@ function todayCard(o,t){
 }
 const BRK_DEF="We're taking a short break and are not taking any orders right now. We'll be back soon!";
 async function loadVis(){if(D.visBusy)return;D.visBusy=1;try{const r=await api({action:'admin_visits'});if(r.ok){D.vis=r;D.visAt=Date.now()}}catch(_){}D.visBusy=0;if(tab==='home')render()}
-document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.id==='visCard'){try{localStorage.setItem('cb_visc',d.open?'1':'0')}catch(_){}const h=d.querySelector('summary .hint');if(h&&D.vis)h.innerHTML=d.open?(D.visAt?'Last updated '+new Date(D.visAt).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):''):'<b>'+D.vis.h24.u+'</b> in last 24 h · <b>'+D.vis.d7+'</b> in 7 days'}},true);
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.classList&&d.classList.contains('st-dc'))D.rvOpen=d.open;if(d&&d.id==='visCard'){try{localStorage.setItem('cb_visc',d.open?'1':'0')}catch(_){}const h=d.querySelector('summary .hint');if(h&&D.vis)h.innerHTML=d.open?(D.visAt?'Last updated '+new Date(D.visAt).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):''):'<b>'+D.vis.h24.u+'</b> in last 24 h · <b>'+D.vis.d7+'</b> in 7 days'}},true);
 function visHtml(){
   if(!D.visBusy&&(!D.vis||Date.now()-(D.visAt||0)>120000))loadVis();
   const v=D.vis;if(!v)return `<div class="card hv"><div class="hvh"><span class="hvi">${hxSvg('chart')}</span><b>Website Visitors</b></div><div class="hint" style="margin-top:6px">Loading…</div></div>`;
@@ -1148,10 +1149,10 @@ $('panel').addEventListener('click',async e=>{const d=e.target.closest('[data-de
 function rvwHtml(){
   const R=(D.settings&&D.settings.reviews)||{};if(!D.rv)D.rv={rating:R.rating||'',count:R.count||'',list:(R.list||[]).map(x=>({...x}))};
   const v=D.rv;
-  return `<div class="sec">Google reviews on the home page</div><div class="card"><div class="hint" style="margin-top:0">Copy the reviews you like from your Google Maps page, exactly as the customer wrote them. Enter your current rating and review count too.</div>
+  return `<details class="card st st-dc"${D.rvOpen?' open':''}><summary class="st-r"><div class="st-l"><b>Google reviews on the home page</b><small>${v.rating?esc(v.rating)+' ★ · ':''}${v.list.length} review${v.list.length==1?'':'s'} shown · copy them exactly from Google Maps</small></div><span class="st-x">›</span></summary>
   <div class="row" style="gap:8px;margin-top:10px"><input class="i" id="rvR" type="number" step="0.1" min="1" max="5" inputmode="decimal" placeholder="Rating, e.g. 4.8" value="${esc(v.rating)}"><input class="i" id="rvC" type="number" min="0" inputmode="numeric" placeholder="Review count" value="${esc(v.count)}"></div>
   ${v.list.map((x,i)=>`<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="row" style="gap:8px"><input class="i" data-rn="${i}" placeholder="Customer name" maxlength="60" value="${esc(x.n)}"><select class="i" data-rs="${i}" style="max-width:90px">${[5,4,3,2,1].map(n=>`<option value="${n}"${+x.s===n?' selected':''}>${n} ★</option>`).join('')}</select></div><textarea class="i" data-rt="${i}" rows="3" maxlength="600" style="margin-top:8px" placeholder="Review text">${esc(x.t)}</textarea><button class="btn ol sm" data-rd="${i}" style="margin-top:6px">Remove</button></div>`).join('')}
-  <div class="row" style="gap:8px;margin-top:12px"><button class="btn ol sm" id="rvAdd">+ Add a review</button><button class="btn sm" id="rvSave">Save reviews</button></div></div>`}
+  <div class="row" style="gap:8px;margin-top:12px"><button class="btn ol sm" id="rvAdd">+ Add a review</button><button class="btn sm" id="rvSave">Save reviews</button></div></details>`}
 /* ---------- custom cake gallery ---------- */
 async function loadGal(){D.galBusy=true;try{const r=await api({action:'admin_gal',op:'list'});if(r.ok)D.gal=r.list;else D.galF=Date.now()}catch(_){D.galF=Date.now()}D.galBusy=false;if(tab==='gal')render()}
 const galImg=g=>API_URL+'?gi='+encodeURIComponent(g.id)+'&v='+(g.ts||0);
@@ -1315,14 +1316,12 @@ $('panel').addEventListener('click',async e=>{
 async function loadWa(){if(D.waBusy)return;D.waBusy=1;try{const r=await api({action:'admin_wa_get'});if(r.ok)D.wa=r;else D.waF=Date.now()}catch(_){D.waF=Date.now()}D.waBusy=0;if((tab==='settings'||tab==='home')&&!dirty){const y=scrollY;render();scrollTo(0,y)}}
 const tAgo=ms=>new Date(ms).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
 function waCard(){const w=D.wa;
-  if(!w)return `<div class="sec">WhatsApp messages</div><div class="card"><div class="hint" style="margin-top:0">Loading…</div></div>`;
-  return `<div class="sec">WhatsApp messages</div><div class="card"><div class="hint" style="margin-top:0">Automatic order updates to customers (received, confirmed, ready) from your WhatsApp Business account. Nothing is sent while this is off.</div>
-  <div class="hist" style="display:block"><div class="h"><span>Access token</span><b>${w.hasToken?'✅ Set':'❌ Missing'}</b></div>
-  <div class="h"><span>Sending number ID</span><b>${esc(w.phone)}</b></div></div>
-  <div class="row" style="margin-top:10px"><b>${w.on?'🟢 Messages are ON':'⚪ Messages are OFF'}</b><button class="btn ${w.on?'ol':''} sm" data-wa-on="${w.on?0:1}">${w.on?'Turn off':'Turn on'}</button></div>
+  if(!w)return `<div class="sec">WhatsApp</div><div class="card st"><div class="hint" style="margin:0">Loading…</div></div>`;
+  return `<div class="sec">WhatsApp</div><div class="card st"><div class="st-r"><div class="st-l"><b>Order updates to customers</b><small>${w.on?'<span class="st-ok">● On</span> · received, confirmed, ready':'<span class="st-off">● Off</span> · nothing is sent'}</small></div><button class="btn ${w.on?'ol':''} sm" data-wa-on="${w.on?0:1}">${w.on?'Turn off':'Turn on'}</button></div>
+  <details class="st-d"><summary>Setup and test messages</summary>
+  <div class="hist" style="display:block"><div class="h"><span>Access token</span><b>${w.hasToken?'✅ Set':'❌ Missing'}</b></div><div class="h"><span>Sending number ID</span><b>${esc(w.phone)}</b></div></div>
   <label class="f">Send a test message</label><div class="row" style="gap:8px"><input class="i" id="waTo" type="tel" inputmode="tel" placeholder="Phone number" maxlength="20"><button class="btn ol sm" id="waTest">Send test</button></div>
-  <div class="hint">Sends Meta's "hello_world" sample. While the test number is in use, only numbers you have added in Meta's allowed list will receive it.</div>
-  ${w.log&&w.log.length?`<div class="hist" style="display:block"><div class="m"><b>Recent messages</b></div>${w.log.slice(0,8).map(l=>`<div class="h"><span>${esc(tAgo(l.t))} · ${esc(l.to)} · ${esc(l.tpl.replace('cravella_order_',''))}${l.ok?'':`<div class="hint" style="margin-top:2px;color:var(--bad,#b3261e)">${esc(l.err)}</div>`}</span><b>${l.ok?'✓':'✕'}</b></div>`).join('')}</div>`:''}</div>`}
+  ${w.log&&w.log.length?`<div class="hist" style="display:block"><div class="m"><b>Recent messages</b></div>${w.log.slice(0,8).map(l=>`<div class="h"><span>${esc(tAgo(l.t))} · ${esc(l.to)} · ${esc(l.tpl.replace('cravella_order_',''))}${l.ok?'':`<div class="hint" style="margin-top:2px;color:var(--bad,#b3261e)">${esc(l.err)}</div>`}</span><b>${l.ok?'✓':'✕'}</b></div>`).join('')}</div>`:''}</details></div>`}
 /* ---- WhatsApp tab: inbox, send, ads ---- */
 const WQ=[['Bengaluru only','Hi, thank you for your interest. We deliver only within Bengaluru, Karnataka. Pickup from our kitchen is available if that works for you.'],['Pickup option','You can also pick up your order from us. Tell us the date and time that suits you and we will confirm it.'],['Delivery fee','Delivery charges are extra and depend on the distance. Please share your pincode and we will confirm the fee on WhatsApp.']];
 const WS={sub:'inbox',thr:null,draft:'',ad:{busy:0,msg:''}};
@@ -1483,18 +1482,17 @@ $('panel').addEventListener('click',async e=>{
 });
 function settingsHtml(){
   const s=D.settings;if(!s)return '<div class="hint">Loading…</div>';
-  return waCard()+`<div class="sec">Closed dates</div><div class="card"><div class="hint" style="margin-top:0">Customers cannot order for these dates (holidays, travel, festivals).</div>
-  <div class="row" style="gap:8px;margin-top:10px"><input class="i" type="date" id="closedIn" min="${todayS()}"><button class="btn sm" id="addClosed">Add</button></div>
-  <div class="chips">${s.closed.length?s.closed.map(d=>`<button class="chip on" data-del="${esc(d)}">${esc(fmtD(d))} ✕</button>`).join(''):'<span class="hint">No closed dates.</span>'}</div></div>
-  <div class="sec">Daily limits</div><div class="card"><div class="hint" style="margin-top:0">When a day is full, customers are asked to pick another date. Use 0 for no limit.</div>
-  <label class="f">Most cakes per day</label><input class="i" id="capCake" type="number" min="0" inputmode="numeric" value="${s.capCake}">
-  <label class="f">Most bakes orders per day (cupcakes, muffins, cookies, brownies)</label><input class="i" id="capOther" type="number" min="0" inputmode="numeric" value="${s.capOther}">
-  <div class="hint">Cakes count each cake. Bakes count each order. Cancelled orders free up a place.</div></div>
-  <div class="sec">Notice on the website</div><div class="card"><div class="hint" style="margin-top:0">A short message shown at the top of the ordering page, such as "Closed 12 to 14 Oct for Diwali". Leave empty for none.</div>
-  <input class="i" id="banner" maxlength="200" style="margin-top:10px" value="${esc(s.banner)}" placeholder="e.g. Closed 12–14 Oct for Diwali"></div>
-  <div class="sec">GST</div><div class="card"><div class="sw"><span>Charge GST (${GST.rate}%)<br><small class="hint">${GST.on?'On. Customers pay '+GST.rate+'% GST on top of the order value (after any discount), e.g. ₹1,000 + ₹50 GST = ₹1,050. It shows on the website cart, receipts, WhatsApp and email messages, and in the calendar.':'Off for now. When you turn it on, customers pay '+GST.rate+'% GST on top of the order value (e.g. ₹1,000 + ₹50 = ₹1,050) on new orders. Until then the calendar shows what GST would be, marked "not charged yet".'}</small></span>${stg(GST.on,'data-gston="1"')}</div></div>
-  ${rvwHtml()}
-  <div class="sec">Your login</div><div class="card"><div class="hint" style="margin-top:0">Signed in as ${esc(me)}. Your username is this email.</div><button class="btn ol sm" id="chgPw" style="margin-top:10px">${hasPw?'Change password':'Set a password'}</button></div>`
+  const R=(s.reviews)||{},nr=(R.list||[]).length;
+  return `<div class="hd"><div><h2>Settings</h2><small>Ordering rules, messages and your account</small></div></div>
+  <div class="sec">Ordering</div><div class="card st">
+  <div class="st-r st-w"><div class="st-l"><b>Closed dates</b><small>No orders on these days</small></div><div class="st-c"><input class="i" type="date" id="closedIn" min="${todayS()}"><button class="btn sm" id="addClosed">Add</button></div>
+  ${s.closed.length?`<div class="chips st-f">${s.closed.map(d=>`<button class="chip on" data-del="${esc(d)}">${esc(fmtD(d))} ✕</button>`).join('')}</div>`:''}</div>
+  <div class="st-r"><div class="st-l"><b>Daily limits</b><small>0 = no limit</small></div><div class="st-c st-n"><label>Cakes<input class="i" id="capCake" type="number" min="0" inputmode="numeric" value="${s.capCake}"></label><label>Bakes orders<input class="i" id="capOther" type="number" min="0" inputmode="numeric" value="${s.capOther}"></label></div></div>
+  <div class="st-r st-w"><div class="st-l"><b>Website notice</b><small>Shown at the top of the order page</small></div><div class="st-c"><input class="i" id="banner" maxlength="200" value="${esc(s.banner)}" placeholder="e.g. Closed 12–14 Oct for Diwali"></div></div>
+  <div class="st-r"><div class="st-l"><b>GST ${GST.rate}%</b><small>${GST.on?'On · added to new orders':'Off · when on, added on top of new orders'}</small></div>${stg(GST.on,'data-gston="1"')}</div></div>
+  ${waCard()}
+  <div class="sec">Website</div>${rvwHtml(nr,R)}
+  <div class="sec">Account</div><div class="card st"><div class="st-r"><div class="st-l"><b>Login</b><small>${esc(me)}</small></div><button class="btn ol sm" id="chgPw">${hasPw?'Change password':'Set a password'}</button></div></div>`
 }
 const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const S=640,sc=Math.min(1,S/Math.min(im.width,im.height)),w=Math.round(im.width*sc),h=Math.round(im.height*sc),m=Math.min(w,h),c=document.createElement('canvas');c.width=c.height=Math.min(S,m);c.getContext('2d').drawImage(im,(w-m)/2/sc,(h-m)/2/sc,m/sc,m/sc,0,0,c.width,c.height);URL.revokeObjectURL(u);const d=c.toDataURL('image/jpeg',.85);ok(d.slice(d.indexOf(',')+1))};im.onerror=()=>no(new Error('bad'));im.src=u});
 function cropPick(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();
