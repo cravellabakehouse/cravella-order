@@ -210,6 +210,7 @@ body{background:#fbf6ee}.ng{display:grid;grid-template-columns:repeat(3,minmax(0
 .cl-bk{padding:14px 16px}.cl-bkh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.cl-bkh b{font-size:16px}.cl-bkh small{color:var(--mut);font-size:12.5px;flex:1}.cl-bk table{width:100%;border-collapse:collapse}.cl-bk td{padding:8px 0;border-top:1px solid var(--line);font-size:15px}.cl-bk td.p{text-align:right;font-weight:800;white-space:nowrap}.nav button{min-width:0}@media (max-width:420px){.nav button{font-size:10.5px;padding:6px 0}.nav button i{font-size:19px}}
 .st-lk{all:unset;box-sizing:border-box;cursor:pointer;width:100%;border-top:0!important}.st-lk:hover b{color:#b4532a}
 .wcv-cb{flex:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:#fff7e8;border-bottom:1px solid #f0dcb8;font-size:14px;font-weight:600;color:#6b4a1f}.wcv-cb span{flex:1;min-width:180px}button.wcv-ic{cursor:pointer;padding:0}
+.tfa-to{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px}.tfa-b{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;background:#fff}.tfa-b:hover{border-color:#25d366}.tfa-b.on{border-color:#1f9d55;background:#eefaf2}.tfa-b b{font-size:16px}.tfa-b span{color:var(--mut);font-weight:700;letter-spacing:.04em}.tfa-b em{margin-left:auto;font-style:normal;font-size:13px;font-weight:800;color:#1f9d55}.tfa-b[disabled]{opacity:.6}
 </style>
 </head>
 <body>
@@ -227,6 +228,17 @@ body{background:#fbf6ee}.ng{display:grid;grid-template-columns:repeat(3,minmax(0
     <div class="err" id="lErr"></div>
     <button class="btn" id="lGo" style="width:100%;margin-top:14px">Sign in</button>
     <button class="btn ol sm" id="lMode" style="width:100%;margin-top:10px">First time or forgot password? Email me a code</button>
+  </div>
+</div>
+
+<div id="tfa" class="wrap hide">
+  <div class="card">
+    <div class="t" style="font-size:20px;text-align:center">🔐 Confirm it's you</div>
+    <p class="hint" id="tfaHint" style="text-align:center">For safety, admin sign-in needs a code sent on WhatsApp. Choose where to send it.</p>
+    <div id="tfaTo" class="tfa-to"></div>
+    <div id="tfaCodeBox" class="hide"><label class="f">6-digit code</label><input class="i" id="tfaCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456"><button class="btn" id="tfaGo" style="width:100%;margin-top:12px">Confirm</button></div>
+    <div class="err" id="tfaErr"></div>
+    <button class="btn ol sm" id="tfaOut" style="width:100%;margin-top:12px">Sign out</button>
   </div>
 </div>
 
@@ -253,7 +265,7 @@ const ST=(k=>{try{return localStorage.getItem(k)}catch(_){return null}});
 const SS=((k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}});
 let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[],mails:{},stock:null,recipes:null},tab='home',loaded=false,filt='active',q='',bakeDate='',bake=null,dirty=false,CM={},cq='',skew=0;
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
-async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
+async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});const j=await res.json();if(j&&j.error==='2fa'&&tok&&!String(p&&p.action).startsWith('admin_2fa')&&typeof show2fa==='function')show2fa();return j}
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const todayS=()=>ymd(new Date());
 const nowMs=()=>Date.now()+skew;
@@ -272,6 +284,7 @@ function loginMode(m){step=m;const pw=m==='pw';$('pwBox').classList.toggle('hide
   $('lHint').textContent=pw?'Sign in with your admin email and password.':'We will email a 6-digit code to approved admin emails. After signing in you can set a new password.'}
 $('lMode').onclick=()=>loginMode(step==='pw'?'email':'pw');
 async function finishLogin(t,err){tok=t;const m=await api({action:'admin_me'});
+  if(!m.ok&&m.error==='2fa'){SS('cb_admin_tok',tok);return true}
   if(!m.ok){tok='';err.textContent='This email is not an approved admin.';return false}
   SS('cb_admin_tok',tok);me=m.email;hasPw=!!m.hasPw;await start();if(!hasPw)openPw(true);return true}
 $('lGo').onclick=async()=>{
@@ -484,6 +497,18 @@ function applyOrders(r){loaded=true;D.orders=r.orders;D.statuses=r.statuses;D.ma
 function sortItems(items,ord){const rk={};(ord||[]).forEach((id,i)=>rk[id]=i);const gs=[],by={};items.forEach((it,i)=>{if(!by[it.group]){by[it.group]=[];gs.push(it.group)}by[it.group].push([it,i])});
   const out=[];gs.forEach(g=>by[g].sort((a,b)=>((a[0].id in rk?rk[a[0].id]:1e6+a[1])-(b[0].id in rk?rk[b[0].id]:1e6+b[1]))).forEach(x=>out.push(x[0])));return out}
 const lazySettings=p=>(p||api({action:'admin_settings_get'})).then(r=>{if(r&&r.ok){D.settings=r.settings;D.items=sortItems(r.items,r.settings.order);D.orderDirty=false;hasPw=r.hasPw!==false;dirty=false}if(tab==='menu'||tab==='settings')render()}).catch(()=>{});
+/* ---------- two-step sign-in: WhatsApp code to one of three approved numbers ---------- */
+const TF={to:null,list:[],busy:0};
+async function show2fa(){if(TF.busy)return;TF.busy=1;['login','app','nav','saveBar','out'].forEach(i=>$(i)&&$(i).classList.add('hide'));$('panel').innerHTML='';$('tfa').classList.remove('hide');$('tfaErr').textContent='';
+  try{const r=await api({action:'admin_2fa_status'});if(r.ok&&r.done){$('tfa').classList.add('hide');TF.busy=0;await finishLogin(tok,$('lErr'));return}
+    if(r.ok){TF.list=r.to;tfaDraw()}else{$('tfaErr').textContent=r.error==='auth'?'Please sign in again.':(r.error||'Could not load')}}catch(_){$('tfaErr').textContent='No connection. Please reload.'}TF.busy=0}
+function tfaDraw(){$('tfaTo').innerHTML=TF.list.map(x=>`<button class="tfa-b${TF.to===x.i?' on':''}" data-tfato="${x.i}"><b>${esc(x.name)}</b><span>${esc(x.mask)}</span><em>${TF.to===x.i?'Code sent · resend':'Send code'}</em></button>`).join('')}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-tfato]');if(!b)return;const i=+b.dataset.tfato,err=$('tfaErr');err.textContent='';b.disabled=true;
+  try{const r=await api({action:'admin_2fa_send',to:i});if(r.ok){TF.to=i;tfaDraw();$('tfaCodeBox').classList.remove('hide');const x=TF.list.find(y=>y.i===i);$('tfaHint').textContent='We sent a 6-digit code on WhatsApp to '+(x?x.name+' '+x.mask:'that number')+'. It works for 10 minutes.';$('tfaCode').value='';$('tfaCode').focus()}else{err.textContent=r.error||'Could not send the code';b.disabled=false}}catch(_){err.textContent='No connection';b.disabled=false}});
+$('tfaGo').onclick=async()=>{const c=$('tfaCode').value.replace(/\D/g,''),err=$('tfaErr'),b=$('tfaGo');err.textContent='';if(c.length!==6){err.textContent='Please enter the 6-digit code.';return}b.disabled=true;
+  try{const r=await api({action:'admin_2fa_verify',code:c});if(r.ok){$('tfa').classList.add('hide');TF.to=null;$('tfaCodeBox').classList.add('hide');await finishLogin(tok,$('lErr'))}else err.textContent=r.error||'That code did not work'}catch(_){err.textContent='No connection'}b.disabled=false};
+$('tfaCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('tfaGo').click()});
+$('tfaOut').onclick=()=>{$('tfa').classList.add('hide');TF.to=null;$('tfaCodeBox').classList.add('hide');$('out').click()};
 async function start(){
   showApp();const sp=api({action:'admin_settings_get'});await loadOrders();render();lazySettings(sp)
 }
@@ -494,7 +519,7 @@ async function boot(){
   const sp0=api({action:'admin_settings_get'});
   try{
     const r=await api({action:'admin_orders'});
-    if(!r.ok){tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);showLogin(r.error==='auth'?'':r.error);return}
+    if(!r.ok){if(r.error==='2fa'){SS('cb_admin_cache',null);D.orders=[];return}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);showLogin(r.error==='auth'?'':r.error);return}
     applyOrders(r);showApp();render();lazySettings(sp0)
   }catch(_){if(!cached)showLogin('No connection. Please reload.');else toast('No connection. Showing your last saved orders.')}
 }
