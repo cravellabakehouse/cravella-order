@@ -238,6 +238,7 @@ body{background:#fbf6ee}.ng{display:grid;grid-template-columns:repeat(3,minmax(0
 .ep-mi{background:#fff;border-radius:18px;width:100%;max-width:560px;max-height:94vh;display:flex;flex-direction:column;padding:14px;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .ep-mh{display:flex;justify-content:space-between;align-items:center;gap:10px}.ep-pv{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#f4efe7;min-height:140px}.ep-pv img{width:100%;display:block}
 .ep-ma{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ep-ma .btn{flex:1}.ep-mt{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--mut);font-weight:700}
+.lvsq{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;padding:7px 9px;border-radius:10px;background:#fff7e8;border:1px solid #f0dcb8}.lvsq b{font-size:12.5px;color:#7a4a1f;margin-right:2px}.lvsq span{font-size:13px;font-weight:700;color:#3b2416;background:#fff;border:1px solid #f0dcb8;border-radius:999px;padding:2px 9px}.lvsq .lvsq-now{background:#1f9d55;color:#fff;border-color:#1f9d55;animation:lvp 1.2s ease-in-out infinite}@keyframes lvp{50%{opacity:.6}}
 </style>
 </head>
 <body>
@@ -866,7 +867,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-epdf
 /* ---------- live view ---------- */
 async function loadLive(){if(D.liveBusy)return;D.liveBusy=1;try{const r=await api({action:'admin_live'});if(r.ok){D.live=r;D.liveAt=Date.now()}}catch(_){}D.liveBusy=0;
   if(tab==='live'){const y=scrollY;render();scrollTo(0,y)}else if(tab==='home'){const el=$('liveStrip');if(el)el.outerHTML=liveStrip()}}
-setInterval(()=>{if(tok&&(tab==='live'||tab==='home')&&document.visibilityState==='visible')loadLive()},10000);
+setInterval(()=>{if(tok&&!window.TFN&&document.visibilityState==='visible'&&(tab==='live'||(tab==='home'&&Date.now()-(D.liveAt||0)>9500)))loadLive()},3000);
 const lvSec=ms=>{const s=Math.max(0,Math.round(ms/1000));return s<60?s+'s':Math.floor(s/60)+'m'};
 const lvDev=x=>x.dev==='Phone'?'📱':x.dev==='Tablet'?'📱':'💻';
 const lvWho=x=>x.cname?esc(x.cname):x.acct?esc(String(x.acct).split('@')[0]):'Visitor'+(x.city?' from '+esc(x.city):'');
@@ -874,17 +875,19 @@ const lvPlace=x=>[x.city,x.region&&x.region!==x.city?x.region:'',x.country&&x.co
 function liveStrip(){const L=D.live?D.live.live:[];if(!L.length)return '<div id="liveStrip"></div>';const ck=L.filter(x=>x.at==='Checkout').length;
   return `<button id="liveStrip" class="lvs" data-hgo="live"><span class="lvdot"></span><b>${L.length} ${L.length==1?'person is':'people are'} on your website now</b>${ck?`<span class="lvck">${ck} at checkout</span>`:''}<span class="lvgo">Watch live ›</span></button>`}
 function lvCard(x,now,old){const ev=(D.live.ev||{})[x.vid]||[],ck=x.at==='Checkout';
-  const trail=ev.slice(0,4).map(e=>`<span>${e.ev==='cart'?'🛒 Added':e.ev==='view'?'👀 Viewed':e.ev==='search'?'🔎 Searched':'📂 Opened'} ${esc(e.name||e.item)}</span>`).join('');
+  const sq=ev.filter(e=>e.ev==='search').map(e=>e.name||e.item).filter((q,i,a)=>a.indexOf(q)===i),typing=!old&&x.at==='Searching'?String(x.it||'').replace(/^“|”$/g,''):'';
+  const trail=ev.filter(e=>e.ev!=='search').slice(0,4).map(e=>`<span>${e.ev==='cart'?'🛒 Added':e.ev==='view'?'👀 Viewed':'📂 Opened'} ${esc(e.name||e.item)}</span>`).join('');
+  const sqh=typing||sq.length?`<div class="lvsq"><b>🔎 Searched</b>${typing?`<span class="lvsq-now">typing “${esc(typing)}”</span>`:''}${sq.map(q=>`<span>“${esc(q)}”</span>`).join('')}</div>`:'';
   return `<div class="lvr${ck?' ck':''}${old?' old':''}"><span class="lva">${lvDev(x)}${old?'':'<i class="lvdot"></i>'}</span>
   <div class="lvm"><div class="lvn">${lvWho(x)}${x.ret?' <span class="lvt">Returning</span>':' <span class="lvt n">New</span>'}${x.acct?' <span class="lvt s">Signed in</span>':''}</div>
   <div class="lvw">${old?'Was on':'Viewing'} <b>${esc(x.at||'Home page')}</b>${x.it?` <span class="lvar">›</span> ${esc(x.it)}`:''}</div>
   <div class="lvx">📍 ${lvPlace(x)} · ${esc(x.model||x.dev||'')}${x.src?' · from '+esc(x.src):''} · ${old?'left '+lvSec(now-x.t)+' ago':'on site '+dur(now-x.since)}</div>
-  ${trail?`<div class="lvtr">${trail}</div>`:''}</div>
+  ${sqh}${trail?`<div class="lvtr">${trail}</div>`:''}</div>
   <div class="lvrt">${x.cn?`<span class="lvc">🛒 ${x.cn} item${x.cn>1?'s':''}<b>${inr(x.ct)}</b></span>`:'<span class="lvc e">Empty cart</span>'}<small>${old?'':'active '+lvSec(now-x.t)+' ago'}</small></div></div>`}
 function liveHtml(){const R=D.live;if(!R)return '<div class="hd"><div><h2>Live view</h2><small>Loading…</small></div></div><div class="sk"></div><div class="sk"></div>';
   const now=R.now+(Date.now()-D.liveAt),L=R.live,O=R.recent||[],ck=L.filter(x=>x.at==='Checkout').length,cv=L.reduce((a,x)=>a+(x.ct||0),0),si=L.filter(x=>x.acct).length;
   const g={};L.forEach(x=>{const k=x.at||'Home page';g[k]=(g[k]||0)+1});const G=Object.entries(g).sort((a,b)=>b[1]-a[1]);
-  return `<div class="hd"><div><h2><span class="lvdot big"></span> Live view</h2><small>Who is on your website right now · updates every 10 seconds</small></div><button class="btn ol sm" id="lvRef">↻ Refresh</button></div>
+  return `<div class="hd"><div><h2><span class="lvdot big"></span> Live view</h2><small>Who is on your website right now · updates every 3 seconds</small></div><button class="btn ol sm" id="lvRef">↻ Refresh</button></div>
   <div class="lvk"><div class="on"><b>${L.length}</b><span>On site now</span></div><div class="${ck?'hot':''}"><b>${ck}</b><span>At checkout</span></div><div><b>${inr(cv)}</b><span>In open carts</span></div><div><b>${si}</b><span>Signed in</span></div></div>
   ${G.length?`<div class="lvg">${G.map(([k,n])=>`<span><b>${n}</b> ${esc(k)}</span>`).join('')}</div>`:''}
   <div class="card lvl"><div class="lvh">Right now</div>${L.length?L.map(x=>lvCard(x,now,0)).join(''):'<div class="lve"><span>🌙</span><b>Nobody is on your website right now.</b><small>People show up here the moment they open it, and drop off about 45 seconds after they leave.</small></div>'}</div>
