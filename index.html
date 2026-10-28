@@ -508,7 +508,12 @@ function renderTabs(){
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${n}${cnt[k]?`<span class="n">${cnt[k]}</span>`:''}</button>`).join('');
 }
 let CFG={unavailable:[],closed:[],full:{cake:[],other:[]},banner:''};
-function applyNames(){const N=(CFG&&CFG.names&&typeof CFG.names==='object')?CFG.names:{};[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies,MENU.cookies).forEach(d=>{if(d._n0===undefined)d._n0=d.name;d.name=(typeof N[d.id]==='string'&&N[d.id])||d._n0})}
+const MENU0=JSON.parse(JSON.stringify(MENU)),PRK=n=>Number.isInteger(n)&&n>0&&n<=200000;
+function applyPrices(){const P=(CFG&&CFG.prices&&typeof CFG.prices==='object')?CFG.prices:{};
+  MENU.cakes.forEach(d=>{const o=MENU0.cakes.find(z=>z.id===d.id);if(!o)return;d.creams.forEach((cr,j)=>{const b=o.creams[j]?o.creams[j].prices:cr.prices,pc=P.c&&P.c[d.id]&&P.c[d.id][cr.id||'_'];cr.prices=Array.isArray(pc)&&pc.length===b.length&&pc.every(PRK)?pc.slice():b.slice()})});
+  ['cupcakes','muffins','brownies','blondies'].forEach(k=>(MENU[k]||[]).forEach(d=>{const o=MENU0[k].find(z=>z.id===d.id)||d,q=P.p&&P.p[d.id];d.rate=q&&PRK(q.rate)?q.rate:o.rate;d.box=q&&PRK(q.box)?q.box:o.box}));
+  (MENU.cookies||[]).forEach(d=>{const o=MENU0.cookies.find(z=>z.id===d.id)||d,q=P.k&&P.k[d.id];d.rate=PRK(q)?q:o.rate})}
+function applyNames(){try{applyPrices()}catch(_){}const N=(CFG&&CFG.names&&typeof CFG.names==='object')?CFG.names:{};[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies,MENU.cookies).forEach(d=>{if(d._n0===undefined)d._n0=d.name;d.name=(typeof N[d.id]==='string'&&N[d.id])||d._n0})}
 /* ---------- site layout (admin-controlled) ---------- */
 const PV=/[?&]sp=1/.test(location.search);let SITE=null;if(!PV)try{SITE=JSON.parse(localStorage.getItem('cb_site')||'null')}catch(_){}
 const bgCss=c=>{const ok=v=>/^#[0-9a-f]{6}$/i.test(v||'');if(!c||!ok(c.bg))return '';return ok(c.bg2)?'linear-gradient('+(Math.round(+c.ang)||135)+'deg,'+c.bg+','+c.bg2+')':c.bg};
