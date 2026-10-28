@@ -265,7 +265,7 @@ const ST=(k=>{try{return localStorage.getItem(k)}catch(_){return null}});
 const SS=((k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}});
 let tok=ST('cb_admin_tok')||'',me='',D={orders:[],statuses:[],settings:null,items:[],mails:{},stock:null,recipes:null},tab='home',loaded=false,filt='active',q='',bakeDate='',bake=null,dirty=false,CM={},cq='',skew=0;
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
-async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});const j=await res.json();if(j&&j.error==='2fa'&&tok&&!String(p&&p.action).startsWith('admin_2fa')&&typeof show2fa==='function')show2fa();return j}
+async function api(p){if(window.TFN&&tok&&!/^(admin_2fa|logout)/.test(String(p&&p.action)))return {ok:false,error:'2fa'};const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});const j=await res.json();if(j&&j.error==='2fa'&&tok&&!String(p&&p.action).startsWith('admin_2fa')&&typeof show2fa==='function'){window.TFN=1;show2fa()}return j}
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const todayS=()=>ymd(new Date());
 const nowMs=()=>Date.now()+skew;
@@ -499,16 +499,16 @@ function sortItems(items,ord){const rk={};(ord||[]).forEach((id,i)=>rk[id]=i);co
 const lazySettings=p=>(p||api({action:'admin_settings_get'})).then(r=>{if(r&&r.ok){D.settings=r.settings;D.items=sortItems(r.items,r.settings.order);D.orderDirty=false;hasPw=r.hasPw!==false;dirty=false}if(tab==='menu'||tab==='settings')render()}).catch(()=>{});
 /* ---------- two-step sign-in: WhatsApp code to one of three approved numbers ---------- */
 const TF={to:null,list:[],busy:0};
-async function show2fa(){if(TF.busy)return;TF.busy=1;['login','app','nav','saveBar','out'].forEach(i=>$(i)&&$(i).classList.add('hide'));$('panel').innerHTML='';$('tfa').classList.remove('hide');$('tfaErr').textContent='';
-  try{const r=await api({action:'admin_2fa_status'});if(r.ok&&r.done){$('tfa').classList.add('hide');TF.busy=0;await finishLogin(tok,$('lErr'));return}
+async function show2fa(){if(TF.busy||(TF.list.length&&!$('tfa').classList.contains('hide')))return;TF.busy=1;['login','app','nav','saveBar','out'].forEach(i=>$(i)&&$(i).classList.add('hide'));$('panel').innerHTML='';$('tfa').classList.remove('hide');$('tfaErr').textContent='';
+  try{const r=await api({action:'admin_2fa_status'});if(r.ok&&r.done){window.TFN=0;$('tfa').classList.add('hide');TF.busy=0;await finishLogin(tok,$('lErr'));return}
     if(r.ok){TF.list=r.to;tfaDraw()}else{$('tfaErr').textContent=r.error==='auth'?'Please sign in again.':(r.error||'Could not load')}}catch(_){$('tfaErr').textContent='No connection. Please reload.'}TF.busy=0}
 function tfaDraw(){$('tfaTo').innerHTML=TF.list.map(x=>`<button class="tfa-b${TF.to===x.i?' on':''}" data-tfato="${x.i}"><b>${esc(x.name)}</b><span>${esc(x.mask)}</span><em>${TF.to===x.i?'Code sent · resend':'Send code'}</em></button>`).join('')}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-tfato]');if(!b)return;const i=+b.dataset.tfato,err=$('tfaErr');err.textContent='';b.disabled=true;
   try{const r=await api({action:'admin_2fa_send',to:i});if(r.ok){TF.to=i;tfaDraw();$('tfaCodeBox').classList.remove('hide');const x=TF.list.find(y=>y.i===i);$('tfaHint').textContent='We sent a 6-digit code on WhatsApp to '+(x?x.name+' '+x.mask:'that number')+'. It works for 10 minutes.';$('tfaCode').value='';$('tfaCode').focus()}else{err.textContent=r.error||'Could not send the code';b.disabled=false}}catch(_){err.textContent='No connection';b.disabled=false}});
 $('tfaGo').onclick=async()=>{const c=$('tfaCode').value.replace(/\D/g,''),err=$('tfaErr'),b=$('tfaGo');err.textContent='';if(c.length!==6){err.textContent='Please enter the 6-digit code.';return}b.disabled=true;
-  try{const r=await api({action:'admin_2fa_verify',code:c});if(r.ok){$('tfa').classList.add('hide');TF.to=null;$('tfaCodeBox').classList.add('hide');await finishLogin(tok,$('lErr'))}else err.textContent=r.error||'That code did not work'}catch(_){err.textContent='No connection'}b.disabled=false};
+  try{const r=await api({action:'admin_2fa_verify',code:c});if(r.ok){window.TFN=0;$('tfa').classList.add('hide');TF.to=null;$('tfaCodeBox').classList.add('hide');await finishLogin(tok,$('lErr'))}else err.textContent=r.error||'That code did not work'}catch(_){err.textContent='No connection'}b.disabled=false};
 $('tfaCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('tfaGo').click()});
-$('tfaOut').onclick=()=>{$('tfa').classList.add('hide');TF.to=null;$('tfaCodeBox').classList.add('hide');$('out').click()};
+$('tfaOut').onclick=()=>{window.TFN=0;TF.list=[];$('tfa').classList.add('hide');TF.to=null;$('tfaCodeBox').classList.add('hide');$('out').click()};
 async function start(){
   showApp();const sp=api({action:'admin_settings_get'});await loadOrders();render();lazySettings(sp)
 }
