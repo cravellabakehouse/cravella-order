@@ -984,7 +984,7 @@ function offerStrip(){const asc=[...TIERS()].sort((a,b)=>a[0]-b[0]);const disc=a
   const src=Array.isArray(ST.items)&&ST.items.length?ST.items:def;
   const items=src.filter(q=>q.on!==false).map(q=>q.k==='disc'?disc:q.k==='fest'?fst:q.t).filter(Boolean),one=items.map(t=>'<span>'+esc(t)+'</span>').join('');
   if(!items.length){$('offer').innerHTML='';return}
-  $('offer').innerHTML='<div class="trk" style="animation-duration:'+(+ST.speed||32)+'s" aria-label="'+esc(items.join('. '))+'">'+one+one+'</div>'}
+  $('offer').style.fontSize=(+ST.size>=11&&+ST.size<=24)?ST.size+'px':'';$('offer').innerHTML='<div class="trk" style="animation-duration:'+(+ST.speed||32)+'s" aria-label="'+esc(items.join('. '))+'">'+one+one+'</div>'}
 offerStrip();
 $('cpnGo').onclick=async()=>{
   const code=$('cpnIn').value.trim();if(!code)return setCpn('Please enter a coupon code.','bad');
