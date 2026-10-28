@@ -519,7 +519,7 @@ async function boot(){
   const sp0=api({action:'admin_settings_get'});
   try{
     const r=await api({action:'admin_orders'});
-    if(!r.ok){if(r.error==='2fa'){SS('cb_admin_cache',null);D.orders=[];return}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);showLogin(r.error==='auth'?'':r.error);return}
+    if(!r.ok){if(r.error==='2fa'){SS('cb_admin_cache',null);D.orders=[];return}if(r.error&&r.error!=='auth'){if(!cached)showLogin(r.error+' Please reload in a minute.');else toast(r.error);return}tok='';SS('cb_admin_tok',null);SS('cb_admin_cache',null);showLogin(r.error==='auth'?'':r.error);return}
     applyOrders(r);showApp();render();lazySettings(sp0)
   }catch(_){if(!cached)showLogin('No connection. Please reload.');else toast('No connection. Showing your last saved orders.')}
 }
