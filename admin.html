@@ -1598,7 +1598,7 @@ function waHero(){
 function waTabHtml(){
   const chips=[['inbox','💬 Chats'],['ads','📣 Offers'],['staff','🔔 Alerts'],['send','⚙️ Setup']].map(([k,n])=>`<button class="chip ${WS.sub===k?'on':''}" data-wsub="${k}">${n}</button>`).join(' ');
   let h=`<div class="hd"><div><h2>WhatsApp</h2><small>${({inbox:'Reply to customers',ads:'Send offers to customers who agreed',staff:'Alerts when a new order arrives',send:'Balance, messages and sign-in'})[WS.sub]||''}</small></div></div>${waHero()}<div class="chips" style="margin:12px 0">${chips}</div>`;
-  const w=D.wa;if(WS.sub==='send'){h+=waBalHtml();h+=waWelHtml();h+=waLoginHtml();h+=waTechHtml()}
+  const w=D.wa;if(WS.sub==='send'){h+=waBalHtml();h+=waWelHtml();h+=waLoginHtml();h+=rvCardHtml();h+=waTechHtml()}
   if(w&&(!w.hasVerify||!w.hasSecret)&&WS.sub==='inbox')h+=`<div class="card"><b>Inbox needs a one-time setup</b><div class="hint">To receive customer replies, Meta must call your Worker. Add two secrets in Cloudflare (Worker → Settings → Variables and Secrets): <b>WA_VERIFY</b> (any word you choose) and <b>WA_APP_SECRET</b> (Meta app → Settings → Basic → App secret). Then in Meta → WhatsApp → Configuration set the callback URL to <b>${esc(API_URL)}</b> with your verify word, and subscribe to <b>messages</b>. Status: ${w.hasVerify?'✅':'❌'} verify word · ${w.hasSecret?'✅':'❌'} app secret</div></div>`;
   if(WS.sub==='inbox')h+=waInboxHtml();else if(WS.sub==='send')h+=waSendHtml();else if(WS.sub==='staff')h+=waStaffHtml();else h+=waAdsHtml();
   return h}
