@@ -247,10 +247,10 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 @keyframes eggFlash2{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(-5deg) scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,.25),0 0 22px 6px rgba(255,211,102,.85)}}
 .hero.sm .egg{padding:5px 12px 6px;font-size:10px;border-radius:11px;right:14px}.hero.sm .egg b{font-size:22px;margin-bottom:2px}
 @media (max-width:520px){.hero:not(.sm).hasEgg>h2{padding-right:96px}.hero .egg{right:10px;padding:6px 9px 7px;font-size:10px;border-radius:11px}.hero .egg b{font-size:21px}.hero.sm.hasEgg>h2,.hero.sm.hasEgg>p{padding-right:96px}}
-.hero .egg{background:rgba(6,28,16,.62)!important;color:#6dff9a!important;border:2px solid #6dff9a!important;text-shadow:0 0 5px #38f57a,0 0 12px #1fd65f,0 0 22px #1fd65f;box-shadow:0 0 12px 1px rgba(60,255,130,.55),inset 0 0 10px rgba(60,255,130,.25);animation-name:eggG}
+.hero .egg{background:linear-gradient(135deg,#2ee06e,#15a64a 60%,#0e8a3c)!important;color:#fff!important;border:2px solid #fff!important;text-shadow:0 1px 3px rgba(0,60,20,.55);box-shadow:0 0 12px 1px rgba(60,255,130,.55);animation-name:eggG}
 .hero:not(.sm) .egg{animation-name:eggG2}
-@keyframes eggG{0%,100%{transform:translateY(-50%) rotate(-5deg) scale(1);text-shadow:0 0 4px #38f57a,0 0 9px #1fd65f;box-shadow:0 0 8px 0 rgba(60,255,130,.4),inset 0 0 8px rgba(60,255,130,.2)}50%{transform:translateY(-50%) rotate(-5deg) scale(1.08);text-shadow:0 0 7px #7dffa8,0 0 16px #38f57a,0 0 30px #1fd65f;box-shadow:0 0 24px 6px rgba(60,255,130,.8),inset 0 0 14px rgba(60,255,130,.4)}}
-@keyframes eggG2{0%,100%{transform:rotate(-5deg) scale(1);text-shadow:0 0 4px #38f57a,0 0 9px #1fd65f;box-shadow:0 0 8px 0 rgba(60,255,130,.4),inset 0 0 8px rgba(60,255,130,.2)}50%{transform:rotate(-5deg) scale(1.08);text-shadow:0 0 7px #7dffa8,0 0 16px #38f57a,0 0 30px #1fd65f;box-shadow:0 0 24px 6px rgba(60,255,130,.8),inset 0 0 14px rgba(60,255,130,.4)}}
+@keyframes eggG{0%,100%{transform:translateY(-50%) rotate(-5deg) scale(1);box-shadow:0 0 8px 0 rgba(60,255,130,.4)}50%{transform:translateY(-50%) rotate(-5deg) scale(1.08);box-shadow:0 0 24px 6px rgba(60,255,130,.8)}}
+@keyframes eggG2{0%,100%{transform:rotate(-5deg) scale(1);box-shadow:0 0 8px 0 rgba(60,255,130,.4)}50%{transform:rotate(-5deg) scale(1.08);box-shadow:0 0 24px 6px rgba(60,255,130,.8)}}
 @media (prefers-reduced-motion:reduce){.hero .egg{animation:none}}
 .hero button{background:var(--acc);color:var(--acc-ink);font-weight:800;font-size:13px;padding:8px 14px;border-radius:99px}
 .hs{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px}
