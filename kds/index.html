@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Cravella Kitchen</title>
 <meta name="theme-color" content="#fffbbe">
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="../icon-192.png">
 <link rel="preconnect" href="https://cravella-api.connect-679.workers.dev" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
@@ -85,6 +85,9 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .lbox .lnk{display:block;margin:12px auto 0;font-size:13px;color:var(--acc);text-decoration:underline}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:40;max-width:90vw}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+@media (min-width:1700px){body{zoom:1.25}.col{max-height:calc((100vh - 170px)/1.25)}}
+@media (min-width:2300px){body{zoom:1.7}.col{max-height:calc((100vh - 170px)/1.7)}}
+@media (min-width:3000px){body{zoom:2.3}.col{max-height:calc((100vh - 170px)/2.3)}}
 @media (max-width:1100px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}.col{max-height:none}}
 @media (max-width:640px){
  .mtabs{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;border-bottom:1px solid var(--line)}
@@ -96,7 +99,7 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 <body>
 <div id="login" class="login hide">
  <div class="lbox">
-  <img src="icon-192.png" alt="Cravella">
+  <img src="../icon-192.png" alt="Cravella">
   <h2>Kitchen sign in</h2>
   <div class="hint" id="lHint" style="text-align:center;margin-top:0">Sign in with your approved email and password.</div>
   <label class="f" for="aEmail">Email</label><input class="i" id="aEmail" type="email" inputmode="email" autocomplete="username" placeholder="you@example.com">
@@ -110,7 +113,7 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 
 <div id="app" class="hide" style="flex:1;display:flex;flex-direction:column">
  <div class="top">
-  <div class="brand"><img src="icon-192.png" alt="Cravella"><div><h1 class="t">Kitchen</h1><small>Cravella Bake House</small></div></div>
+  <div class="brand"><img src="../icon-192.png" alt="Cravella"><div><h1 class="t">Kitchen</h1><small>Cravella Bake House</small></div></div>
   <div class="tools">
    <div class="clock" id="clock"></div>
    <button class="btn ol sm" id="snd">🔔 Sound off</button>
@@ -157,7 +160,7 @@ function loginMode(m){step=m;const pw=m==='pw';$('pwBox').classList.toggle('hide
 $('lMode').onclick=()=>loginMode(step==='pw'?'email':'pw');
 $('aEmail').value=ST('cb_admin_email')||'';
 async function finishLogin(t,err){tok=t;const m=await api({action:'admin_me'});
- if(!m.ok&&m.error==='2fa'){SS('cb_admin_tok',tok);err.innerHTML='Extra security step needed. Open the <a href="admin.html">admin page</a>, finish it there, then come back.';return false}
+ if(!m.ok&&m.error==='2fa'){SS('cb_admin_tok',tok);err.innerHTML='Extra security step needed. Open the <a href="../admin.html">admin page</a>, finish it there, then come back.';return false}
  if(!m.ok){tok='';err.textContent='This email is not approved.';return false}
  SS('cb_admin_tok',tok);await start();return true}
 $('lGo').onclick=async()=>{const b=$('lGo'),e=$('aEmail').value.trim(),err=$('lErr');err.textContent='';err.style.color='';b.disabled=true;
@@ -280,7 +283,7 @@ $('lbx').onclick=()=>$('lb').classList.add('hide');$('lb').onclick=e=>{if(e.targ
 setInterval(()=>{$('clock').textContent=new Date(nowMs()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});if(tok&&!busy&&!document.hidden&&!$('app').classList.contains('hide'))render()},30000);
 $('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 (async()=>{if(!tok){showLogin('');return}
- try{const m=await api({action:'admin_me'});if(m.ok){await start();return}if(m.error==='2fa'){showLogin('');$('lErr').innerHTML='Extra security step needed. Open the <a href="admin.html">admin page</a>, finish it there, then reload this page.';return}}catch(_){}
+ try{const m=await api({action:'admin_me'});if(m.ok){await start();return}if(m.error==='2fa'){showLogin('');$('lErr').innerHTML='Extra security step needed. Open the <a href="../admin.html">admin page</a>, finish it there, then reload this page.';return}}catch(_){}
  tok='';SS('cb_admin_tok',null);showLogin('Please sign in.')})();
 </script>
 </body>
