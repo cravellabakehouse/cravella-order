@@ -124,6 +124,7 @@ label.f{display:block;font-size:15.4px;font-weight:700;letter-spacing:.06em;text
   <div class="brand"><img src="../icon-192.png" alt="Cravella"><div><h1 class="t">Kitchen</h1><small>Cravella Bake House</small></div></div>
   <div class="tools">
    <div class="clock" id="clock"></div>
+   <button class="btn ol sm" id="tst">🔊 Test</button>
    <button class="btn ol sm" id="snd">🔔 Sound off</button>
    <button class="btn ol sm" id="ref">↻ Refresh</button>
    <button class="btn ol sm" id="out">Sign out</button>
@@ -151,7 +152,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const ST=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const SS=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-const KDSV='3';
+const KDSV='4';
 let tok=ST('cb_admin_tok')||'',orders=[],baking=new Set(),skew=0,range='today',mcol='tobake',known=null,busy=0,pollT=0,soundOn=ST('cb_kds_sound')!=='0',actx=null,localBake=false,errMsg='';
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
 async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
@@ -201,7 +202,7 @@ async function load(first){
   if(known){const fresh=orders.filter(o=>!known.has(o.id)&&o.status==='New');if(fresh.length){beep();newPop(fresh)}}
   if(!known){const w=orders.filter(o=>o.status==='New');if(w.length)newPop(w,true)}
   known=ids;
-  $('upd').textContent='Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  $('upd').textContent='v'+KDSV+' · Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
   render();
  }catch(_){errMsg='No connection. Retrying…';render()}finally{busy=0}
 }
@@ -225,9 +226,10 @@ function mkWav(){const sr=22050,seq=[[880,0,.16],[1175,.18,.16],[880,.36,.3]],n=
  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
  for(let k=0;k<n;k++)v.setInt16(44+k*2,d[k],true);return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}))}
 function beep(){if(!soundOn)return;if(aud){aud.currentTime=0;const p=aud.play();if(p&&p.catch)p.catch(()=>webBeep());if(audOk)return}webBeep()}
-function setSound(){$('snd').textContent=soundOn?'🔔 Sound on':'🔕 Sound off';$('snd').classList.toggle('ol',!soundOn)}
+function setSound(){$('snd').textContent=!soundOn?'🔕 Sound off':audOk?'🔔 Sound on':'🔔 Tap to enable';$('snd').classList.toggle('ol',!soundOn||audOk)}
+$('tst').onclick=()=>{soundOn=true;SS('cb_kds_sound','1');if(audOk)beep();else unlockA();ctx();hintUpd();toast(audOk?'Sound test played':'Sound is blocked – tap once more')};
 $('snd').onclick=()=>{soundOn=!soundOn;SS('cb_kds_sound',soundOn?'1':'0');setSound();if(soundOn){ctx();audOk?beep():unlockA()}hintUpd()};
-function hintUpd(){$('sndHint').classList.toggle('hide',audOk||!soundOn)}
+function hintUpd(){setSound();$('sndHint').classList.toggle('hide',audOk||!soundOn)}
 let unl=0;function unlockA(){if(audOk||!soundOn||unl)return;unl=1;setTimeout(()=>{unl=0},1500);try{if(!aud)aud=new Audio(mkWav());aud.currentTime=0;const p=aud.play();if(p&&p.then)p.then(()=>{audOk=true;hintUpd()}).catch(()=>{});ctx()}catch(_){}}
 ['click','touchend','pointerup','keydown'].forEach(e=>document.addEventListener(e,unlockA,{passive:true}));
 setInterval(hintUpd,1500);hintUpd();
@@ -314,7 +316,8 @@ $('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',min
  try{const m=await api({action:'admin_me'});if(m.ok){await start();return}if(m.error==='2fa'){showLogin('');$('lErr').innerHTML='Extra security step needed. Open the <a href="../admin.html">admin page</a>, finish it there, then reload this page.';return}}catch(_){}
  tok='';SS('cb_admin_tok',null);showLogin('Please sign in.')})();
 
-(async()=>{try{const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text();const m=t.match(/KDSV='(\d+)'/);if(m&&m[1]!==KDSV&&!sessionStorage.getItem('kdsr'+m[1])){sessionStorage.setItem('kdsr'+m[1],'1');setTimeout(()=>location.reload(),1500)}}catch(_){}})();
+async function chkVer(){try{const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text();const m=t.match(/KDSV='(\d+)'/);if(m&&m[1]!==KDSV&&$('npop').classList.contains('hide')&&!sessionStorage.getItem('kdsr'+m[1])){sessionStorage.setItem('kdsr'+m[1],'1');location.reload()}}catch(_){}}
+chkVer();setInterval(chkVer,120000);
 </script>
 </body>
 </html>
