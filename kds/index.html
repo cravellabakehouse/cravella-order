@@ -85,6 +85,7 @@ label.f{display:block;font-size:15.4px;font-weight:700;letter-spacing:.06em;text
 .lbox .lnk{display:block;margin:12px auto 0;font-size:16.6px;color:var(--acc);text-decoration:underline}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:40;max-width:90vw}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+.shint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2b1d0e;color:#fff;padding:12px 20px;border-radius:12px;font-size:19px;font-weight:600;z-index:50;max-width:92vw;text-align:center}.shint.hide{display:none}
 .npop{position:fixed;left:0;right:0;top:0;z-index:60;background:#b8431f;color:#fff;padding:18px 24px;box-shadow:0 8px 30px rgba(0,0,0,.35);display:flex;align-items:center;gap:20px;cursor:pointer;animation:npin .35s ease-out}
 .npop.hide{display:none}
 .npop .nb{font-size:44px}.npop .nt{flex:1;min-width:0}.npop .nt b{display:block;font-size:34px;line-height:1.15}.npop .nt span{display:block;font-size:24px;margin-top:4px;opacity:.95}
@@ -140,6 +141,7 @@ label.f{display:block;font-size:15.4px;font-weight:700;letter-spacing:.06em;text
 </div>
 <div id="lb" class="ov hide"><button id="lbx">Close</button><img id="lbi" alt=""></div>
 <div id="npop" class="npop hide" role="alert"><div class="nb">🔔</div><div class="nt" id="ntxt"></div><div class="nx">Got it</div></div>
+<div id="sndHint" class="shint hide">🔔 Tap anywhere on the screen once to turn on the new-order sound</div>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -150,7 +152,7 @@ const ST=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const SS=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const KDSV='3';
-let tok=ST('cb_admin_tok')||'',orders=[],baking=new Set(),skew=0,range='today',mcol='tobake',known=null,busy=0,pollT=0,soundOn=ST('cb_kds_sound')==='1',actx=null,localBake=false,errMsg='';
+let tok=ST('cb_admin_tok')||'',orders=[],baking=new Set(),skew=0,range='today',mcol='tobake',known=null,busy=0,pollT=0,soundOn=ST('cb_kds_sound')!=='0',actx=null,localBake=false,errMsg='';
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
 async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
 const nowMs=()=>Date.now()+skew;
@@ -203,7 +205,7 @@ async function load(first){
   render();
  }catch(_){errMsg='No connection. Retrying…';render()}finally{busy=0}
 }
-async function start(){$('login').classList.add('hide');$('app').classList.remove('hide');setSound();await load(true);clearInterval(pollT);pollT=setInterval(()=>load(),10000)}
+async function start(){$('login').classList.add('hide');$('app').classList.remove('hide');setSound();await load(true);clearInterval(pollT);pollT=setInterval(()=>load(),5000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tok)load()});
 $('ref').onclick=()=>load();
 
@@ -218,7 +220,9 @@ $('npop').onclick=()=>{popIds=[];clearInterval(popT);$('npop').classList.add('hi
 function beep(){if(!soundOn)return;const c=ctx();if(!c)return;[[880,0],[1175,.18],[880,.36]].forEach(([f,t])=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.35,c.currentTime+t+.03);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+t+.16);o.connect(g);g.connect(c.destination);o.start(c.currentTime+t);o.stop(c.currentTime+t+.18)})}
 function setSound(){$('snd').textContent=soundOn?'🔔 Sound on':'🔕 Sound off';$('snd').classList.toggle('ol',!soundOn)}
 $('snd').onclick=()=>{soundOn=!soundOn;SS('cb_kds_sound',soundOn?'1':'0');setSound();if(soundOn){ctx();beep()}};
-document.addEventListener('click',()=>{if(soundOn)ctx()},{once:true});
+function unlockA(){if(soundOn)ctx();const c=actx;const ok=c&&c.state==='running';$('sndHint').classList.toggle('hide',ok||!soundOn)}
+['pointerdown','touchstart','keydown','click'].forEach(e=>document.addEventListener(e,()=>{setTimeout(unlockA,200)},{passive:true}));
+setInterval(unlockA,2000);
 
 /* ---------- board ---------- */
 const COLS=[['tobake','To bake'],['baking','Baking'],['ready','Ready'],['delivered','Delivered']];
