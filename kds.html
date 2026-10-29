@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>if(window.top!==window.self){try{window.top.location.replace(window.self.location.href)}catch(_){document.documentElement.innerHTML=""}}</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Cravella Kitchen</title>
+<meta name="theme-color" content="#fffbbe">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://cravella-api.connect-679.workers.dev" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"></noscript>
+<style>
+:root{color-scheme:light;--cream:#fffbbe;--bg:#ffffff;--card:#ffffff;--ink:#3b2416;--mut:#7d6a58;--line:#eadfc9;--acc:#b4532a;--acc-ink:#ffffff;--ok:#2f7d4f;--bad:#c0392b;--warn:#b9791a;--shadow:0 1px 3px rgba(60,36,22,.10);--col:#fbf6ea}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.4 'Hanken Grotesk',system-ui,sans-serif;display:flex;flex-direction:column;min-height:100vh}
+h1,h2,.t{font-family:'Bricolage Grotesque','Hanken Grotesk',system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.hide{display:none!important}
+.top{background:var(--cream);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand img{height:44px;width:auto;display:block}
+.brand h1{font-size:22px;line-height:1.1}.brand small{display:block;font-size:12px;color:#6a5a2a}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{display:inline-block;padding:10px 16px;border-radius:12px;background:var(--acc);color:var(--acc-ink);font-weight:700;text-align:center}
+.btn.ol{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:14px;border-radius:10px}
+.btn[disabled]{opacity:.55}
+.clock{font:700 22px 'Bricolage Grotesque',system-ui,sans-serif;padding:0 6px}
+.bar{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;font-weight:600;font-size:14.5px;background:var(--card)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.upd{margin-left:auto;font-size:13px;color:var(--mut)}
+.mtabs{display:none}
+.board{flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));align-items:start}
+.col{background:var(--col);border:1px solid var(--line);border-radius:16px;min-height:200px;display:flex;flex-direction:column;max-height:calc(100vh - 170px);overflow:hidden}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);font:700 18px 'Bricolage Grotesque',system-ui,sans-serif}
+.ch .n{min-width:26px;padding:0 8px;border-radius:13px;background:var(--acc);color:var(--acc-ink);font:700 14px/26px 'Hanken Grotesk',sans-serif;text-align:center}
+.col[data-c=baking] .ch .n{background:var(--warn)}.col[data-c=ready] .ch .n,.col[data-c=delivered] .ch .n{background:var(--ok)}
+.cl{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.empty{color:var(--mut);text-align:center;padding:26px 10px;font-size:14px}
+.k{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.k.late{border-left-color:var(--bad)}.k.soon{border-left-color:var(--warn)}.k.today{border-left-color:var(--ok)}
+.k.late .due b{color:var(--bad)}.k.soon .due b{color:var(--warn)}
+.kh{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.id{font:700 19px 'Bricolage Grotesque',system-ui,sans-serif}
+.nm{color:var(--mut);font-size:14px}
+.mode{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;background:#e4edff;color:#27509e;white-space:nowrap}
+.mode.pk{background:#ffe3cc;color:#a24a00}
+.due{margin-top:6px;font-size:14px;color:var(--mut)}.due b{color:var(--ink);font-size:16px}
+.tag{display:inline-block;margin:6px 6px 0 0;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;background:#fff1c9;color:#7a5a00}
+.tag.new{background:#e4edff;color:#27509e}.tag.adv{background:#ffe3cc;color:#a24a00}
+.items{margin:10px 0 0;padding:0;list-style:none}
+.items li{padding:6px 0;border-top:1px dashed var(--line);font-size:16px;font-weight:600}
+.items li:first-child{border-top:0}
+.items li small{display:block;font-weight:400;color:var(--mut);font-size:13.5px}
+.note{margin-top:10px;padding:9px 11px;border-radius:10px;background:#fff1c2;color:#6b4b00;font-weight:600;font-size:15px;white-space:pre-wrap;word-break:break-word}
+.ph{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ph button{all:unset;cursor:pointer}.ph img{width:68px;height:68px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
+.go{width:100%;margin-top:12px;padding:14px;border-radius:12px;background:var(--acc);color:var(--acc-ink);font-weight:700;font-size:17px}
+.go.ok{background:var(--ok)}.go.warn{background:var(--warn)}
+.go[disabled]{opacity:.55}
+.back{display:block;margin:8px auto 0;font-size:13px;color:var(--mut);text-decoration:underline}
+.stp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:12px}
+.st{min-width:0;padding:7px 2px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;font-weight:700;text-align:center;line-height:1.15;background:#fff;color:var(--mut)}
+.st.done{background:#d9efe1;color:#1f6b3d;border-color:#bfe3cb}
+.st.cur{background:var(--ok);color:#fff;border-color:var(--ok)}
+.st.nx{border-color:var(--acc);color:var(--acc)}
+.st[data-s]{cursor:pointer}
+.st.lock{cursor:default}
+.ov{position:fixed;inset:0;z-index:30;background:rgba(40,24,12,.85);display:flex;align-items:center;justify-content:center;padding:16px}
+.ov img{max-width:100%;max-height:100%;border-radius:12px}
+.ov button{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;padding:10px 16px;border-radius:12px;background:#fff;font-weight:700}
+.login{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
+.lbox{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.lbox img{height:60px;display:block;margin:0 auto 10px}
+.lbox h2{text-align:center;font-size:22px;margin-bottom:6px}
+.i{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit}
+label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:14px 0 6px}
+.hint{font-size:13px;color:var(--mut);margin-top:8px}
+.err{color:var(--bad);font-weight:600;margin-top:8px;font-size:14px}
+.lbox .btn{width:100%;margin-top:14px}
+.lbox .lnk{display:block;margin:12px auto 0;font-size:13px;color:var(--acc);text-decoration:underline}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:40;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (max-width:1100px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}.col{max-height:none}}
+@media (max-width:640px){
+ .mtabs{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;border-bottom:1px solid var(--line)}
+ .mtabs .chip{flex:none}
+ .board{grid-template-columns:1fr}.col{display:none;max-height:none}.col.on{display:flex}
+}
+</style>
+</head>
+<body>
+<div id="login" class="login hide">
+ <div class="lbox">
+  <img src="icon-192.png" alt="Cravella">
+  <h2>Kitchen sign in</h2>
+  <div class="hint" id="lHint" style="text-align:center;margin-top:0">Sign in with your approved email and password.</div>
+  <label class="f" for="aEmail">Email</label><input class="i" id="aEmail" type="email" inputmode="email" autocomplete="username" placeholder="you@example.com">
+  <div id="pwBox"><label class="f" for="aPw">Password</label><input class="i" id="aPw" type="password" autocomplete="current-password"></div>
+  <div id="codeBox" class="hide"><label class="f" for="aCode">6-digit code</label><input class="i" id="aCode" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>
+  <div class="err" id="lErr"></div>
+  <button class="btn" id="lGo">Sign in</button>
+  <button class="lnk" id="lMode" style="all:unset;display:block;margin:12px auto 0;font-size:13px;color:var(--acc);text-decoration:underline;cursor:pointer;text-align:center">First time or forgot password? Email me a code</button>
+ </div>
+</div>
+
+<div id="app" class="hide" style="flex:1;display:flex;flex-direction:column">
+ <div class="top">
+  <div class="brand"><img src="icon-192.png" alt="Cravella"><div><h1 class="t">Kitchen</h1><small>Cravella Bake House</small></div></div>
+  <div class="tools">
+   <div class="clock" id="clock"></div>
+   <button class="btn ol sm" id="snd">🔔 Sound off</button>
+   <button class="btn ol sm" id="ref">↻ Refresh</button>
+   <button class="btn ol sm" id="out">Sign out</button>
+  </div>
+ </div>
+ <div class="bar" id="bar">
+  <button class="chip on" data-r="today">Today</button>
+  <button class="chip" data-r="tomorrow">Tomorrow</button>
+  <button class="chip" data-r="week">Next 7 days</button>
+  <button class="chip" data-r="all">All</button>
+  <span class="upd" id="upd"></span>
+ </div>
+ <div class="mtabs" id="mtabs"></div>
+ <div class="board" id="board"></div>
+</div>
+<div id="lb" class="ov hide"><button id="lbx">Close</button><img id="lbi" alt=""></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const API_URL='https://cravella-api.connect-679.workers.dev';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ST=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
+const SS=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
+const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+let tok=ST('cb_admin_tok')||'',orders=[],baking=new Set(),skew=0,range='today',mcol='tobake',known=null,busy=0,pollT=0,soundOn=ST('cb_kds_sound')==='1',actx=null,localBake=false,errMsg='';
+let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
+async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
+const nowMs=()=>Date.now()+skew;
+const dueMs=(d,t)=>{const m=String(t).match(/^(\d+):(\d+) (AM|PM)$/);if(!m||!/^\d{4}-\d{2}-\d{2}$/.test(d))return 0;return Date.parse(d+'T'+pad((+m[1]%12)+(m[3]==='PM'?12:0))+':'+m[2]+':00+05:30')||0};
+const dur=ms=>{const m=Math.floor(Math.abs(ms)/60000),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mi=m%60;return d?d+'d '+h+'h':h?h+'h '+mi+'m':mi+'m'};
+const fmtD=s=>{const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return s;return new Date(+m[1],m[2]-1,+m[3]).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
+const dueList=o=>{const a=[{ms:dueMs(o.date,o.time),d:o.date,t:o.time,l:o.split?'Cakes':''}];if(o.split)a.push({ms:dueMs(o.split.date,o.split.time),d:o.split.date,t:o.split.time,l:'Other bakes'});return a.filter(x=>x.ms).sort((p,q)=>p.ms-q.ms)};
+const firstDue=o=>(dueList(o)[0]||{ms:0}).ms;
+
+/* ---------- sign in (same accounts as the admin page) ---------- */
+let step='pw';
+function showLogin(msg){$('app').classList.add('hide');$('login').classList.remove('hide');if(msg)$('lErr').textContent=msg}
+function loginMode(m){step=m;const pw=m==='pw';$('pwBox').classList.toggle('hide',!pw);$('codeBox').classList.add('hide');$('lErr').textContent='';
+ $('lGo').textContent=pw?'Sign in':'Send code';$('lMode').textContent=pw?'First time or forgot password? Email me a code':'Back to password sign in';
+ $('lHint').textContent=pw?'Sign in with your approved email and password.':'We will email a 6-digit code to approved emails.'}
+$('lMode').onclick=()=>loginMode(step==='pw'?'email':'pw');
+$('aEmail').value=ST('cb_admin_email')||'';
+async function finishLogin(t,err){tok=t;const m=await api({action:'admin_me'});
+ if(!m.ok&&m.error==='2fa'){SS('cb_admin_tok',tok);err.innerHTML='Extra security step needed. Open the <a href="admin.html">admin page</a>, finish it there, then come back.';return false}
+ if(!m.ok){tok='';err.textContent='This email is not approved.';return false}
+ SS('cb_admin_tok',tok);await start();return true}
+$('lGo').onclick=async()=>{const b=$('lGo'),e=$('aEmail').value.trim(),err=$('lErr');err.textContent='';err.style.color='';b.disabled=true;
+ try{
+  if(!/^\S+@\S+\.\S+$/.test(e)){err.textContent='Please enter a valid email.';return}
+  if(step==='pw'){const r=await api({action:'admin_pw_login',email:e,password:$('aPw').value,token:''});if(!r.ok){err.textContent=r.error||'Could not sign in.';return}SS('cb_admin_email',e);$('aPw').value='';await finishLogin(r.token,err)}
+  else if(step==='email'){const r=await api({action:'otp_request',email:e,token:''});if(!r.ok){err.textContent=r.error||'Could not send the code.';return}
+   SS('cb_admin_email',e);step='code';$('codeBox').classList.remove('hide');b.textContent='Sign in';$('aCode').focus();err.style.color='var(--mut)';err.textContent='Code sent to '+e+'. It can take a minute to arrive (check Spam).'}
+  else{const r=await api({action:'otp_verify',email:e,code:$('aCode').value,token:''});if(!r.ok){err.textContent=r.error||'That code is not right.';return}if(!await finishLogin(r.token,err))loginMode('email')}
+ }catch(_){err.textContent='No connection. Please try again.'}finally{b.disabled=false}};
+['aPw','aCode','aEmail'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')$('lGo').click()}));
+$('out').onclick=()=>{SS('cb_admin_tok',null);tok='';clearInterval(pollT);showLogin('')};
+
+/* ---------- data ---------- */
+const OSTEP=[['New','New'],['Confirmed','Confirmed'],['Advance received','Advance paid'],['Baking','Baking'],['Ready','Ready'],['Delivered','Delivered']];
+function loadLocalBake(){try{return new Set(JSON.parse(ST('cb_kds_bake')||'[]'))}catch(_){return new Set()}}
+async function load(first){
+ if(busy)return;busy=1;
+ try{
+  const [r,k]=await Promise.all([api({action:'admin_orders'}),api({action:'admin_wa_kds_get'}).catch(()=>({ok:false}))]);
+  if(!r.ok){if(r.error==='auth'||r.error==='no'){tok='';SS('cb_admin_tok',null);showLogin('Please sign in again.');return}errMsg=r.error||'Could not load orders.';render();return}
+  if(r.now)skew=r.now-Date.now();
+  orders=(r.orders||[]).filter(o=>o.status!=='Cancelled');
+  if(k&&k.ok&&Array.isArray(k.ids)){baking=new Set(k.ids.map(String));localBake=false}else{baking=loadLocalBake();localBake=true}
+  errMsg='';
+  const ids=new Set(orders.map(o=>o.id));
+  if(known){const fresh=orders.filter(o=>!known.has(o.id)&&o.status==='New');if(fresh.length){beep();toast('New order: '+fresh.map(o=>o.id).join(', '))}}
+  known=ids;
+  $('upd').textContent='Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  render();
+ }catch(_){errMsg='No connection. Retrying…';render()}finally{busy=0}
+}
+async function start(){$('login').classList.add('hide');$('app').classList.remove('hide');setSound();await load(true);clearInterval(pollT);pollT=setInterval(()=>{if(!document.hidden)load()},30000)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tok)load()});
+$('ref').onclick=()=>load();
+
+/* ---------- sound ---------- */
+function ctx(){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx}catch(_){return null}}
+function beep(){if(!soundOn)return;const c=ctx();if(!c)return;[[880,0],[1175,.18],[880,.36]].forEach(([f,t])=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.35,c.currentTime+t+.03);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+t+.16);o.connect(g);g.connect(c.destination);o.start(c.currentTime+t);o.stop(c.currentTime+t+.18)})}
+function setSound(){$('snd').textContent=soundOn?'🔔 Sound on':'🔕 Sound off';$('snd').classList.toggle('ol',!soundOn)}
+$('snd').onclick=()=>{soundOn=!soundOn;SS('cb_kds_sound',soundOn?'1':'0');setSound();if(soundOn){ctx();beep()}};
+document.addEventListener('click',()=>{if(soundOn)ctx()},{once:true});
+
+/* ---------- board ---------- */
+const COLS=[['tobake','To bake'],['baking','Baking'],['ready','Ready'],['delivered','Delivered']];
+function stageOf(o){if(o.status==='Delivered')return 'delivered';if(o.status==='Ready')return 'ready';if(baking.has(String(o.id)))return 'baking';return 'tobake'}
+function inRange(o){if(range==='all')return true;const d=dueList(o),t=ymd(new Date(nowMs())),tm=ymd(new Date(nowMs()+864e5)),w=ymd(new Date(nowMs()+7*864e5));
+ const late=o.status!=='Delivered'&&d.length&&d[0].ms<nowMs()&&d[0].d<t;
+ const days=d.map(x=>x.d);
+ if(range==='today')return late||days.includes(t);
+ if(range==='tomorrow')return days.includes(tm);
+ return late||days.some(x=>x>=t&&x<=w)}
+function lineParts(l){const m=/^(.*) – ₹(\d+(?:\.\d+)?)$/.exec(l),d=m?m[1]:l;let x;
+ if((x=/^(.*) × (\d+) \((.*)\)$/.exec(d)))return {n:x[1],q:x[3]+' · '+x[2]+' pcs'};
+ if((x=/^(.*?) · (.*)$/.exec(d)))return {n:x[1],q:x[2]};
+ return {n:d,q:''}}
+function card(o,c){
+ const dl=dueList(o),f=dl[0]||{ms:0,d:'',t:''},diff=f.ms-nowMs(),t=ymd(new Date(nowMs()));
+ const done=o.status==='Delivered';
+ const cls=done?'':diff<0?'late':diff<2*36e5?'soon':f.d===t?'today':'';
+ const first=String(o.name||'').trim().split(/\s+/)[0]||'';
+ const dueTxt=dl.map(x=>(x.l?x.l+' · ':'')+fmtD(x.d)+', '+esc(x.t)).join(' &nbsp;|&nbsp; ');
+ const rel=done?'':diff<0?`<b>Overdue ${dur(diff)}</b>`:`<b>in ${dur(diff)}</b>`;
+ const tags=(o.status==='New'?'<span class="tag new">NEW · needs confirming</span>':'')+(o.status==='Confirmed'?'<span class="tag adv">Advance not paid yet</span>':'')+(o.split?'<span class="tag">Split order</span>':'');
+ const items=(o.lines||[]).filter(Boolean).map(l=>{const p=lineParts(l);return `<li>${esc(p.n)}${p.q?`<small>${esc(p.q)}</small>`:''}</li>`}).join('');
+ const photos=(o.photos||[]).filter(u=>/^https:\/\//.test(u));
+ let go='',back='';
+ if(c==='tobake'){go=o.status==='New'?`<button class="go" data-a="s" data-s="Confirmed" data-id="${esc(o.id)}">Confirm order</button>`:`<button class="go warn" data-a="bake" data-id="${esc(o.id)}">Start baking</button>`}
+ if(c==='baking'){go=`<button class="go ok" data-a="s" data-s="Ready" data-id="${esc(o.id)}">Mark ready</button>`;back=`<button class="back" data-a="unbake" data-id="${esc(o.id)}">↩ Back to To bake</button>`}
+ if(c==='ready'){go=`<button class="go ok" data-a="s" data-s="Delivered" data-id="${esc(o.id)}">${o.mode==='Pickup'?'Mark collected':'Mark delivered'}</button>`}
+ const cur=c==='baking'?'Baking':o.status==='Advance received'?'Advance received':o.status;
+ const ix=OSTEP.findIndex(x=>x[0]===cur);
+ const stp=OSTEP.map(([k,lb],i)=>{const st=i<ix?'done':i===ix?'cur':i===ix+1?'nx':'';const tap=i>ix;return `<${tap?'button':'span'} class="st ${st}${tap?'':' lock'}"${tap?` data-a="step" data-s="${esc(k)}" data-id="${esc(o.id)}"`:''}>${esc(lb)}</${tap?'button':'span'}>`}).join('');
+ return `<div class="k ${cls}">
+  <div class="kh"><div><div class="id">${esc(o.id)}</div><div class="nm">${esc(first)}</div></div><span class="mode ${o.mode==='Pickup'?'pk':''}">${o.mode==='Pickup'?'🛍 Pickup':'🚚 Delivery'}</span></div>
+  <div class="due">${dueTxt}${rel?' · '+rel:''}</div>${tags}
+  <ul class="items">${items}</ul>
+  ${o.notes?`<div class="note">📝 ${esc(o.notes)}</div>`:''}
+  ${photos.length?`<div class="ph">${photos.map(u=>`<button data-a="photo" data-u="${esc(u)}"><img src="${esc(u)}" alt="Reference photo" loading="lazy"></button>`).join('')}</div>`:''}
+  ${go}${back}<div class="stp">${stp}</div></div>`}
+function render(){
+ const by={tobake:[],baking:[],ready:[],delivered:[]};
+ orders.filter(inRange).forEach(o=>by[stageOf(o)].push(o));
+ Object.keys(by).forEach(k=>by[k].sort((a,b)=>k==='delivered'?firstDue(b)-firstDue(a):firstDue(a)-firstDue(b)));
+ by.delivered=by.delivered.slice(0,15);
+ $('mtabs').innerHTML=COLS.map(([k,l])=>`<button class="chip ${mcol===k?'on':''}" data-m="${k}">${l} (${by[k].length})</button>`).join('');
+ $('board').innerHTML=(errMsg?`<div class="err" style="grid-column:1/-1">${esc(errMsg)}</div>`:'')+COLS.map(([k,l])=>`<section class="col ${mcol===k?'on':''}" data-c="${k}"><div class="ch"><span>${l}</span><span class="n">${by[k].length}</span></div><div class="cl">${by[k].length?by[k].map(o=>card(o,k)).join(''):'<div class="empty">Nothing here</div>'}</div></section>`).join('');
+}
+$('bar').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;range=b.dataset.r;[...$('bar').querySelectorAll('.chip')].forEach(x=>x.classList.toggle('on',x===b));render()});
+$('mtabs').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;mcol=b.dataset.m;render()});
+
+/* ---------- actions ---------- */
+async function setBaking(id,on){
+ if(on)baking.add(String(id));else baking.delete(String(id));
+ if(localBake){SS('cb_kds_bake',JSON.stringify([...baking]));return true}
+ try{const r=await api({action:'admin_wa_kds_set',id,on});if(r.ok)return true;toast(r.error||'Could not save');return false}catch(_){toast('No connection');return false}}
+async function setStatus(id,st){
+ const o=orders.find(x=>x.id===id);if(!o)return;
+ const prev=o.status;o.status=st;render();
+ try{const r=await api({action:'admin_status',id,status:st,notify:st!=='Confirmed'&&!!o.email});
+  if(r.ok){toast(id+' → '+st);if(st==='Ready'||st==='Delivered'){if(baking.has(String(id)))setBaking(id,false)}}
+  else{o.status=prev;render();toast(r.error||'Could not update')}}
+ catch(_){o.status=prev;render();toast('No connection. Change not saved.')}}
+$('board').addEventListener('click',async e=>{
+ const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.id;
+ if(a==='photo'){$('lbi').src=b.dataset.u;$('lb').classList.remove('hide');return}
+ if(b.disabled)return;
+ if(a==='s'){b.disabled=true;await setStatus(id,b.dataset.s);return}
+ if(a==='bake'){b.disabled=true;if(!await setBaking(id,true))baking.delete(String(id));render();return}
+ if(a==='unbake'){b.disabled=true;await setBaking(id,false);render();return}
+ if(a==='step'){
+  const s=b.dataset.s,o=orders.find(x=>x.id===id);if(!o)return;
+  if(s==='Baking'){if(['New','Confirmed'].includes(o.status)&&!confirm('Advance is not marked as paid yet. Start baking anyway?'))return;b.disabled=true;await setBaking(id,true);render();return}
+  if(s==='Advance received'){if(!confirm('Mark the 50% advance as received for '+id+'?'))return;b.disabled=true;try{const r=await api({action:'admin_wa_paid',id,kind:'adv'});if(r.ok){o.status=r.status||'Advance received';toast('Advance marked as received')}else toast(r.error||'Could not save the payment')}catch(_){toast('No connection')}render();return}
+  if(!confirm('Set '+id+' to “'+s+'”?'))return;b.disabled=true;await setStatus(id,s);return}
+});
+$('lbx').onclick=()=>$('lb').classList.add('hide');$('lb').onclick=e=>{if(e.target===$('lb'))$('lb').classList.add('hide')};
+
+/* ---------- clock and boot ---------- */
+setInterval(()=>{$('clock').textContent=new Date(nowMs()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});if(tok&&!busy&&!document.hidden&&!$('app').classList.contains('hide'))render()},30000);
+$('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+(async()=>{if(!tok){showLogin('');return}
+ try{const m=await api({action:'admin_me'});if(m.ok){await start();return}if(m.error==='2fa'){showLogin('');$('lErr').innerHTML='Extra security step needed. Open the <a href="admin.html">admin page</a>, finish it there, then reload this page.';return}}catch(_){}
+ tok='';SS('cb_admin_tok',null);showLogin('Please sign in.')})();
+</script>
+</body>
+</html>
