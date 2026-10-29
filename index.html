@@ -825,8 +825,9 @@ const festBanner=()=>{const F=FX();if(F.theme==='none')return;const b=$('banner'
 /* ---------- custom cake gallery (auto-sliding banner) ---------- */
 let GAL=[];try{GAL=JSON.parse(localStorage.getItem('cb_gal')||'[]')||[]}catch(_){}
 const galUrl=g=>API_URL+'?gi='+encodeURIComponent(g.id)+'&v='+(g.v||0);
+const galSt=g=>{if(!g||(g.fx==null&&g.fy==null&&!(g.z>1)))return '';const x=Math.min(100,Math.max(0,g.fx==null?50:+g.fx||0)),y=Math.min(100,Math.max(0,g.fy==null?45:+g.fy||0)),z=Math.min(3,Math.max(1,+g.z||1));return ` style="object-position:${x}% ${y}%${z>1?`;transform:scale(${z});transform-origin:${x}% ${y}%`:''}"`};
 function galHtml(title,cta){if(!GAL.length)return '';
-  return `<div class="gal"><div class="hs"><span>${title}</span>${cta?'<button data-go="custom">Custom cakes ›</button>':''}</div><div class="gl-tr">${GAL.map((g,i)=>`<figure class="gs" data-gz="${i}"><img src="${esc(galUrl(g))}" alt="${esc(g.cap||'Custom theme cake')}" ${i?'loading="lazy"':''}>${g.cap?`<figcaption>${esc(g.cap)}</figcaption>`:''}</figure>`).join('')}</div>${GAL.length>1?`<div class="gl-dots">${GAL.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div>`:''}</div>`}
+  return `<div class="gal"><div class="hs"><span>${title}</span>${cta?'<button data-go="custom">Custom cakes ›</button>':''}</div><div class="gl-tr">${GAL.map((g,i)=>`<figure class="gs" data-gz="${i}"><img src="${esc(galUrl(g))}" alt="${esc(g.cap||'Custom theme cake')}"${galSt(g)} ${i?'loading="lazy"':''}>${g.cap?`<figcaption>${esc(g.cap)}</figcaption>`:''}</figure>`).join('')}</div>${GAL.length>1?`<div class="gl-dots">${GAL.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div>`:''}</div>`}
 const galIdx=tr=>{const k=[...tr.children];let b=0,d=1e9;const c=tr.scrollLeft+tr.clientWidth/2;k.forEach((x,i)=>{const m=Math.abs(x.offsetLeft+x.clientWidth/2-c);if(m<d){d=m;b=i}});return b};
 const galGo=(tr,i)=>{const x=tr.children[i];if(x)tr.scrollTo({left:x.offsetLeft-(tr.clientWidth-x.clientWidth)/2,behavior:'smooth'})};
 let galHold=0;
