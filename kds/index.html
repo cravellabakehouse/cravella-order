@@ -149,6 +149,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const ST=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const SS=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
 const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const KDSV='3';
 let tok=ST('cb_admin_tok')||'',orders=[],baking=new Set(),skew=0,range='today',mcol='tobake',known=null,busy=0,pollT=0,soundOn=ST('cb_kds_sound')==='1',actx=null,localBake=false,errMsg='';
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
 async function api(p){const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token:tok},p))});return res.json()}
@@ -196,22 +197,23 @@ async function load(first){
   errMsg='';
   const ids=new Set(orders.map(o=>o.id));
   if(known){const fresh=orders.filter(o=>!known.has(o.id)&&o.status==='New');if(fresh.length){beep();newPop(fresh)}}
+  if(!known){const w=orders.filter(o=>o.status==='New');if(w.length)newPop(w,true)}
   known=ids;
   $('upd').textContent='Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
   render();
  }catch(_){errMsg='No connection. Retrying…';render()}finally{busy=0}
 }
-async function start(){$('login').classList.add('hide');$('app').classList.remove('hide');setSound();await load(true);clearInterval(pollT);pollT=setInterval(()=>{if(!document.hidden)load()},30000)}
+async function start(){$('login').classList.add('hide');$('app').classList.remove('hide');setSound();await load(true);clearInterval(pollT);pollT=setInterval(()=>load(),10000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tok)load()});
 $('ref').onclick=()=>load();
 
 /* ---------- sound ---------- */
 function ctx(){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx}catch(_){return null}}
 let popIds=[],popT=0;
-function newPop(list){list.forEach(o=>{if(!popIds.some(x=>x.id===o.id))popIds.push(o)});const el=$('npop');
+function newPop(list,quiet){list.forEach(o=>{if(!popIds.some(x=>x.id===o.id))popIds.push(o)});const el=$('npop');
  const one=o=>{const f=dueList(o)[0]||{d:'',t:''};const fn=String(o.name||'').trim().split(/\s+/)[0]||'';return esc(o.id)+(fn?' · '+esc(fn):'')+' · '+esc(o.mode||'')+' · due '+fmtD(f.d)+', '+esc(f.t)};
  $('ntxt').innerHTML='<b>'+(popIds.length>1?popIds.length+' new orders':'New order')+'</b>'+popIds.map(o=>'<span>'+one(o)+'</span>').join('');
- el.classList.remove('hide');clearInterval(popT);popT=setInterval(beep,15000)}
+ el.classList.remove('hide');clearInterval(popT);if(!quiet)popT=setInterval(beep,15000)}
 $('npop').onclick=()=>{popIds=[];clearInterval(popT);$('npop').classList.add('hide')};
 function beep(){if(!soundOn)return;const c=ctx();if(!c)return;[[880,0],[1175,.18],[880,.36]].forEach(([f,t])=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.35,c.currentTime+t+.03);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+t+.16);o.connect(g);g.connect(c.destination);o.start(c.currentTime+t);o.stop(c.currentTime+t+.18)})}
 function setSound(){$('snd').textContent=soundOn?'🔔 Sound on':'🔕 Sound off';$('snd').classList.toggle('ol',!soundOn)}
@@ -221,7 +223,7 @@ document.addEventListener('click',()=>{if(soundOn)ctx()},{once:true});
 /* ---------- board ---------- */
 const COLS=[['tobake','To bake'],['baking','Baking'],['ready','Ready'],['delivered','Delivered']];
 function stageOf(o){if(o.status==='Delivered')return 'delivered';if(o.status==='Ready')return 'ready';if(baking.has(String(o.id)))return 'baking';return 'tobake'}
-function inRange(o){if(range==='all')return true;const d=dueList(o),t=ymd(new Date(nowMs())),tm=ymd(new Date(nowMs()+864e5)),w=ymd(new Date(nowMs()+7*864e5));
+function inRange(o){if(range==='all'||o.status==='New')return true;const d=dueList(o),t=ymd(new Date(nowMs())),tm=ymd(new Date(nowMs()+864e5)),w=ymd(new Date(nowMs()+7*864e5));
  const late=o.status!=='Delivered'&&d.length&&d[0].ms<nowMs()&&d[0].d<t;
  const days=d.map(x=>x.d);
  if(range==='today')return late||days.includes(t);
@@ -299,6 +301,8 @@ $('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',min
 (async()=>{if(!tok){showLogin('');return}
  try{const m=await api({action:'admin_me'});if(m.ok){await start();return}if(m.error==='2fa'){showLogin('');$('lErr').innerHTML='Extra security step needed. Open the <a href="../admin.html">admin page</a>, finish it there, then reload this page.';return}}catch(_){}
  tok='';SS('cb_admin_tok',null);showLogin('Please sign in.')})();
+
+(async()=>{try{const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text();const m=t.match(/KDSV='(\d+)'/);if(m&&m[1]!==KDSV&&!sessionStorage.getItem('kdsr'+m[1])){sessionStorage.setItem('kdsr'+m[1],'1');setTimeout(()=>location.reload(),1500)}}catch(_){}})();
 </script>
 </body>
 </html>
