@@ -1246,6 +1246,8 @@ $('panel').addEventListener('click',async e=>{
   if(e.target.closest('[data-acsv]')){if(D.acc&&D.acc.length)accCsv();else toast('No accounts to download yet');return}
   if(e.target.closest('#cCsv')){custCsv();return}
   const cpb=e.target.closest('[data-cp]');if(cpb&&!e.target.closest('a,button')){openCust(cpb.dataset.cp);return}
+  if(e.target.closest('#balTog')){const v=D.bq;if(!v)return;try{const r=await api({action:'admin_wa_balreq_set',on:!v.on});if(r.ok){D.bq={on:r.on};toast(r.on?'Balance requests on':'Balance requests off')}else toast(r.error||'Could not change')}catch(_){toast('No connection')}const y=scrollY;render();scrollTo(0,y);return}
+  if(e.target.closest('#balTpl')){e.preventDefault();try{const r=await api({action:'admin_wa_balreq_tpl'});toast(r.ok?'Template sent to Meta: '+r.status:(r.error||'Could not create'))}catch(_){toast('No connection')}return}
   if(e.target.closest('#rvTog')){const v=D.rv2;if(!v)return;try{const r=await api({action:'admin_wa_rv_set',on:!v.on,url:($('rvUrl')&&$('rvUrl').value.trim())||v.url});if(r.ok){D.rv2={on:r.on,url:r.url};toast(r.on?'Review requests on':'Review requests off')}else toast(r.error||'Could not change')}catch(_){toast('No connection')}const y=scrollY;render();scrollTo(0,y);return}
   if(e.target.closest('#rvSaveU')){const v=D.rv2;if(!v)return;try{const r=await api({action:'admin_wa_rv_set',on:v.on,url:$('rvUrl').value.trim()});if(r.ok){D.rv2={on:r.on,url:r.url};toast('Review link saved')}else toast(r.error||'Could not save')}catch(_){toast('No connection')}return}
   if(e.target.closest('#rvTpl')){e.preventDefault();try{const r=await api({action:'admin_wa_rv_tpl'});toast(r.ok?'Template sent to Meta: '+r.status:(r.error||'Could not create'))}catch(_){toast('No connection')}return}
@@ -1536,7 +1538,7 @@ $('panel').addEventListener('click',async e=>{
   if(e.target.closest('#offSave')){const b=e.target.closest('#offSave');b.disabled=true;
     try{const r=await api({action:'admin_offers_save',offers:offRead()});if(r.ok){D.off=r.offers;toast('Offers saved. They are live on the website.')}else toast(r.error||'Could not save');render()}catch(_){toast('No connection');b.disabled=false}}
 });
-async function loadWa(){if(D.waBusy)return;D.waBusy=1;try{const r=await api({action:'admin_wa_get'});if(r.ok)D.wa=r;else D.waF=Date.now();try{const v=await api({action:'admin_wa_rv_get'});if(v.ok)D.rv2={on:v.on,url:v.url}}catch(_){}}catch(_){D.waF=Date.now()}D.waBusy=0;if((tab==='settings'||tab==='home')&&!dirty){const y=scrollY;render();scrollTo(0,y)}}
+async function loadWa(){if(D.waBusy)return;D.waBusy=1;try{const r=await api({action:'admin_wa_get'});if(r.ok)D.wa=r;else D.waF=Date.now();try{const v=await api({action:'admin_wa_rv_get'});if(v.ok)D.rv2={on:v.on,url:v.url}}catch(_){}try{const v=await api({action:'admin_wa_balreq_get'});if(v.ok)D.bq={on:v.on}}catch(_){}}catch(_){D.waF=Date.now()}D.waBusy=0;if((tab==='settings'||tab==='home')&&!dirty){const y=scrollY;render();scrollTo(0,y)}}
 const tAgo=ms=>new Date(ms).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
 function waCard(){const w=D.wa;
   if(!w)return `<div class="sec">WhatsApp</div><div class="card sx"><div class="hint" style="margin:0">Loading…</div></div>`;
@@ -1545,6 +1547,9 @@ function waCard(){const w=D.wa;
   <div class="hist" style="display:block"><div class="h"><span>Access token</span><b>${w.hasToken?'✅ Set':'❌ Missing'}</b></div><div class="h"><span>Sending number ID</span><b>${esc(w.phone)}</b></div></div>
   <label class="f">Send a test message</label><div class="row" style="gap:8px"><input class="i" id="waTo" type="tel" inputmode="tel" placeholder="Phone number" maxlength="20"><button class="btn ol sm" id="waTest">Send test</button></div>
   ${w.log&&w.log.length?`<div class="hist" style="display:block"><div class="m"><b>Recent messages</b></div>${w.log.slice(0,8).map(l=>`<div class="h"><span>${esc(tAgo(l.t))} · ${esc(l.to)} · ${esc(l.tpl.replace('cravella_order_',''))}${l.ok?'':`<div class="hint" style="margin-top:2px;color:var(--bad,#b3261e)">${esc(l.err)}</div>`}</span><b>${l.ok?'✓':'✕'}</b></div>`).join('')}</div>`:''}</details></div>${rvCardHtml()}`}
+function balCardHtml(){const v=D.bq;if(!v)return '';
+  return `<div class="card sx" id="balReq"><div class="st-r"><div class="st-l"><b>Ask for the balance when an order is ready</b><small>${v.on?'<span class="st-ok">● On</span> · sent on WhatsApp when you tap Mark ready':'<span class="st-off">● Off</span> · nothing is sent'}</small></div><button class="btn ${v.on?'ol':''} sm" id="balTog">${v.on?'Turn off':'Turn on'}</button></div>
+  <div class="hint" style="margin-top:8px">Only for orders where the 50% advance is paid and a balance is left. It says the amount due and the UPI number. Sent once per order, only to the phone number on that order. Needs the WhatsApp switch to be on. Tap <a href="#" id="balTpl">create the message template</a> once.</div></div>`}
 function rvCardHtml(){const v=D.rv2;if(!v)return '';
   return `<div class="card sx" id="rvReq"><div class="st-r"><div class="st-l"><b>Ask for a Google review when delivered</b><small>${v.on?'<span class="st-ok">● On</span> · sent on WhatsApp when you tap Mark delivered':'<span class="st-off">● Off</span> · nothing is sent'}</small></div><button class="btn ${v.on?'ol':''} sm" id="rvTog">${v.on?'Turn off':'Turn on'}</button></div>
   <label class="f">Your Google review link</label><div class="row" style="gap:8px"><input class="i" id="rvUrl" type="url" inputmode="url" placeholder="https://g.page/r/…/review" value="${esc(v.url)}"><button class="btn ol sm" id="rvSaveU">Save link</button></div>
@@ -1598,7 +1603,7 @@ function waHero(){
 function waTabHtml(){
   const chips=[['inbox','💬 Chats'],['ads','📣 Offers'],['staff','🔔 Alerts'],['send','⚙️ Setup']].map(([k,n])=>`<button class="chip ${WS.sub===k?'on':''}" data-wsub="${k}">${n}</button>`).join(' ');
   let h=`<div class="hd"><div><h2>WhatsApp</h2><small>${({inbox:'Reply to customers',ads:'Send offers to customers who agreed',staff:'Alerts when a new order arrives',send:'Balance, messages and sign-in'})[WS.sub]||''}</small></div></div>${waHero()}<div class="chips" style="margin:12px 0">${chips}</div>`;
-  const w=D.wa;if(WS.sub==='send'){h+=waBalHtml();h+=waWelHtml();h+=waLoginHtml();h+=rvCardHtml();h+=waTechHtml()}
+  const w=D.wa;if(WS.sub==='send'){h+=waBalHtml();h+=waWelHtml();h+=waLoginHtml();h+=balCardHtml();h+=rvCardHtml();h+=waTechHtml()}
   if(w&&(!w.hasVerify||!w.hasSecret)&&WS.sub==='inbox')h+=`<div class="card"><b>Inbox needs a one-time setup</b><div class="hint">To receive customer replies, Meta must call your Worker. Add two secrets in Cloudflare (Worker → Settings → Variables and Secrets): <b>WA_VERIFY</b> (any word you choose) and <b>WA_APP_SECRET</b> (Meta app → Settings → Basic → App secret). Then in Meta → WhatsApp → Configuration set the callback URL to <b>${esc(API_URL)}</b> with your verify word, and subscribe to <b>messages</b>. Status: ${w.hasVerify?'✅':'❌'} verify word · ${w.hasSecret?'✅':'❌'} app secret</div></div>`;
   if(WS.sub==='inbox')h+=waInboxHtml();else if(WS.sub==='send')h+=waSendHtml();else if(WS.sub==='staff')h+=waStaffHtml();else h+=waAdsHtml();
   return h}
