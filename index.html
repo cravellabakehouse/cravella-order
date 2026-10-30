@@ -518,6 +518,7 @@ function itemsPayload(){return[...S.cakes.map(l=>({t:'cake',id:l.id,cream:l.crea
 
 /* ---------- menu rendering ---------- */
 function renderTabs(){
+  spyKey=null;
   const nC=S.cakes.filter(l=>{const c=findCake(l.id);return c&&c.custom}).length,cnt={cakes:S.cakes.length-nC,custom:nC,cupcakes:0,muffins:0,cookies:0,brownies:0};
   for(const id in S.pc)if(S.pc[id]){const k=id.startsWith('cup')?'cupcakes':id.startsWith('muf')?'muffins':'brownies';cnt[k]++}
   for(const id in S.cookie)if(S.cookie[id])cnt.cookies++;
@@ -683,6 +684,15 @@ function renderAll(keepScroll){const y=scrollY;renderTabs();renderPanel();render
 let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1400)}
 
 /* ---------- menu events ---------- */
+/* scroll-spy: on the home page the top tab follows the section being read */
+var spyKey=null,spyBusy=false;
+function spyRun(){spyBusy=false;if(S.tab!=='home'||(S.q&&S.q.trim()))return;const tb=$('tabs');if(!tb)return;
+  const line=tb.getBoundingClientRect().bottom+28;let want='home';
+  document.querySelectorAll('#panel .hs').forEach(h=>{if(h.getBoundingClientRect().top<=line){const g=h.querySelector('[data-go]');const k=g&&g.dataset.go;want=k&&TABS.some(t=>t[0]===k)?k:'home'}});
+  if(want===spyKey)return;spyKey=want;let on=null;
+  tb.querySelectorAll('.tab').forEach(b=>{const o=b.dataset.tab===want;b.classList.toggle('on',o);if(o)on=b});
+  if(on){try{tb.scrollTo({left:Math.max(0,on.offsetLeft-(tb.clientWidth-on.offsetWidth)/2),behavior:'smooth'})}catch(_){}}}
+addEventListener('scroll',()=>{if(!spyBusy){spyBusy=true;requestAnimationFrame(spyRun)}},{passive:true});
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;vev('tab',S.tab,b.textContent.trim().slice(0,40));renderTabs();renderPanel();scrollTo(0,0)});
 $('panel').addEventListener('click',e=>{
   const card=e.target.closest('.card');if(!card)return;
