@@ -118,7 +118,7 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .hint{font-size:13px;color:var(--mut);margin-top:6px}
 .spl{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-size:14px;line-height:1.35;cursor:pointer}.spl input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:var(--brown,#3b2416)}
-.how{margin:10px 0 8px;padding-left:20px;font-size:14px;line-height:1.45}.how li{margin:3px 0}
+.how{margin:10px 0 8px;padding-left:24px;font-size:16.5px;line-height:1.5}.how li{margin:7px 0}
 .inord{font-size:12px;font-weight:600;color:var(--ok);margin-top:3px}.incart{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line,#e6d6c2)}.incart .line{padding:6px 0}
 .banner{background:#fff4e4;color:#7a5a30;border-bottom:1px solid #f0dcb8;text-align:center;font-size:14px;font-weight:600;padding:9px 16px;line-height:1.35}.banner:empty{display:none}
 .soldout{color:var(--mut);font-weight:700;font-size:13px;padding:6px 10px;border:1px dashed var(--line);border-radius:10px}
@@ -628,7 +628,7 @@ function renderPanel(){
   }else if(S.tab==='custom'){
     const c=MENU.cakes.find(x=>x.custom);
     h+=galHtml('Custom theme cakes')+`<div class="sec">Custom / theme cake</div><div class="card"><div class="t">Designed just for you</div><div class="d">Starts from ${inr(c.creams[0].prices[0])} per kg. Share a reference of your choice and we'll check if it's possible within your budget.</div>
-    <ol class="how"><li>Choose a size and tap Add.</li><li>At checkout, upload a sample reference photo of the cake you like and tell us your budget.</li><li>We'll check if it's possible within your budget and discuss the design with you on WhatsApp.</li><li>50% advance to book, and the remaining 50% on delivery.</li></ol>
+    <ol class="how"><li>Choose a size and tap Add.</li><li>At checkout, upload a sample reference photo of the cake you like and tell us your budget.</li><li>We'll check if it's possible within your budget and discuss the design with you on WhatsApp.</li><li>50% advance to book, and the remaining 50% on delivery.</li><li>No whipped cream, no palm oil, no preservatives.</li><li>We use premium quality fondant for decoration.</li></ol>
     <div class="d"><b>2 days' notice</b> needed for custom cakes.</div></div>`+cakeCard(c);
   }else if(S.tab==='cupcakes'){h+=`<div class="sec">Cupcakes</div>`+MENU.cupcakes.map(d=>pcCard(d,'cupcakes')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
   else if(S.tab==='muffins'){h+=`<div class="sec">Muffins</div>`+MENU.muffins.map(d=>pcCard(d,'muffins')).join('')+`<div class="note">Sold by the box of 6. Each + adds one box (6 pieces). Bakes need 1 day's notice.</div>`}
