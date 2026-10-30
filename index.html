@@ -688,7 +688,7 @@ let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on'
 /* scroll-spy: on the home page the top tab follows the section being read */
 var spyKey=null,spyBusy=false;
 function spyRun(){spyBusy=false;if(S.tab!=='home'||(S.q&&S.q.trim()))return;const tb=$('tabs');if(!tb)return;
-  const line=tb.getBoundingClientRect().bottom+28;let want='home';
+  const line=tb.getBoundingClientRect().bottom+120;let want='home';
   document.querySelectorAll('#panel .hs').forEach(h=>{if(h.getBoundingClientRect().top<=line){const g=h.querySelector('[data-go]');const k=g&&g.dataset.go;want=k&&TABS.some(t=>t[0]===k)?k:'home'}});
   if(want===spyKey)return;spyKey=want;let on=null;
   tb.querySelectorAll('.tab').forEach(b=>{const o=b.dataset.tab===want;b.classList.toggle('on',o);if(o)on=b});
