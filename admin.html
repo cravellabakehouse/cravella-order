@@ -986,11 +986,18 @@ function epModal(){const o=EP.o;if(!o)return;const ph=String(o.phone).replace(/\
   <div class="hint" style="margin:6px 0 0">The PDF goes on WhatsApp only to this order's mobile number. Test copies go only to your three approved numbers.</div>`:''}</div>`;m.classList.remove('hide')}
 async function payMark(o,k){if(k!=='adv'&&k!=='full')return;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:k});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;saveCache();const y=scrollY;render();scrollTo(0,y);
   toast('Saved. Sending the confirmation PDF…');const p=await epMake(o);const s=await api({action:'admin_wa_send_pdf',id:o.id,pdf:p.b64,conf:1});toast(s.ok?'Confirmation PDF sent to '+String(o.name).split(' ')[0]+' on WhatsApp':'Payment saved, but the PDF was not sent: '+(s.error||'error'))}catch(_){toast('No connection')}}
-async function payLate(o){if(!confirm('Mark the '+inr(o.total-Math.round(o.total/2))+' balance as received for '+o.id+'? The order stays Delivered and nothing is sent to the customer.'))return;
-  try{const r=await api({action:'admin_wa_paid',id:o.id,kind:'full'});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;
-    if(r.status&&r.status!=='Delivered'){const s=await api({action:'admin_status',id:o.id,status:'Delivered',notify:false});o.status=s.ok?'Delivered':r.status}else o.status='Delivered';
-    saveCache();const y=scrollY;render();scrollTo(0,y);toast('Balance marked received · '+o.id+' is paid in full')}catch(_){toast('No connection')}}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-paylate]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.paylate);if(o)payLate(o)},true);
+async function payLate(o,btn){if(D.plBusy)return;if(!confirm('Mark the '+inr(o.total-Math.round(o.total/2))+' balance as received for '+o.id+'? The order stays Delivered and nothing is sent to the customer.'))return;
+  D.plBusy=1;if(btn){btn.disabled=true}toast('Saving…');
+  const fresh=async()=>{try{const q=await api({action:'admin_orders'});return q.ok?(q.orders||[]).find(x=>x.id===o.id):null}catch(_){return null}};
+  try{let r=null;try{r=await api({action:'admin_wa_paid',id:o.id,kind:'full'})}catch(_){}
+    // the server sometimes saves the payment and still reports an error, so check what actually got saved
+    const f=await fresh();
+    if(!(f&&f.paid&&f.paid.k==='full')){toast((r&&r.error)||'Could not save the payment. Please try again.');return}
+    o.paid=f.paid;o.status=f.status;
+    if(f.status!=='Delivered'){try{const s=await api({action:'admin_status',id:o.id,status:'Delivered',notify:false});if(s.ok)o.status='Delivered'}catch(_){}}
+    saveCache();const y=scrollY;render();scrollTo(0,y);toast('Balance marked received · '+o.id+' is paid in full')}
+  finally{D.plBusy=0;if(btn)btn.disabled=false}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-paylate]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.paylate);if(o)payLate(o,b)},true);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-payfull]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.payfull);if(o){b.disabled=true;payMark(o,'full')}},true);
 document.addEventListener('click',async e=>{const t=e.target.closest('[data-epdf],[data-epx],[data-epsend],[data-epdl]');if(!t)return;e.preventDefault();e.stopPropagation();
   if(t.dataset.epx){$('epM').classList.add('hide');return}
