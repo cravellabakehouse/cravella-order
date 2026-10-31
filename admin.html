@@ -689,7 +689,7 @@ async function waPoll(first){if(!tok||document.hidden&&!first)return;try{const r
       try{if('Notification' in window&&Notification.permission==='granted'){const nt=new Notification('New WhatsApp message',{body:'A customer just messaged Cravella. Tap to reply.',icon:'icon-192.png',tag:'cb-chat'});nt.onclick=()=>{window.focus();goTab('wa');nt.close()}}}catch(_){}}
     try{localStorage.setItem('cb_wal',String(r.latest))}catch(_){}}
   if(prevN!==r.n&&tab==='home')render()}catch(_){}}
-setTimeout(()=>waPoll(true),2500);setInterval(()=>waPoll(false),40000);
+setTimeout(()=>waPoll(true),2500);setInterval(()=>{if(tab!=='wa')waPoll(false)},15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)waPoll(false)});
 (function(){const tick=()=>{const c=$('clk');if(!c)return;const d=new Date();c.textContent=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})};tick();setInterval(tick,15000)})();
 const csvQ=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
@@ -1658,13 +1658,20 @@ function waTechHtml(){const w=D.wa;if(!w)return '';
 /* ---- WhatsApp tab: inbox, send, ads ---- */
 const WQ=[['Bengaluru only','Hi, thank you for your interest. We deliver only within Bengaluru, Karnataka. Pickup from our kitchen is available if that works for you.'],['Pickup option','You can also pick up your order from us. Tell us the date and time that suits you and we will confirm it.'],['Delivery fee','Delivery charges are extra and depend on the distance. Please share your pincode and we will confirm the fee on WhatsApp.']];
 const WS={sub:'inbox',thr:null,draft:'',ad:{busy:0,msg:''}};
-async function waLoad(k,act,extra,put){if(D[k+'B'])return;D[k+'B']=1;try{const r=await api(Object.assign({action:act},extra||{}));if(r.ok)D[k]=r;else{D[k+'F']=Date.now();D[k+'E']=r.error||'Could not load'}}catch(_){D[k+'F']=Date.now();D[k+'E']='No connection'}D[k+'B']=0;if(tab==='wa'&&!WS.typing){const y=scrollY;render();scrollTo(0,y)}}
+async function waLoad(k,act,extra,put){if(D[k+'B'])return;D[k+'B']=1;let same=false;try{const r=await api(Object.assign({action:act},extra||{}));if(r.ok){if(k==='wThr'&&D.wThr&&D.wThr.pend&&r.phone===D.wThr.phone){const ids=new Set((r.msgs||[]).filter(m=>m.dir==='out').map(m=>m.body));r.pend=D.wThr.pend.filter(m=>m.status==='failed'||(!ids.has(m.body)&&Date.now()-m.t<9e4));r.msgs=(r.msgs||[]).concat(r.pend);if(!r.pend.length)delete r.pend}
+    same=!!D[k]&&JSON.stringify(D[k])===JSON.stringify(r);D[k]=r}else{D[k+'F']=Date.now();D[k+'E']=r.error||'Could not load'}}catch(_){D[k+'F']=Date.now();D[k+'E']='No connection'}D[k+'B']=0;
+  if(tab!=='wa'||same)return;if(WS.typing){if(k==='wThr')wcvSwapMsgs();return}const y=scrollY;render();scrollTo(0,y)}
+function wcvSwapMsgs(){const m=document.querySelector('.wcv-msgs');if(!m)return;const st=m.scrollHeight-m.scrollTop-m.clientHeight<80,tp=m.scrollTop;const d=document.createElement('div');d.innerHTML=waTabHtml();const n=d.querySelector('.wcv-msgs');if(!n)return;m.innerHTML=n.innerHTML;m.scrollTop=st?m.scrollHeight:tp}
+/* fast refresh while the WhatsApp tab is open: check for new messages every 4s (tiny request), reload the open chat when something changed */
+setInterval(async()=>{if(!tok||document.hidden||tab!=='wa'||WS.sub!=='inbox')return;await waPoll(false);const ch=(D.waLatest||0)!==D.wLoopL,now=Date.now();D.wLoopL=D.waLatest||0;
+  if(WS.thr){if(ch||now-(D.wThrAt||0)>12000){D.wThrAt=now;waLoad('wThr','admin_wa_thread',{phone:WS.thr})}}
+  else if(ch||now-(D.wInbAt||0)>15000){D.wInbAt=now;waLoad('wInb','admin_wa_inbox')}},4000);
 function waTabLoad(){if(!D.wa&&!D.waBusy&&nf('wa'))loadWa();
   if(!WS.thr&&!D.wInb&&nf('wInb'))waLoad('wInb','admin_wa_inbox');
   if(WS.sub!=='inbox'&&!D.wTpl&&nf('wTpl'))waLoad('wTpl','admin_wa_tpl_list');
   if(WS.sub==='staff'&&!D.wStf&&nf('wStf'))waLoad('wStf','admin_wa_staff_get');
   if(WS.sub==='ads'){if(!D.wOpt&&nf('wOpt'))waLoad('wOpt','admin_wa_optin_get');if(!D.wAds&&nf('wAds'))waLoad('wAds','admin_wa_ads_get')}}
-const waSt=s=>({sent:'✓',delivered:'✓✓',read:'✓✓',failed:'✕'}[s]||'');
+const waSt=s=>({sending:'🕓',sent:'✓',delivered:'✓✓',read:'✓✓',failed:'✕'}[s]||'');
 const HX_P={globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',alert:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',cal:NI_P.today,orders:NI_P.orders,stock:NI_P.stock,people:NI_P.cust,chart:NI_P.vis,wa:NI_P.wa,link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',dots:'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',up:'<path d="m18 15-6-6-6 6"/>',down:'<path d="m6 9 6 6 6-6"/>'};
 const hxSvg=k=>`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${HX_P[k]||''}</svg>`;
 const SRC_I={google:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.1a11 11 0 0 0 0 9.8z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2.1 7.1l3.7 2.8C6.7 7.3 9.1 5.4 12 5.4z"/></svg>',instagram:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".4" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="url(#igg)"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="#fff" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.2" fill="#fff"/></svg>',facebook:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#1877F2"/><path fill="#fff" d="M13.4 21v-6.9h2.3l.4-2.7h-2.7V9.7c0-.8.2-1.3 1.4-1.3h1.4V6c-.3 0-1.1-.1-2.1-.1-2.1 0-3.5 1.3-3.5 3.6v2h-2.3v2.7h2.3V21z"/></svg>'};
@@ -1915,7 +1922,15 @@ $('panel').addEventListener('click',async e=>{
     toast('Saved');render()}catch(_){$('wsfMsg')&&($('wsfMsg').textContent='No connection');u()}return}
   if(id==='wRef'){D.wInb=null;D.wInbF=0;render();waTabLoad();return}
   if(id==='wTplRef'){D.wTpl=null;D.wTplF=0;render();waTabLoad();return}
-  if(id==='wReply'){const t=($('wTxt').value||'').trim();if(!t){toast('Type a message');return}const u=B(e.target);try{const r=await api(Object.assign({action:'admin_wa_reply',phone:WS.thr,text:t},WS.rep?{ctx:WS.rep}:{}));if(r.ok){WS.draft='';WS.rep=null;WS.emo=0;D.wThr=null;render();waLoad('wThr','admin_wa_thread',{phone:WS.thr})}else{toast(r.error||'Could not send');u()}}catch(_){toast('No connection');u()}return}
+  if(id==='wReply'){const t=($('wTxt').value||'').trim();if(!t){toast('Type a message');return}const ph=WS.thr,ctx=WS.rep,th=D.wThr;
+    const pm={id:'tmp'+Date.now(),dir:'out',kind:'text',body:t,t:Date.now(),status:'sending',ref:ctx||undefined};
+    if(th&&th.msgs){th.msgs.push(pm);(th.pend=th.pend||[]).push(pm)}
+    WS.draft='';WS.rep=null;WS.emo=0;WS.stick=true;render();const x=$('wTxt');if(x)x.focus();
+    try{const r=await api(Object.assign({action:'admin_wa_reply',phone:ph,text:t},ctx?{ctx}:{}));
+      if(r.ok){pm.status='sent';if(WS.thr===ph){D.wThrAt=Date.now();waLoad('wThr','admin_wa_thread',{phone:ph})}}
+      else{pm.status='failed';pm.err=r.error||'Could not send';toast(pm.err);if(!WS.draft)WS.draft=t}}
+    catch(_){pm.status='failed';pm.err='No connection';toast('No connection');if(!WS.draft)WS.draft=t}
+    if(tab==='wa'&&WS.thr===ph){if(WS.typing)wcvSwapMsgs();else render()}return}
   if(id==='wsGo'){const s=waSel('wsT'),to=($('wsTo').value||'').trim();if(!s){toast('Pick a template');return}if(!to){toast('Enter a phone number');return}const u=B(e.target);try{const r=await api({action:'admin_wa_send_tpl',to,tpl:s.tpl,lang:s.lang,params:waCsv($('wsP').value)});$('wsMsg').textContent=r.ok?'Sent ✓':(r.error||'Could not send')}catch(_){$('wsMsg').textContent='No connection'}u();return}
   if(id==='woGo'){const t=$('woAdd').value;if(!t.trim()){toast('Add at least one customer');return}const u=B(e.target);try{const r=await api({action:'admin_wa_optin_add',text:t,consent:$('woOk').checked});if(r.ok){D.wOpt=null;D.wOptF=0;toast('Added '+r.added+(r.bad?', skipped '+r.bad:''));render();waTabLoad()}else{$('woMsg').textContent=r.error||'Could not add';u()}}catch(_){$('woMsg').textContent='No connection';u()}return}
   if(id==='wtGo'){const u=B(e.target);try{const r=await api({action:'admin_wa_tpl_create',name:$('wtN').value.trim(),body:$('wtB').value,cat:'MARKETING'});if(r.ok){toast('Sent to Meta for approval');D.wTpl=null;D.wTplF=0;render();waTabLoad()}else{$('wtMsg').textContent=r.error||'Could not submit';u()}}catch(_){$('wtMsg').textContent='No connection';u()}return}
