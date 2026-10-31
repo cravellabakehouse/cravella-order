@@ -872,8 +872,8 @@ function moneyHtml(o,f){
   else{
     rows=row(f.advPaid,'Advance 50%',(f.advPaid?'Received'+(o.paid&&o.paid.k==='adv'&&pd?' '+pd:''):'Not received yet')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(f.adv));
     const bs=f.balShots.length?' · '+shotBtns(f.balShots,'screenshot'):'';
-    const canMark=!f.full&&f.advPaid&&!f.cx&&!dl&&o.status!=='Ready';
-    rows+=row(f.full,'Balance',(f.full?'Received':dl?'Not marked as received':'Not received yet')+bs,f.full?inr(o.total-f.adv):canMark?`<button class="btn sm" data-payfull="${esc(o.id)}">Mark received</button>`:inr(o.total-f.adv));
+    const canMark=!f.full&&f.advPaid&&!f.cx&&o.status!=='Ready';
+    rows+=row(f.full,'Balance',(f.full?'Received':dl?'Not marked as received':'Not received yet')+bs,f.full?inr(o.total-f.adv):canMark?`<button class="btn sm" ${dl?'data-paylate':'data-payfull'}="${esc(o.id)}">Mark received</button>`:inr(o.total-f.adv));
   }
   return `<div class="pm"><div class="pm-top"><div><small>Total</small><b>${inr(o.total)}</b></div><div class="g"><small>Paid</small><b>${inr(f.paidAmt)}</b></div><div class="${f.due?'d':'g'}"><small>Still due</small><b>${inr(f.due)}</b></div></div>
   <div class="pm-bar"><i style="width:${pct}%"></i></div>${rows}</div>${pk?'':'<div class="pm-h">Porter delivery charge is at actuals, collected separately.</div>'}`
@@ -886,7 +886,7 @@ function stepsHtml(o,f){
     {l:'Confirmed',s:'Confirmed',done:ix>=1,tag:'you',m:ix>=1?'':'Confirm, then send the payment request'},
     {l:'Advance paid',s:'Advance received',done:ix>=2||f.full,tag:'you',m:f.once?'Paid in full · '+inr(o.total):(ix>=2?inr(f.adv)+' received':'Check the screenshot, then tap')},
     {l:'Ready',s:'Ready',done:ix>=3,tag:bqOn&&!f.once?'auto':'you',m:f.balT?'Balance request sent '+tShort(f.balT):bqOn&&!f.full?'Balance request goes out by itself':''},
-    {l:'Balance paid',pay:1,done:f.full,tag:'you',m:f.full?'Received':dl?'Not marked as received':'Check the screenshot, then tap'},
+    {l:'Balance paid',pay:1,done:f.full,tag:'you',m:f.full?'Received':dl?'Tap to mark the balance received':'Check the screenshot, then tap'},
     pk?null:{l:'Send with Porter',done:dl,tag:'you',m:dl?'':'Book Porter once fully paid'},
     {l:pk?'Collected':'Delivered',s:'Delivered',done:dl,tag:rvOn?'auto':'you',m:f.rvT?'Google review request sent '+tShort(f.rvT):rvOn?'Thank-you + Google review link goes out by itself':''}
   ].filter(Boolean);
@@ -894,8 +894,8 @@ function stepsHtml(o,f){
   let cur=-1;if(!f.cx&&!dl)cur=S.findIndex(x=>!x.done);
   return `<ol class="tl2${f.cx?' cx':''}">${S.map((x,i)=>{
     const st=f.cx?'todo':x.done?'done':i===cur?'now':'todo';
-    const tap=f.cx?x.s==='New':x.pay?(!x.done&&f.advPaid&&!dl):(x.s&&!x.done);
-    const at=tap?(x.pay?` data-payfull="${esc(o.id)}"`:` data-s="${esc(x.s)}"`):'';
+    const tap=f.cx?x.s==='New':x.pay?(!x.done&&f.advPaid):(x.s&&!x.done);
+    const at=tap?(x.pay?` ${dl?'data-paylate':'data-payfull'}="${esc(o.id)}"`:` data-s="${esc(x.s)}"`):'';
     return `<li class="${st}"><${tap?'button':'div'} class="tl2-r${tap?' tap':''}"${at}${tap?` title="Mark as ${esc(x.l)}"`:''}><span class="tl2-c">${x.done?'✓':i+1}</span><span class="tl2-b"><b>${esc(x.l)}</b>${x.tag?T[x.tag]:''}${x.m?`<small>${esc(x.m)}</small>`:''}</span></${tap?'button':'div'}></li>`}).join('')}</ol>
   <div class="ohint">${f.cx?'Cancelled.':'Tap a step to mark it done. <span class="ftg auto">auto WhatsApp</span> steps send a message by themselves.'}</div>`
 }
@@ -986,6 +986,11 @@ function epModal(){const o=EP.o;if(!o)return;const ph=String(o.phone).replace(/\
   <div class="hint" style="margin:6px 0 0">The PDF goes on WhatsApp only to this order's mobile number. Test copies go only to your three approved numbers.</div>`:''}</div>`;m.classList.remove('hide')}
 async function payMark(o,k){if(k!=='adv'&&k!=='full')return;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:k});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;saveCache();const y=scrollY;render();scrollTo(0,y);
   toast('Saved. Sending the confirmation PDF…');const p=await epMake(o);const s=await api({action:'admin_wa_send_pdf',id:o.id,pdf:p.b64,conf:1});toast(s.ok?'Confirmation PDF sent to '+String(o.name).split(' ')[0]+' on WhatsApp':'Payment saved, but the PDF was not sent: '+(s.error||'error'))}catch(_){toast('No connection')}}
+async function payLate(o){if(!confirm('Mark the '+inr(o.total-Math.round(o.total/2))+' balance as received for '+o.id+'? The order stays Delivered and nothing is sent to the customer.'))return;
+  try{const r=await api({action:'admin_wa_paid',id:o.id,kind:'full'});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;
+    if(r.status&&r.status!=='Delivered'){const s=await api({action:'admin_status',id:o.id,status:'Delivered',notify:false});o.status=s.ok?'Delivered':r.status}else o.status='Delivered';
+    saveCache();const y=scrollY;render();scrollTo(0,y);toast('Balance marked received · '+o.id+' is paid in full')}catch(_){toast('No connection')}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-paylate]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.paylate);if(o)payLate(o)},true);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-payfull]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.payfull);if(o){b.disabled=true;payMark(o,'full')}},true);
 document.addEventListener('click',async e=>{const t=e.target.closest('[data-epdf],[data-epx],[data-epsend],[data-epdl]');if(!t)return;e.preventDefault();e.stopPropagation();
   if(t.dataset.epx){$('epM').classList.add('hide');return}
