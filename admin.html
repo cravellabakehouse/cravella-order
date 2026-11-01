@@ -356,6 +356,7 @@ body{background:#fbf6ee}.ng{display:grid;grid-template-columns:repeat(3,minmax(0
 
 <script>
 const API_URL='https://cravella-api.connect-679.workers.dev';
+try{localStorage.setItem('cb_nt','1')}catch(_){} /* staff devices are never counted as website visitors */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
