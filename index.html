@@ -23,6 +23,8 @@
 <meta name="apple-mobile-web-app-title" content="Cravella">
 <link rel="preconnect" href="https://cravella-api.connect-679.workers.dev" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18544042873"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','AW-18544042873');</script>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"></noscript>
 <style>
@@ -1110,6 +1112,7 @@ function showDone(id,t,when,name,total,disc,dnote,subt,cp){
   $('dIos').style.display=ios?'block':'none';$('dInstall').style.display=deferred?'block':'none';
   $('done').classList.add('on');document.body.style.overflow='hidden';$('done').scrollTop=0;
   S.placed=true;try{localStorage.removeItem('cb_cart');localStorage.removeItem('cb_form')}catch(_){}
+  try{if(typeof gtag==='function'&&String(id).indexOf('DEMO')!==0)gtag('event','conversion',{send_to:'AW-18544042873/9Ar1CIuI7q8dEPnGvopF',value:Number(total!=null?total:t.tot)||1,currency:'INR',transaction_id:String(id)})}catch(_){}
 }
 let lastOrder=null;
 function orderImage(o){
