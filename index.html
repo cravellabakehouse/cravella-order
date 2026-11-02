@@ -264,6 +264,10 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .hs button,.rv-a{color:var(--acc);font-weight:700;font-size:13px;text-decoration:none}
 .rv-top{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);margin:-2px 0 10px}.rv-top b{font-size:22px;color:var(--ink)}
 .rv-st{color:#e8a317;letter-spacing:1px;font-size:14px}
+.rvbig{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
+.rvbig b{font-size:40px;line-height:1;font-weight:800}
+.rvbig .bs{color:#e8a317;font-size:28px;letter-spacing:2px;line-height:1}
+.rvbig small{display:block;font-size:12.5px;color:var(--mut);margin-top:4px}
 .rv{flex:0 0 78%;max-width:300px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;scroll-snap-align:start}
 .rv p{margin:6px 0 8px;font-size:13.5px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .rv em{font-style:normal;font-weight:700;font-size:12.5px;color:var(--mut)}
@@ -880,6 +884,10 @@ function siteLoad(){if(PV)return;if(API_URL.startsWith('__')||API_URL.includes('
 function galLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
   fetch(API_URL+'?gal=1').then(r=>r.json()).then(l=>{if(!Array.isArray(l))return;if(JSON.stringify(l)===JSON.stringify(GAL))return;GAL=l;try{localStorage.setItem('cb_gal',JSON.stringify(l))}catch(_){}
     if(!S.q.trim()&&(S.tab==='home'||S.tab==='custom'))renderPanel();galWire()}).catch(()=>{})}
+function rvBadge(){
+  const R=(typeof CFG!=='undefined'&&CFG&&CFG.reviews)||{};
+  if(!R.rating)return '';
+  return `<a class="rvbig" href="${GMAP}" target="_blank" rel="noopener" aria-label="Rated ${Number(R.rating).toFixed(1)} out of 5 on Google"><b>${Number(R.rating).toFixed(1)}</b><span><span class="bs" aria-hidden="true">${stars(R.rating)}</span><small>${R.count?R.count+' Google reviews':'Rated on Google'} · See reviews ›</small></span></a>`}
 function homeHtml(){
   const cakes=MENU.cakes.filter(c=>!c.custom),bro=[...MENU.brownies,...(MENU.blondies||[])];
   const H=sx('hero'),G=sx('gal'),secs=siteSecs(),galOn=GAL.length&&secs.some(q=>q.id==='gallery'&&q.on);
@@ -897,7 +905,7 @@ function homeHtml(){
    crumb:()=>crumbHtml(),
    wa:()=>waCardHtml(),
    reviews:()=>reviewsHtml()};
-  return secs.filter(q=>q.on!==false).map(q=>P[q.id](q)).join('')}
+  return secs.filter(q=>q.on!==false).map((q,i)=>P[q.id](q)+(i===0?rvBadge():'')).join('')}
 function dwItems(d){return `<ul class="dwl">${d.items.map(i=>`<li><span>${i[0]}</span><div><b>${esc(i[1])}</b>${i[2]?` <small>(${esc(i[2])})</small>`:''}</div><em>${esc(i[3])}</em></li>`).join('')}</ul>`}
 function diwaliHtml(){const d=GIFTS[0],q=S.gift[d.id]||0;return `<div class="hs dwhs"><span>🪔 Diwali special ✨</span></div><div class="dwc"><button class="dwi" data-gzoom aria-label="View full photo"><img src="${dwImg()}" alt="Cravella Diwali gift box" loading="lazy"><i>⤢</i>${dwOff(d)?`<s class="dwoff">${dwOff(d)}% OFF</s>`:''}</button><div class="dwt"><b class="dwh">🪔 ${esc(d.name)}</b><p class="dwtag">${esc(d.tag)}</p>${dwItems(d)}${dwOff(d)?`<p class="dwofl">🎉 Diwali offer: ${dwOff(d)}% off till 15 Nov</p>`:''}<div class="dwr"><b>${dwOff(d)?`<del>${inr(d.price)}</del> `:''}${inr(dwPrice(d))} <span>/ box · min ${d.min}</span></b>${q?`<div class="step"><button data-gm aria-label="One box less">−</button><span>${q}</span><button class="p" data-gp aria-label="One box more">+</button></div>`:`<button class="add" data-gadd>Add ${d.min}</button>`}</div></div></div>`}
 function dwZoom(){const d=GIFTS[0];let o=document.getElementById('dwlb');if(!o){o=document.createElement('div');o.id='dwlb';o.className='dwlb';document.body.appendChild(o);o.addEventListener('click',e=>{if(e.target===o||e.target.closest('[data-dwx]')){o.classList.remove('on');document.body.style.overflow=''}})}
