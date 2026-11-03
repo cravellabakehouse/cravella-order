@@ -1,0 +1,121 @@
+/* Cravella Liquid Glass: HEADER ONLY (TEST).
+   Covers: lights bar, logo row, Sign in / Search / Cart, green strip, search box, category bar.
+   Does NOT touch: product cards, review pill, banners, page background, footer, bottom bar.
+   Paint and spacing only: no scripts, markup or animations are changed, so the festive
+   lights, the scrolling strip and the eggless glow keep working.
+   To turn it off, remove the one <link href="glass-header.css"> line from the page. */
+
+/* ---- Header container: inset from the screen edges, soft backing behind the gaps ---- */
+#hdr{
+  padding:5px 10px 3px !important;
+  background:linear-gradient(180deg,rgba(255,246,224,.80) 0%,rgba(255,246,224,.62) 72%,rgba(255,246,224,0) 100%) !important;
+  box-shadow:none !important;
+}
+
+/* ---- Logo row: floating glass panel (keeps the purple/peach glows) ---- */
+/* The glass itself lives on a separate layer BEHIND the row (::before), so the logo,
+   the green eggless badge and the buttons are NOT inside a blurred element. That avoids
+   phone browsers drawing the badge washed out. */
+#hdr .band{
+  position:relative;
+  isolation:isolate;
+  border-radius:28px !important;
+  background:transparent !important;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  box-shadow:none;
+}
+#hdr .band::before{
+  content:"";
+  position:absolute;left:0;top:0;right:0;bottom:0;
+  z-index:-1;
+  pointer-events:none;
+  border-radius:28px;
+  background:
+    radial-gradient(150px 70px at 88% 45%,rgba(150,100,230,.30),transparent 70%),
+    radial-gradient(150px 60px at 58% 90%,rgba(255,160,110,.28),transparent 70%),
+    rgba(255,251,190,.68);
+  -webkit-backdrop-filter:blur(22px) saturate(1.9);
+  backdrop-filter:blur(22px) saturate(1.9);
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(255,255,255,.55),0 12px 30px rgba(80,40,10,.20);
+}
+/* keep the eggless badge exactly as the site draws it */
+#hdr .eggst{position:relative;z-index:1}
+
+/* ---- Sign in, Search, Cart ---- */
+#hdr .acc,
+#hdr .cartb{
+  background:rgba(255,255,255,.52) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.7);
+  backdrop-filter:blur(14px) saturate(1.7);
+  border:1px solid rgba(255,255,255,.9) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(70,40,10,.14);
+}
+
+/* ---- Green strip: rounded tinted pill; text keeps scrolling ---- */
+#hdr .offer{
+  margin-top:6px;
+  border-radius:16px;
+  background:rgba(20,87,58,.94) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 8px 20px rgba(20,60,40,.25);
+}
+
+/* ---- Search box (opens from the Search button) ---- */
+#hdr .sbox{
+  margin-left:0 !important;
+  margin-right:0 !important;
+  background:rgba(255,255,255,.58) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.6);
+  backdrop-filter:blur(14px) saturate(1.6);
+  border:1px solid rgba(255,255,255,.9) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(70,40,10,.10);
+}
+
+/* ---- Category bar: floating pill (purple glass in festive mode) ---- */
+.tabs{
+  margin:2px 10px 0 !important;
+  border-radius:26px !important;
+  border:1px solid rgba(255,255,255,.85) !important;
+  background:rgba(255,251,190,.70) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(1.9) !important;
+  backdrop-filter:blur(22px) saturate(1.9) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,1),0 10px 26px rgba(80,40,10,.18) !important;
+}
+body.fest .tabs{
+  background:rgba(42,15,79,.82) !important;
+  border:1px solid rgba(245,184,61,.6) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 10px 26px rgba(30,10,70,.32) !important;
+}
+.tab{
+  background:rgba(255,255,255,.55) !important;
+  border:1px solid rgba(255,255,255,.9) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 2px 8px rgba(70,40,10,.10);
+}
+.tab.on{
+  background:rgba(180,83,42,.92) !important;
+  border-color:rgba(255,255,255,.55) !important;
+  color:#fff !important;
+}
+body.fest .tab{
+  background:rgba(255,255,255,.14) !important;
+  border-color:rgba(255,255,255,.42) !important;
+  color:#ffe9a8 !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+}
+/* the festive selected tab keeps the site's own amber gradient */
+
+/* ---- Safety nets ---- */
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  #hdr .band{background:#fffbbe !important}
+  .tabs{background:#fffbbe !important}
+  body.fest .tabs{background:#2a0f4f !important}
+  #hdr .sbox{background:#fff !important}
+}
+@media (prefers-reduced-transparency:reduce){
+  #hdr{background:#fff6e0 !important}
+  #hdr .band{background:#fffbbe !important;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .tabs{background:#fffbbe !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+  body.fest .tabs{background:#2a0f4f !important}
+  #hdr .offer{background:#14573a !important}
+}
