@@ -294,6 +294,15 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .ctl{flex:0 0 auto;gap:6px!important}.ctl .step{gap:4px}.ctl .step span{min-width:36px}.ctl .add{padding:9px 14px}.ph{flex:0 0 auto;width:50px;height:50px;border-radius:12px;border:1px solid var(--line);display:block;cursor:zoom-in}.ph.big{width:84px;height:84px}
 #zoomBox{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:10px;cursor:zoom-out}
 #zoomBox img{max-width:100%;max-height:78vh;border-radius:14px;background:#fff}#zoomBox b{color:#fff;font:700 15px 'Hanken Grotesk',sans-serif;text-align:center}
+
+/* tap-to-zoom hints */
+.ph{position:relative}
+.ph::after{content:"";position:absolute;right:4px;bottom:4px;width:22px;height:22px;border-radius:50%;background:#4a2183 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20.5 20.5L16 16M11 8v6M8 11h6'/%3E%3C/svg%3E") center/13px no-repeat;border:2px solid #fffdf4;box-shadow:0 2px 6px rgba(40,10,80,.35);pointer-events:none}
+.ph.big::after{width:26px;height:26px;background-size:15px}
+.zhint{display:flex;align-items:center;gap:8px;background:#f1e7ff;color:#3f1d78;border-radius:12px;padding:9px 12px;margin:10px 0 0;font-size:13.5px;font-weight:600}
+.zhint svg{flex:0 0 auto}
+#zoomBox .zx{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+#zoomBox .zt{color:#e6dcf7;font:600 14px 'Hanken Grotesk',sans-serif;text-align:center}
 .rv-btn{display:block;text-align:center;margin:12px 0 8px;padding:11px;border:1.5px solid var(--acc);border-radius:12px;color:var(--acc);font-weight:700;font-size:14px;text-decoration:none}
 .car{scroll-padding-left:16px;display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scroll-snap-type:x proximity;scrollbar-width:none}.car::-webkit-scrollbar{display:none}
 .tl{flex:none;width:158px;text-align:left;scroll-snap-align:start;display:block}
@@ -667,6 +676,7 @@ function renderPanel(){
   else if(S.tab==='about'){h=aboutHtml()}
   else if(S.tab==='policy'){h=policyHtml()}
   else{h+=`<div class="sec">Brownies</div>`+MENU.brownies.map(d=>pcCard(d,'brownies')).join('')+`<div class="sec">Blondies</div>`+MENU.blondies.map(d=>pcCard(d,'blondies')).join('')+`<div class="note">Sold by the box of 4. Each + adds one box (4 pieces). Bakes need 1 day's notice.</div>`}
+  if(h.indexOf('data-zoom')>-1&&S.tab!=='about'&&S.tab!=='policy')h='<div class="zhint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a2183" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5L16 16M11 8v6M8 11h6"/></svg><span>Tap any photo to see it bigger</span></div>'+h;
   $('panel').innerHTML=h;
 }
 function renderBar(){saveCart();
@@ -1407,7 +1417,7 @@ try{const p=JSON.parse(sessionStorage.getItem('cb_contact')||'null');if(p){$('fN
 try{const c=JSON.parse(localStorage.getItem('cb_cfg')||'null');if(c&&Array.isArray(c.unavailable)){CFG=c;applyNames();applyOrder();bannerSet();offerStrip();footApply()}}catch(_){}
 document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;e.stopPropagation();e.preventDefault();
   const id=z.dataset.zoom,all=[].concat(MENU.cakes,MENU.cupcakes,MENU.muffins,MENU.brownies,MENU.blondies||[],MENU.cookies),d=all.find(x=>x.id===id),o=d&&imgOf(d);if(d)vev('view',id,d.name);if(!o)return;
-  const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
+  const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<button class="zx" aria-label="Close photo">&#10005;</button><img alt="${esc(d.name)}" src="${esc(o.u)}"><b>${esc(d.name)}</b><span class="zt">Tap anywhere to go back to the menu</span>`;b.onclick=()=>b.remove();document.body.appendChild(b)},true);
 (function(){try{const q=new URLSearchParams(location.search).get('notrack');if(q==='1')localStorage.setItem('cb_nt','1');else if(q==='0')localStorage.removeItem('cb_nt');if(q==='1'||q==='0')setTimeout(()=>{try{toast(q==='1'?'This device will no longer be counted as a visitor':'This device is counted as a visitor again')}catch(_){}},900)}catch(_){}})();
 (function(){try{if(localStorage.getItem('cb_nt')==='1')return}catch(_){}if(PV||!live())return;try{let v='';try{v=localStorage.getItem('cb_vid')||''}catch(_){}
   if(!/^[a-z0-9]{16,40}$/.test(v)){v=(crypto.randomUUID?crypto.randomUUID().replace(/-/g,''):Math.random().toString(36).slice(2)+Date.now().toString(36)).slice(0,32);try{localStorage.setItem('cb_vid',v)}catch(_){}}
