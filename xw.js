@@ -70,7 +70,7 @@
   function esc(t){return String(t).replace(/[&<>]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]})}
   function render(){
     var el=document.getElementById('xw');if(!el||!ST)return;
-    var h='<button class="xbk" id="xwX">‹ BACK TO MAIN PAGE</button><div class="xh"><div class="xm"><small>CRAVELLA BAKE HOUSE PRESENTS</small><b>The Crumb Crossword</b><small>NO. '+ST.inf.n+' · '+esc(ST.inf.date.toUpperCase())+'</small></div><div class="xt" id="xwT">'+fmt(ST.t)+'</div></div>';
+    var h='<button class="xbk" id="xwX">‹ BACK TO MAIN PAGE</button><div class="xh"><div class="xm"><small>PRIYANKA LLP PRESENTS</small><b>The Crumb Crossword</b><small>NO. '+ST.inf.n+' · '+esc(ST.inf.date.toUpperCase())+'</small></div><div class="xt" id="xwT">'+fmt(ST.t)+'</div></div>';
     if(ST.done){
       h+='<div class="xs"><div class="xv"><h2>Sweet work!</h2><p>You finished No. '+ST.inf.n+' in '+fmt(ST.t)+'</p><div class="xst"><div><b>'+fmt(ST.t)+'</b><span>TIME</span></div><div><b>'+ST.hints+'</b><span>HINTS</span></div></div>'+
         '<a class="xbt" id="xwSh" href="#">SHARE ON WHATSAPP</a><button class="xbt o" id="xwOd">ORDER A CAKE →</button><button class="xbt o" id="xwX2">‹ BACK TO MAIN PAGE</button><p style="margin-top:18px;font-size:13px">Next puzzle: Friday</p></div></div>';
@@ -92,7 +92,7 @@
   function wire(){
     var el=document.getElementById('xw');
     el.querySelector('#xwX').onclick=close;var x2=el.querySelector('#xwX2');if(x2)x2.onclick=close;
-    var sh=el.querySelector('#xwSh');if(sh){var m='I solved The Crumb Crossword No. '+ST.inf.n+' in '+fmt(ST.t)+'! Try this week’s baking puzzle — Cravella Bake House, https://order.cravellabakehouse.com';sh.href='https://wa.me/?text='+encodeURIComponent(m);sh.target='_blank';sh.rel='noopener'}
+    var sh=el.querySelector('#xwSh');if(sh){var m='I solved The Crumb Crossword No. '+ST.inf.n+' in '+fmt(ST.t)+'! Try this week’s baking puzzle — PRIYANKA LLP, https://order.cravellabakehouse.com';sh.href='https://wa.me/?text='+encodeURIComponent(m);sh.target='_blank';sh.rel='noopener'}
     var od=el.querySelector('#xwOd');if(od)od.onclick=order;
     var g=el.querySelector('#xwG');
     if(g)g.onclick=function(e){var c=e.target.closest('[data-i]');if(!c)return;var i=+c.dataset.i,r=Math.floor(i/5),cc=i%5;

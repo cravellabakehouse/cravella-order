@@ -1,5 +1,5 @@
 /**
- * Cravella Bake House – PUBLIC order-request endpoint.
+ * PRIYANKA LLP – PUBLIC order-request endpoint.
  * Deploy as: Web app · Execute as: Me · Who has access: Anyone
  * (This is a SEPARATE Apps Script project from your private quote app.)
  */
@@ -757,10 +757,10 @@ function notify_(id, v, photos){
   const adv = Math.round(v.total / 2);
   const advLine = v.hasCustom ? '\n\nCustom / theme cakes need a 50% advance (₹' + adv + ') to book your order. The balance 50% is paid on ' + (v.mode === 'Delivery' ? 'delivery' : 'pickup') + '. The final amount is confirmed once we have agreed the design.' : '';
   const pay = UPI_ID ? 'To book it, please pay the advance by UPI to ' + UPI_ID + ' and send us the screenshot.' : 'To book it, please pay the advance by UPI. We will share the details here.';
-  const msgConfirm = 'Hi ' + first + ', thank you for ordering from Cravella Bake House! Your order ' + id + ' is confirmed:\n\n' + items + (v.discount ? '\n\nSubtotal: ₹' + v.subtotal + '\nDiscount (' + v.discNote + '): −₹' + v.discount : '') + '\n\nTotal: ₹' + v.total + '\n' + when.charAt(0).toUpperCase() + when.slice(1) + advLine + '\n\n' + pay;
+  const msgConfirm = 'Hi ' + first + ', thank you for ordering from PRIYANKA LLP! Your order ' + id + ' is confirmed:\n\n' + items + (v.discount ? '\n\nSubtotal: ₹' + v.subtotal + '\nDiscount (' + v.discNote + '): −₹' + v.discount : '') + '\n\nTotal: ₹' + v.total + '\n' + when.charAt(0).toUpperCase() + when.slice(1) + advLine + '\n\n' + pay;
   const msgPaid = 'Hi ' + first + ', we have received your advance. Your order ' + id + ' is booked for ' + when + '. Thank you!';
   const msgReady = 'Hi ' + first + ', your Cravella order ' + id + ' is ready' + (v.mode === 'Delivery' ? ' and out for delivery.' : ' for pickup.');
-  const msgAsk = 'Hi ' + first + ', thank you for your order ' + id + ' at Cravella Bake House. Before we confirm, we need to check a detail with you:';
+  const msgAsk = 'Hi ' + first + ', thank you for your order ' + id + ' at PRIYANKA LLP. Before we confirm, we need to check a detail with you:';
   const btn = (label, txt, bg) => '<a href="' + wa(txt) + '" style="display:inline-block;margin:0 6px 8px 0;padding:10px 14px;border-radius:8px;background:' + bg + ';color:#ffffff;text-decoration:none;font-weight:bold">' + label + '</a>';
   const buttons = '<p style="margin:14px 0 4px;color:#7d6a58">Tap to open WhatsApp with the message ready, then press send:</p>'
     + btn('Confirm order', msgConfirm, '#1f7a4d') + btn('Advance received', msgPaid, '#2563a8') + btn('Order ready', msgReady, '#b4532a') + btn('Ask a question', msgAsk, '#6b5a4c');
@@ -902,12 +902,12 @@ function accountApi_(r){
     const code = ('000000' + Math.floor(Math.random() * 1000000)).slice(-6);
     CacheService.getScriptCache().put('otp:' + h_(email), JSON.stringify({c: h_(code + '|' + email), t: 0}), 600);
     MailApp.sendEmail({
-      to: email, name: 'Cravella Bake House',
+      to: email, name: 'PRIYANKA LLP',
       subject: 'Your Cravella sign-in code: ' + code,
-      htmlBody: '<div style="font-family:Arial,sans-serif;max-width:420px;color:#3b2416"><p>Your Cravella Bake House sign-in code is</p>'
+      htmlBody: '<div style="font-family:Arial,sans-serif;max-width:420px;color:#3b2416"><p>Your PRIYANKA LLP sign-in code is</p>'
         + '<p style="font-size:32px;letter-spacing:6px;font-weight:bold;margin:8px 0">' + code + '</p>'
         + '<p>It works for 10 minutes. If you did not ask for this, you can ignore this email.</p></div>',
-      body: 'Your Cravella Bake House sign-in code is ' + code + '. It works for 10 minutes.'
+      body: 'Your PRIYANKA LLP sign-in code is ' + code + '. It works for 10 minutes.'
     });
     return {ok:true};
   }
@@ -1113,12 +1113,12 @@ function statusMail_(o, status){
     'Confirmed': 'Your order ' + o.id + ' is confirmed. We will message you on WhatsApp with the details.',
     'Advance received': 'We have received your advance. Your order ' + o.id + ' is booked. Thank you!',
     'Ready': 'Your order ' + o.id + ' is ready' + (o.mode === 'Delivery' ? ' and will be on its way shortly.' : ' for pickup.'),
-    'Delivered': 'Your order ' + o.id + ' is complete. Thank you for choosing Cravella Bake House! We would love to hear how it was.',
+    'Delivered': 'Your order ' + o.id + ' is complete. Thank you for choosing PRIYANKA LLP! We would love to hear how it was.',
     'Cancelled': 'Your order ' + o.id + ' has been cancelled. If this is a surprise, please WhatsApp us on 98459-04310.'
   };
   if (!msgs[status]) return false;
-  MailApp.sendEmail({to: o.email, name: 'Cravella Bake House', subject: 'Cravella order ' + o.id + ': ' + status,
-    body: 'Hi ' + first + ',\n\n' + msgs[status] + '\n\nCravella Bake House · 98459-04310'});
+  MailApp.sendEmail({to: o.email, name: 'PRIYANKA LLP', subject: 'Cravella order ' + o.id + ': ' + status,
+    body: 'Hi ' + first + ',\n\n' + msgs[status] + '\n\nPRIYANKA LLP · 98459-04310'});
   return true;
 }
 
@@ -1135,15 +1135,15 @@ function mailDraft_(o, kind){
   const items = o.lines.map(function(l){ return '• ' + l; }).join('\n');
   const custom = o.lines.some(function(l){ return /custom – price to confirm/.test(l); });
   const adv = Math.round(o.total / 2);
-  const sign = '\n\nWarm regards,\nCravella Bake House\nEggless · Freshly baked to order\n98459-04310';
+  const sign = '\n\nWarm regards,\nPRIYANKA LLP\nEggless · Freshly baked to order\n98459-04310';
   const pay = UPI_ID ? 'To book your order, please pay the advance by UPI to ' + UPI_ID + ' and reply with a screenshot.' : 'To book your order, please pay the advance by UPI. We will share the details with you.';
   const hello = 'Hi ' + first + ',\n\n';
   if (kind === 'advance') return {subject:'Advance received · order ' + o.id, body: hello + 'We have received your advance. Your order ' + o.id + ' is booked.\n\n' + when + sign};
   if (kind === 'ready') return {subject:'Your order ' + o.id + ' is ready', body: hello + 'Your order ' + o.id + ' is ready' + (o.mode === 'Delivery' ? ' and will be on its way shortly.' : ' for pickup.') + sign};
-  if (kind === 'thanks') return {subject:'Thank you from Cravella Bake House', body: hello + 'Thank you for choosing Cravella Bake House for order ' + o.id + '. We hope you loved it! If you have a minute, we would love to hear your feedback, and a photo of the celebration makes our day.' + sign};
+  if (kind === 'thanks') return {subject:'Thank you from PRIYANKA LLP', body: hello + 'Thank you for choosing PRIYANKA LLP for order ' + o.id + '. We hope you loved it! If you have a minute, we would love to hear your feedback, and a photo of the celebration makes our day.' + sign};
   if (kind === 'ask') return {subject:'A quick question about your order ' + o.id, body: hello + 'Thank you for your order ' + o.id + '. Before we confirm, we need to check a detail with you:\n\n' + sign.trim()};
-  return {subject:'Order confirmed · ' + o.id + ' · Cravella Bake House',
-    body: hello + 'Thank you for ordering from Cravella Bake House! Your order ' + o.id + ' is confirmed.\n\n' + items
+  return {subject:'Order confirmed · ' + o.id + ' · PRIYANKA LLP',
+    body: hello + 'Thank you for ordering from PRIYANKA LLP! Your order ' + o.id + ' is confirmed.\n\n' + items
       + (o.discount ? '\n\nSubtotal: ₹' + o.subtotal + '\nDiscount: −₹' + o.discount : '')
       + '\n\nTotal: ₹' + o.total + (custom ? ' (final amount confirmed once the design is agreed)' : '') + '\n' + when
       + (custom ? '\n\nCustom / theme cakes need a 50% advance (₹' + adv + ') to book. The balance 50% is paid on ' + trip + '.' : '')
@@ -1307,7 +1307,7 @@ function adminApi_(a, r, email){
     if (subject.length < 3) return {ok:false, error:'Please add a subject.'};
     if (body.length < 5) return {ok:false, error:'Please write a message.'};
     if (!bump_('amail', 60, 3600)) return {ok:false, error:'Too many emails this hour. Please try again later.'};
-    MailApp.sendEmail({to:to, name:'Cravella Bake House', replyTo:String(NOTIFY_EMAIL).split(',')[0].trim(), subject:subject, body:body});
+    MailApp.sendEmail({to:to, name:'PRIYANKA LLP', replyTo:String(NOTIFY_EMAIL).split(',')[0].trim(), subject:subject, body:body});
     tab_(MAIL_LOG, MAIL_LOG_HEAD).appendRow([new Date(), o.id, to, subject, email]);
     return {ok:true, sent:true, to:to};
   }
