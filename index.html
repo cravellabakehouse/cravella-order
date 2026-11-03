@@ -297,8 +297,8 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 
 /* tap-to-zoom hints */
 .ph{position:relative}
-.ph::after{content:"";position:absolute;right:4px;bottom:4px;width:22px;height:22px;border-radius:50%;background:#4a2183 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20.5 20.5L16 16M11 8v6M8 11h6'/%3E%3C/svg%3E") center/13px no-repeat;border:2px solid #fffdf4;box-shadow:0 2px 6px rgba(40,10,80,.35);pointer-events:none}
-.ph.big::after{width:26px;height:26px;background-size:15px}
+.tl .tz{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:#4a2183 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20.5 20.5L16 16M11 8v6M8 11h6'/%3E%3C/svg%3E") center/16px no-repeat;border:2px solid #fffdf4;box-shadow:0 2px 6px rgba(40,10,80,.4);z-index:2}
+.tl .tz::before{content:"";position:absolute;inset:-7px}
 .zhint{display:flex;align-items:center;gap:8px;background:#f1e7ff;color:#3f1d78;border-radius:12px;padding:9px 12px;margin:10px 0 0;font-size:13.5px;font-weight:600}
 .zhint svg{flex:0 0 auto}
 #zoomBox .zx{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
@@ -661,7 +661,7 @@ function policyHtml(){return '<div class="sec pth">Our policy</div>'+POLICY.slic
 function renderPanel(){
   let h='';
   if(S.q.trim()){$('panel').innerHTML=searchHtml(S.q);return}
-  if(S.tab==='home'){$('panel').innerHTML='<div class="zhint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a2183" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5L16 16M11 8v6M8 11h6"/></svg><span>Tap any photo to see it bigger</span></div>'+homeHtml();return}
+  if(S.tab==='home'){$('panel').innerHTML='<div class="zhint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a2183" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5L16 16M11 8v6M8 11h6"/></svg><span>Tap the magnifier on a photo to see it bigger</span></div>'+homeHtml();return}
   if(S.tab==='cakes'){
     let g='';MENU.cakes.filter(c=>!c.custom).forEach(c=>{if(c.group!==g){g=c.group;h+=`<div class="sec">${g}</div>`}h+=cakeCard(c)});
     h+=`<div class="note">Cakes need 1 day's notice. Custom and theme cakes need 2 days. See the Custom cake tab.</div>`;
@@ -780,7 +780,7 @@ const GR=[['#7b4a2b','#3b2416'],['#d97a8a','#8c2f45'],['#f7c04d','#e2872b'],['#8
 function emo(n,f){for(const [r,e] of EM)if(r.test(n))return e;return f}
 function tile(d,price,sub,go,fb,i){
   const off=isOff(d.id),g=GR[i%GR.length],ph=IMG[d.id],rp=phUrl(d.id),bg=rp?`background:#fff url('${rp}') center/cover`:ph?`background:url('${ph}') center 42%/62% no-repeat,linear-gradient(135deg,#fff6cf,#ffe3c6)`:d.img?`background:#fff url('${esc(d.img)}') center/cover`:`background:linear-gradient(135deg,${g[0]},${g[1]})`;
-  return `<button class="tl${off?' off':''}" data-go="${go}" data-jump="${esc(d.id)}"><span class="im" style="${bg}">${d.img||ph||rp?'':emo(d.name,fb)}<s>${off?'Sold out':price}</s></span><b>${esc(d.name)}</b><span class="sb">${esc(sub)}</span></button>`}
+  return `<button class="tl${off?' off':''}" data-go="${go}" data-jump="${esc(d.id)}"><span class="im" style="${bg}">${d.img||ph||rp?'':emo(d.name,fb)}${d.img||ph||rp?`<span class="tz" data-zoom="${esc(d.id)}" role="button" aria-label="See a bigger photo of ${esc(d.name)}"></span>`:''}<s>${off?'Sold out':price}</s></span><b>${esc(d.name)}</b><span class="sb">${esc(sub)}</span></button>`}
 function cakeFrom(c){return 'from '+inr(Math.min(...c.creams.map(x=>x.prices[0])))}
 function car(title,go,tiles){return `<div class="hs"><span>${title}</span><button data-go="${go}">See all ›</button></div><div class="car">${tiles}</div>`}
 const GMAP='https://www.google.com/maps/place/Cravella+Bake+House/@13.0969234,77.6199817,17z/data=!4m8!3m7!1s0x3bae192e00319eef:0x6a29d6d8ca416182!8m2!3d13.0969182!4d77.6225566!9m1!1b1!16s%2Fg%2F11yq1h0x70';
