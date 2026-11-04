@@ -396,6 +396,13 @@ body.fx-l .band{padding-top:calc(30px + env(safe-area-inset-top))}
 #brk .bc{max-width:340px;width:100%;text-align:center;padding:26px 22px;border-radius:24px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.8);box-shadow:0 10px 40px rgba(0,0,0,.18);color:#222}#brk .bc b{display:block;font-size:42px;line-height:1}#brk .bc h2{margin:10px 0 6px;font-size:22px}#brk .bc p{margin:0 0 14px;font-size:15px;line-height:1.45}#brk .bc a{display:inline-block;padding:10px 18px;border-radius:99px;background:#222;color:#fff;font-weight:700;text-decoration:none}
 body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media (prefers-reduced-motion:reduce){#brk .bt span{animation:none;padding-left:12px}}
 #fxc{position:fixed;left:0;top:0;pointer-events:none;z-index:19}@media (prefers-reduced-motion:reduce){.lights g,.fstar{animation:none}#fall,#fxc{display:none}}
+/* floating round cart button (replaces the wide order bar) */
+.bar,body .bar{left:auto!important;right:16px!important;bottom:calc(88px + env(safe-area-inset-bottom))!important;width:auto!important;max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:50%!important}
+.bar .sum{display:none!important}
+body .bar .go,body.fest .bar .go{position:relative;width:58px;height:58px;padding:0!important;border-radius:50%!important;background:#0b5d3b!important;color:#fff!important;font-size:25px!important;line-height:1;display:grid;place-items:center;border:0;box-shadow:0 6px 18px rgba(0,0,0,.35)!important}
+.bar .go i{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:11px;background:#fff;color:#0b5d3b;font:800 12.5px/22px system-ui,sans-serif;text-align:center;font-style:normal;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
+@media (prefers-reduced-motion:no-preference){.bar{transition:transform .2s}}
 </style>
 <link rel="stylesheet" href="glass-nav.css">
 </head>
@@ -416,7 +423,7 @@ body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media 
 <div class="credit">Website by <b>MEETUNOVA TECH (OPC) PVT. LTD.</b> · Ver 1.26</div></div>
 
 <nav class="bn" id="bn"><button data-n="home" class="on"><i>🏠</i>Menu</button><button data-n="orders"><i>📋</i>My orders</button><button data-n="cart"><i>🛒</i>Cart<span class="n" id="bnN" hidden>0</span></button><a href="https://wa.me/918147733224?text=Hi%2C%20I%27d%20like%20to%20see%20the%20menu" target="_blank" rel="noopener"><i>💬</i>Chat</a><a href="tel:+919845904310"><i>📞</i>Call</a></nav>
-<div class="bar hide" id="bar"><div class="sum"><div><div class="a" id="barA">0 items</div><div class="b" id="barB">₹0</div></div></div><button class="go" id="barGo">Order now</button></div>
+<div class="bar hide" id="bar"><div class="sum"><div><div class="a" id="barA">0 items</div><div class="b" id="barB">₹0</div></div></div><button class="go" id="barGo" aria-label="Order now"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6.4"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg></button></div>
 <div class="toast" id="toast"></div>
 
 <div class="ov" id="review">
@@ -685,7 +692,7 @@ function renderPanel(){
 function renderBar(){saveCart();
   const t=totals();$('bar').classList.toggle('hide',!t.count);document.body.classList.toggle('hasbar',!!t.count);
   $('barA').textContent=t.count+(t.count===1?' item':' items');$('barB').textContent=inr(t.tot);
-  $('barGo').textContent=t.count?'Order now ›':'Order now';
+  $('barGo').innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6.4"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg><i>'+(t.count>99?'99+':t.count)+'</i>';$('barGo').setAttribute('aria-label','Order now, '+t.count+(t.count===1?' item':' items')+', '+inr(t.tot));
   const nb=$('bnN');if(nb){nb.textContent=t.count>99?'99+':t.count;nb.hidden=!t.count}
   const cn=$('cartN');if(cn){const prev=+cn.textContent||0;cn.textContent=t.count>99?'99+':t.count;cn.hidden=!t.count;$('cartBtn').setAttribute('aria-label','Cart, '+t.count+(t.count===1?' item':' items'));if(t.count>prev){const cb=$('cartBtn');cb.classList.remove('pop');void cb.offsetWidth;cb.classList.add('pop')}}
 }
