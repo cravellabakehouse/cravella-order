@@ -372,7 +372,8 @@ body.fest .bn>*{color:#fff!important}body.fest .bn .on{background:#ffd366!import
 #hdr .band{background:radial-gradient(150px 70px at 88% 45%,rgba(150,100,230,.30),transparent 70%),radial-gradient(150px 60px at 58% 90%,rgba(255,160,110,.28),transparent 70%),#fffbbe}
 #hdr .acc,#hdr .cartb{background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(231,216,255,.5))!important;-webkit-backdrop-filter:blur(14px) saturate(1.6);backdrop-filter:blur(14px) saturate(1.6);border:1px solid rgba(255,255,255,.85)!important;color:#3d1d72!important;box-shadow:0 4px 14px rgba(80,40,150,.16),inset 0 1px 0 rgba(255,255,255,.95)}
 #hdr .cartb .cn{background:#6a2fb8;color:#fff;border-color:rgba(255,255,255,.9)}
-body{padding-bottom:calc(92px + env(safe-area-inset-bottom))}body.hasbar{padding-bottom:calc(186px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(92px + env(safe-area-inset-bottom))}.fabtag{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#fff;color:#1446b8;font:800 14px system-ui,sans-serif;padding:9px 13px;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s}.fabtag.on{opacity:1}.fabtag.r{right:auto;left:calc(100% + 10px)}.fabtip{position:absolute;right:-4px;bottom:calc(100% + 12px);width:210px;background:#1446b8;color:#fff;font:600 13.5px/1.35 system-ui,sans-serif;padding:11px 13px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s;text-shadow:none}.fabtip.on{opacity:1}.fabtip b{display:block;font-size:14.5px;margin-bottom:2px}.fabtip u{display:block;margin-top:7px;text-decoration:none;font-size:12px;opacity:.8}.fabtip:after{content:"";position:absolute;right:26px;bottom:-8px;border:8px solid transparent;border-bottom:0;border-top-color:#1446b8}.fabtip.l{right:auto;left:-4px}.fabtip.l:after{right:auto;left:26px}.fabtip.d{bottom:auto;top:calc(100% + 12px)}.fabtip.d:after{display:none}@media (prefers-reduced-motion:reduce){.fabtag,.fabtip{transition:none}}
+body.hasbar{padding-bottom:calc(186px + env(safe-area-inset-bottom))}
 /* tidy glass footer card */
 .ft2{background:linear-gradient(160deg,rgba(255,255,255,.7),rgba(236,224,255,.55));-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.85);border-radius:22px;box-shadow:0 6px 20px rgba(80,40,150,.12),inset 0 1px 0 rgba(255,255,255,.95);padding:20px 16px 14px;margin:26px 12px 0;max-width:616px;margin-left:auto;margin-right:auto;width:calc(100% - 24px);box-sizing:border-box}
 .ft2 .fph{margin:0;line-height:1.1;color:#4a2a14}.ft2 .fsub{font-size:12.5px;color:var(--mut);margin:2px 0 10px;letter-spacing:.02em}
@@ -692,8 +693,18 @@ function renderPanel(){
   else{h+=`<div class="sec">Brownies</div>`+MENU.brownies.map(d=>pcCard(d,'brownies')).join('')+`<div class="sec">Blondies</div>`+MENU.blondies.map(d=>pcCard(d,'blondies')).join('')+`<div class="note">Sold by the box of 4. Each + adds one box (4 pieces). Bakes need 1 day's notice.</div>`}
   $('panel').innerHTML=h;
 }
+/* cart button hints: "Place order" tag after each add, one-time tip for first-time customers */
+var _fn={prev:null,tag:null,tip:null,t1:0,t2:0};
+function fabNote(tot){const bar=document.getElementById('bar');if(!bar)return;const prev=_fn.prev;_fn.prev=tot;if(prev===null||!(tot>prev)||!tot)return;
+  if(!_fn.tag){_fn.tag=document.createElement('div');_fn.tag.className='fabtag';_fn.tag.textContent='Place order ›';_fn.tag.setAttribute('aria-hidden','true');bar.appendChild(_fn.tag);_fn.tip=document.createElement('div');_fn.tip.className='fabtip';_fn.tip.setAttribute('aria-hidden','true');_fn.tip.innerHTML='<b>Added to your order ✓</b>Tap the blue cart to review and place your order.<u>Tap anywhere to dismiss</u>';bar.appendChild(_fn.tip)}
+  const r=bar.getBoundingClientRect(),tag=_fn.tag,tip=_fn.tip;tag.classList.toggle('r',r.left<170);tip.classList.toggle('l',r.right<226);tip.classList.toggle('d',r.top<170);
+  let seen=false;try{seen=!!localStorage.getItem('cb_tip_seen')}catch(_){}
+  clearTimeout(_fn.t1);clearTimeout(_fn.t2);
+  if(!seen){tag.classList.remove('on');tip.classList.add('on');try{localStorage.setItem('cb_tip_seen','1')}catch(_){}
+    const off=()=>{tip.classList.remove('on');document.removeEventListener('pointerdown',off,true);clearTimeout(_fn.t2)};document.addEventListener('pointerdown',off,true);_fn.t2=setTimeout(off,9000)}
+  else{tip.classList.remove('on');tag.classList.add('on');_fn.t1=setTimeout(()=>tag.classList.remove('on'),5000)}}
 function renderBar(){saveCart();
-  const t=totals();$('bar').classList.toggle('hide',!t.count);document.body.classList.toggle('hasbar',!!t.count);
+  const t=totals();try{fabNote(t.tot)}catch(_){}$('bar').classList.toggle('hide',!t.count);document.body.classList.toggle('hasbar',!!t.count);
   $('barA').textContent=t.count+(t.count===1?' item':' items');$('barB').textContent=inr(t.tot);
   $('barGo').innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6.4"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg><i>'+(t.count>99?'99+':t.count)+'</i>';$('barGo').setAttribute('aria-label','Order now, '+t.count+(t.count===1?' item':' items')+', '+inr(t.tot));
   const nb=$('bnN');if(nb){nb.textContent=t.count>99?'99+':t.count;nb.hidden=!t.count}
