@@ -401,8 +401,9 @@ body.brk{overflow:hidden}body.brk img,body.brk video{filter:grayscale(1)}@media 
 /* floating round cart button (replaces the wide order bar) */
 .bar,body .bar{left:auto!important;right:16px!important;bottom:calc(88px + env(safe-area-inset-bottom))!important;width:auto!important;max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:50%!important}
 .bar .sum{display:none!important}
-body .bar .go,body.fest .bar .go{position:relative;width:58px;height:58px;padding:0!important;border-radius:50%!important;background:#0b5d3b!important;color:#fff!important;font-size:25px!important;line-height:1;display:grid;place-items:center;border:0;box-shadow:0 6px 18px rgba(0,0,0,.35)!important}
-.bar .go i{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:11px;background:#fff;color:#0b5d3b;font:800 12.5px/22px system-ui,sans-serif;text-align:center;font-style:normal;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+body .bar .go,body.fest .bar .go{position:relative;width:58px;height:58px;padding:0!important;border-radius:50%!important;background:radial-gradient(circle at 35% 30%,#5aa2ff,#1e66f5 55%,#1446b8)!important;color:#fff!important;font-size:25px!important;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;animation:fabglow 2s ease-in-out infinite!important;line-height:1;display:grid;place-items:center;border:0;box-shadow:0 0 16px 3px rgba(60,140,255,.75),0 6px 18px rgba(0,0,0,.35)}
+.bar .go:active{cursor:grabbing}@keyframes fabglow{0%,100%{box-shadow:0 0 10px 2px rgba(60,140,255,.6),0 6px 18px rgba(0,0,0,.35)}50%{box-shadow:0 0 24px 8px rgba(90,170,255,.95),0 6px 18px rgba(0,0,0,.35)}}@media (prefers-reduced-motion:reduce){body .bar .go,body.fest .bar .go{animation:none!important}}
+.bar .go i{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:11px;background:#fff;color:#1446b8;font:800 12.5px/22px system-ui,sans-serif;text-align:center;font-style:normal;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 @media (prefers-reduced-motion:no-preference){.bar{transition:transform .2s}}
 </style>
@@ -1088,7 +1089,20 @@ function tsToken(ms){if(TS.tok)return Promise.resolve(TS.tok);if(!TS.l)return Pr
 function tsUsed(){TS.tok='';try{if(TS.id!=null)turnstile.reset(TS.id)}catch(_){}}
 function openReview(){tsLoad();$('review').classList.add('on');document.body.style.overflow='hidden';renderReview();prefill();$('review').scrollTop=0;if(A.tok&&!A.profile)loadMe().then(prefill)}
 function closeReview(){$('review').classList.remove('on');document.body.style.overflow=''}
-$('barGo').onclick=goOrder;$('cartBtn').onclick=goOrder;$('revBack').onclick=closeReview;
+$('barGo').onclick=goOrder;
+/* draggable floating cart button */
+(function(){const bar=$('bar'),btn=$('barGo'),K='cb_fab_pos';let moved=false,st=null;
+const dims=()=>{const w=bar.offsetWidth||58,h=bar.offsetHeight||58;return[w,h,Math.max(1,innerWidth-w-12),Math.max(1,innerHeight-h-12)]};
+const apply=(l,t)=>{const[w,h,mx,my]=dims(),L=Math.max(6,Math.min(6+mx,l)),T=Math.max(6,Math.min(6+my,t));['left:'+L,'top:'+T].forEach(x=>{const[k,v]=x.split(':');bar.style.setProperty(k,v+'px','important')});bar.style.setProperty('right','auto','important');bar.style.setProperty('bottom','auto','important');return[L,T]};
+const save=()=>{try{const r=bar.getBoundingClientRect(),[w,h,mx,my]=dims();localStorage.setItem(K,JSON.stringify({x:(r.left-6)/mx,y:(r.top-6)/my}))}catch(_){}};
+const load=()=>{try{const v=JSON.parse(localStorage.getItem(K)||'null');if(v&&isFinite(v.x)&&isFinite(v.y)){const[,,mx,my]=dims();apply(6+v.x*mx,6+v.y*my)}}catch(_){}};
+load();addEventListener('resize',load);
+btn.addEventListener('pointerdown',e=>{const r=bar.getBoundingClientRect();st={x:e.clientX,y:e.clientY,l:r.left,t:r.top};moved=false;try{btn.setPointerCapture(e.pointerId)}catch(_){}});
+btn.addEventListener('pointermove',e=>{if(!st)return;const dx=e.clientX-st.x,dy=e.clientY-st.y;if(!moved&&Math.hypot(dx,dy)>8)moved=true;if(moved){e.preventDefault();apply(st.l+dx,st.t+dy)}});
+const end=()=>{if(st&&moved)save();st=null;setTimeout(()=>{moved=false},60)};
+btn.addEventListener('pointerup',end);btn.addEventListener('pointercancel',end);
+bar.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true)})();
+$('cartBtn').onclick=goOrder;$('revBack').onclick=closeReview;
 $('revLines').addEventListener('click',e=>{
   const row=e.target.closest('[data-i]');if(!row)return;const l=lines()[+row.dataset.i];const up=!!e.target.closest('[data-ad]');if(!up&&!e.target.closest('[data-rm]'))return;
   const [k,r]=l.ref;
