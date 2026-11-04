@@ -1018,6 +1018,7 @@ function dateOf(h){const e=leadSlot(h).date.split('-');return new Date(+e[0],e[1
 function leadHours(){return hasCustom()?LEAD.cake:LEAD.other}
 function minDate(){return dateOf(leadHours())}
 function minDate2(){return dateOf(LEAD.other)}
+function earliestAt(h){const e=leadSlot(h);if(!e.mins)return'';const t=TIMES.find(x=>tmin(x)>=e.mins);return t?', from '+t:''}
 function limitTimes(dEl,tEl,h){const e=leadSlot(h);[...tEl.options].forEach(o=>{if(!o.value)return;o.disabled=dEl.value===e.date&&tmin(o.value)<e.mins});if(tEl.selectedOptions[0]&&tEl.selectedOptions[0].disabled)tEl.value=''}
 function fmtDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
 function setCpn(m,k){const e=$('cpnMsg');e.textContent=m;e.className='cmsg'+(k?' '+k:'')}
@@ -1056,8 +1057,8 @@ function renderReview(){saveCart();
   $('dateLbl').textContent=sep?'Cakes: date & time':'Date & time';
   {const nd=S.mode==='Delivery'||(sep&&S.mode2==='Delivery');$('addrBox').style.display=nd?'block':'none';if(nd&&typeof geoUi==='function')geoUi();$('revDelRow').style.display=nd?'flex':'none'}
   if(sep){const m2=minDate2(),f2=$('fDate2');f2.min=ymd(m2);if(f2.value&&f2.value<f2.min)f2.value='';limitTimes(f2,$('fTime2'),LEAD.other);
-    $('dateHint2').textContent='Earliest date: '+m2.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+' (bakes need 1 day\'s notice).'}
-  $('dateHint').textContent='Earliest date: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+(hasCustom()?' (custom and theme cakes need 2 days\' notice)':'');
+    $('dateHint2').textContent='Earliest: '+m2.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+earliestAt(LEAD.other)+' (bakes need 24 hours\' notice).'}
+  $('dateHint').textContent='Earliest: '+md.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+earliestAt(leadHours())+(hasCustom()?' (custom and theme cakes need 2 days\' notice)':' (24 hours\' notice, counted from when you order)');
 }
 const TS_KEY='0x4AAAAAAFmRHnzD_PyfWRI3';let TS={l:0,id:null,tok:'',w:[]};
 function tsLoad(){if(TS.l||PV||!/^0x/.test(TS_KEY))return;TS.l=1;window.tsReady=()=>{try{const b=document.createElement('div');b.id='tsBox';b.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden';document.body.appendChild(b);TS.id=turnstile.render(b,{sitekey:TS_KEY,callback:t=>{TS.tok=t;TS.w.splice(0).forEach(f=>f(t))},'expired-callback':()=>{TS.tok='';try{turnstile.reset(TS.id)}catch(_){}},'error-callback':()=>{TS.tok=''}})}catch(_){}};
