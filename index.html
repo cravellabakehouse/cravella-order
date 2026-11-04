@@ -1126,7 +1126,7 @@ $('revLines').addEventListener('click',e=>{
 $('fTime2').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
 $('fDate').addEventListener('change',()=>{const m=dateIssue($('fDate').value,S.cakes.length>0);if(m){toast(m);$('fDate').value=''}});
 $('fDate2').addEventListener('change',()=>{const m=dateIssue($('fDate2').value,false);if(m){toast(m);$('fDate2').value=''}});
-$('fDate').addEventListener('change',()=>limitTimes($('fDate'),$('fTime'),leadHours()));$('fDate2').addEventListener('change',()=>limitTimes($('fDate2'),$('fTime2'),LEAD.other));
+const dNice=d=>{const q=d.split('-');return +q[2]+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][q[1]-1]};$('fDate').addEventListener('change',()=>{const f=$('fDate');if(f.value&&f.value<ymd(minDate())){const m=ymd(minDate());f.value='';toast('Earliest date for your items is '+dNice(m)+'. Please pick that day or later.')}});$('fDate2').addEventListener('change',()=>{const f=$('fDate2');if(f.value&&f.value<ymd(minDate2())){const m=ymd(minDate2());f.value='';toast('Earliest date for these items is '+dNice(m)+'. Please pick that day or later.')}});$('fDate').addEventListener('change',()=>limitTimes($('fDate'),$('fTime'),leadHours()));$('fDate2').addEventListener('change',()=>limitTimes($('fDate2'),$('fTime2'),LEAD.other));
 $('fTime').innerHTML='<option value="">Preferred time</option>'+TIMES.map(t=>`<option>${t}</option>`).join('');
 const pinOk=v=>{v=String(v||'').trim();return /^560\d{3}$/.test(v)&&+v>=560001&&+v<=560103};
 function buildAddr(){const house=$('fHouse').value.trim(),land=$('fLand').value.trim(),street=$('fAddr').value.trim(),g=$('fGeo').value,geo=/^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/.test(g)?g:'';
