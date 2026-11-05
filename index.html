@@ -410,11 +410,40 @@ body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 </style>
 <link rel="stylesheet" href="glass-nav.css">
 <style>
-/* Auto-hide bottom nav: hidden while browsing, slides in after the first tap on an item and stays until the order is placed */
-.bn{transition:transform .28s ease,opacity .2s ease,visibility 0s linear 0s}
-body:not(.nav-on) .bn{transform:translateY(110%);opacity:0;visibility:hidden;pointer-events:none;transition:transform .28s ease,opacity .2s ease,visibility 0s linear .28s}
+/* Bottom nav as a floating dock: hidden while browsing; springs up after the first item tap and stays until the order is placed */
+.bn{
+  left:50%!important;right:auto!important;width:min(calc(100% - 24px),420px);
+  bottom:calc(10px + env(safe-area-inset-bottom))!important;
+  border-radius:26px!important;border:1px solid rgba(150,185,255,.5)!important;
+  padding:6px 8px!important;
+  box-shadow:0 16px 38px rgba(8,16,60,.55),0 2px 0 rgba(255,255,255,.18) inset!important;
+  transform:translateX(-50%);
+  transition:transform .6s cubic-bezier(.34,1.5,.5,1),opacity .25s ease,visibility 0s linear 0s;
+  will-change:transform
+}
+body:not(.nav-on) .bn{
+  transform:translateX(-50%) translateY(calc(100% + 30px)) scale(.9);opacity:0;visibility:hidden;pointer-events:none;
+  transition:transform .35s cubic-bezier(.5,0,.75,0),opacity .25s ease,visibility 0s linear .35s
+}
 body:not(.nav-on):not(.hasbar){padding-bottom:calc(24px + env(safe-area-inset-bottom))}
-@media (prefers-reduced-motion:reduce){.bn,body:not(.nav-on) .bn{transition:none}}
+/* icons pop in one after another, like a dock launching */
+@keyframes dockpop{0%{transform:translateY(16px) scale(.55);opacity:0}100%{transform:none;opacity:1}}
+body.nav-on .bn>*{animation:dockpop .55s cubic-bezier(.34,1.56,.64,1) both}
+body.nav-on .bn>*:nth-child(1){animation-delay:.06s}body.nav-on .bn>*:nth-child(2){animation-delay:.10s}
+body.nav-on .bn>*:nth-child(3){animation-delay:.14s}body.nav-on .bn>*:nth-child(4){animation-delay:.18s}
+body.nav-on .bn>*:nth-child(5){animation-delay:.22s}
+/* dock magnify: pressed icon lifts and grows, its neighbours swell a little */
+.bn i{transition:transform .28s cubic-bezier(.34,1.56,.64,1);transform-origin:50% 100%}
+.bn>*:active i{transform:translateY(-7px) scale(1.4)}
+.bn>*:active+* i,.bn>*:has(+ *:active) i{transform:translateY(-3px) scale(1.18)}
+@media (hover:hover){
+  .bn>*:hover i{transform:translateY(-7px) scale(1.4)}
+  .bn>*:hover+* i,.bn>*:has(+ *:hover) i{transform:translateY(-3px) scale(1.18)}
+}
+@media (prefers-reduced-motion:reduce){
+  .bn,body:not(.nav-on) .bn{transition:opacity .15s linear}
+  body.nav-on .bn>*{animation:none}.bn i{transition:none}
+}
 </style>
 </head>
 <body>
