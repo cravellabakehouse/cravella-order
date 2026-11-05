@@ -1264,11 +1264,76 @@ $('submit').onclick=async()=>{
     if(!r.ok){const e=new Error(r.error||'failed');e.server=!!r.error;throw e}
     if(A.tok){A.orders=null;loadMe()}
     showDone(r.id,t,when,name,r.total,r.discount,r.discNote,r.subtotal,r.coupon);
+    cardSend(r,t,when,name,r.total);
   }catch(ex){
     const why=ex&&ex.server?esc(ex.message)+' ':'Sorry, we could not send your request. ';
     err.innerHTML=why+'You can also <a href="https://wa.me/'+WA+'?text='+encodeURIComponent(summaryText('',t,when,name))+'" target="_blank" rel="noopener" style="color:inherit">send it on WhatsApp instead</a>.';
   }finally{btn.disabled=false;btn.textContent='Send order request · no payment now'}
 };
+/* ---- order card for WhatsApp (inert unless the server hands out a one-time code) ----
+   Draws the card shown in the mockup (1080x1350 PNG) and sends it with the code. Never affects the order flow. */
+async function cardDraw(o){
+  try{await document.fonts.ready}catch(_){}
+  const W=1080,H=1350,P=72,c=document.createElement('canvas'),x=c.getContext('2d'),F='"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+  c.width=W;c.height=H;
+  const fit=(t,max,font)=>{x.font=font;t=String(t);if(x.measureText(t).width<=max)return t;while(t.length>1&&x.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'};
+  const rr=(X,Y,w,h,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()};
+  const wrap=(t,max,font)=>{x.font=font;const out=[];let cur='';String(t).split(' ').forEach(k=>{const n=cur?cur+' '+k:k;if(x.measureText(n).width>max&&cur){out.push(cur);cur=k}else cur=n});if(cur)out.push(cur);return out};
+  x.fillStyle='#fbf4ea';x.fillRect(0,0,W,H);x.fillStyle='#3b2416';x.fillRect(0,0,W,16);
+  const lg=document.querySelector('.band img');
+  if(lg&&lg.naturalWidth){const lw=336,lh=lw*lg.naturalHeight/lg.naturalWidth;x.drawImage(lg,(W-lw)/2,48,lw,lh)}
+  else{x.textAlign='center';x.fillStyle='#1d5e35';x.font='800 56px '+F;x.fillText('CRAVELLA BAKE HOUSE',W/2,120)}
+  /* "Order received" tag */
+  const tag='Order received  ·  '+o.id;x.font='800 30px '+F;const tw=x.measureText(tag).width,pw=tw+92,px=(W-pw)/2,py=232;
+  x.fillStyle='#e0efe3';rr(px,py,pw,56,28);x.fill();
+  x.strokeStyle='#1d5e35';x.lineWidth=5;x.lineCap='round';x.lineJoin='round';x.beginPath();x.arc(px+34,py+28,17,0,Math.PI*2);x.stroke();
+  x.beginPath();x.moveTo(px+26,py+29);x.lineTo(px+32,py+35);x.lineTo(px+43,py+22);x.stroke();
+  x.textAlign='left';x.fillStyle='#1d5e35';x.fillText(tag,px+62,py+38);
+  /* greeting */
+  x.fillStyle='#3b2416';x.font='800 54px '+F;x.fillText('Thank you, '+o.first+'!',P,366);
+  x.fillStyle='#6f5c4b';x.font='600 31px '+F;x.fillText('Here is what you ordered',P,410);
+  /* items card */
+  const items=o.items.slice(0,3),more=o.items.length-items.length,cw=W-2*P,cx=P;let cy=446,ch=32;
+  const single=o.items.length===1;ch+=items.length*(single?96:70)+(more>0?50:0)+22+58+50+50+32;
+  x.fillStyle='#ffffff';rr(cx,cy,cw,ch,36);x.fill();x.strokeStyle='#eadfce';x.lineWidth=2;rr(cx,cy,cw,ch,36);x.stroke();
+  let y=cy+32+46;x.textAlign='left';
+  items.forEach(it=>{x.fillStyle='#3b2416';x.font='800 42px '+F;x.textAlign='left';x.fillText(fit(it.name,cw-300,'800 42px '+F),cx+40,y);
+    x.textAlign='right';x.fillText(it.amount,cx+cw-40,y);x.textAlign='left';
+    if(single){x.fillStyle='#e0efe3';rr(cx+40,y+14,208,40,20);x.fill();x.fillStyle='#1d5e35';x.font='700 25px '+F;x.fillText('100% eggless',cx+60,y+42);y+=96}else y+=70});
+  if(more>0){x.fillStyle='#6f5c4b';x.font='700 28px '+F;x.fillText('+ '+more+' more item'+(more>1?'s':''),cx+40,y-10);y+=50}
+  x.fillStyle='#eadfce';x.fillRect(cx+40,y-24,cw-80,2);y+=34;
+  const row=(l,v,font,col)=>{x.fillStyle=col;x.font=font;x.textAlign='left';x.fillText(l,cx+40,y);x.textAlign='right';x.fillText(v,cx+cw-40,y);y+=50};
+  row('Total',o.total,'800 36px '+F,'#3b2416');y+=8;
+  row('Advance 50% (after we confirm)',o.adv,'600 30px '+F,'#6f5c4b');
+  row(o.mode==='Delivery'?'Balance on delivery':'Balance on pickup',o.bal,'600 30px '+F,'#6f5c4b');
+  /* date block */
+  const by=cy+ch+28,rows=o.when,fee=o.mode==='Delivery'&&rows.length===1?36:0,bh=Math.max(150,52+rows.length*84+fee);
+  x.fillStyle='#3b2416';rr(P,by,W-2*P,bh,36);x.fill();
+  x.fillStyle='rgba(251,244,234,.14)';x.beginPath();x.arc(P+72,by+bh/2,46,0,Math.PI*2);x.fill();
+  x.strokeStyle='#fbf4ea';x.lineWidth=4;x.lineCap='round';x.lineJoin='round';const ix=P+72,iy=by+bh/2;
+  if(o.mode==='Delivery'){x.strokeRect(ix-24,iy-14,26,24);x.beginPath();x.moveTo(ix+2,iy-8);x.lineTo(ix+16,iy-8);x.lineTo(ix+26,iy+2);x.lineTo(ix+26,iy+10);x.lineTo(ix+2,iy+10);x.stroke();x.beginPath();x.arc(ix-12,iy+14,5,0,Math.PI*2);x.stroke();x.beginPath();x.arc(ix+16,iy+14,5,0,Math.PI*2);x.stroke()}
+  else{x.beginPath();x.moveTo(ix-20,iy-14);x.lineTo(ix+20,iy-14);x.lineTo(ix+16,iy+22);x.lineTo(ix-16,iy+22);x.closePath();x.stroke();x.beginPath();x.arc(ix,iy-14,10,Math.PI,0);x.stroke()}
+  let ty=by+(bh-rows.length*84-fee)/2+22;
+  rows.forEach(r=>{x.fillStyle='rgba(251,244,234,.75)';x.font='800 25px '+F;x.textAlign='left';x.fillText(r.label,P+156,ty);x.fillStyle='#fbf4ea';x.font='800 40px '+F;x.fillText(fit(r.value,W-2*P-190,'800 40px '+F),P+156,ty+46);
+    if(fee){x.fillStyle='rgba(251,244,234,.8)';x.font='600 26px '+F;x.fillText('Delivery charges extra',P+156,ty+82)}ty+=84});
+  /* footer */
+  const fh=Math.max(1000,Math.min(H,by+bh+190));
+  x.textAlign='center';x.fillStyle='#6f5c4b';x.font='600 28px '+F;
+  wrap('We will confirm your order shortly and send the payment request on WhatsApp.',W-2*P-40,'600 28px '+F).forEach((l,i)=>x.fillText(l,W/2,fh-82+i*38));
+  const o2=document.createElement('canvas');o2.width=W;o2.height=fh;o2.getContext('2d').drawImage(c,0,0,W,fh,0,0,W,fh);
+  return o2.toDataURL('image/png').split(',')[1];
+}
+async function cardSend(r,t,when,name,total){
+  try{
+    if(!r||!r.cardCode||!r.id||String(r.id).indexOf('DEMO')===0)return;
+    const tot=Number(total!=null?total:t.tot)||0,adv=Math.round(tot/2),mode=S.mode==='Delivery'?'Delivery':'Pickup';
+    const rows=String(when).split('\n').map(l=>{const m=l.match(/^(?:(.+?) – )?(Pickup|Delivery): (.*)$/);if(!m)return {label:mode.toUpperCase(),value:l};
+      return {label:(m[1]?m[1].toUpperCase()+' · ':'')+m[2].toUpperCase(),value:m[3].replace(/, (\d{1,2}:\d{2} [AP]M)$/,' · $1')}}).slice(0,2);
+    const img=await cardDraw({id:r.id,first:String(name||'there').trim().split(/\s+/)[0]||'there',items:t.L.map(l=>({name:l.name,amount:inr(l.amount)})),total:inr(tot),adv:inr(adv),bal:inr(tot-adv),mode,when:rows});
+    if(!img||img.length>470000)return;
+    await api({action:'order_card',id:r.id,code:r.cardCode,img});
+  }catch(_){}
+}
 function showDone(id,t,when,name,total,disc,dnote,subt,cp){
   closeReview();
   $('dName').textContent=name.split(' ')[0];$('dId').textContent='Request '+id;
