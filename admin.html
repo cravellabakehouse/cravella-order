@@ -309,6 +309,7 @@ body{background:#fbf6ee}.ng{display:grid;grid-template-columns:repeat(3,minmax(0
 .wn-go{display:flex;gap:8px}.wn-go .i{flex:1;min-width:0}.emp-g.wn-l{grid-template-columns:1fr;gap:0}.emp-g.wn-l .wn-r{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px;text-align:left}.emp-g.wn-l .wn-r:hover{background:#fbf6ee}.wn-t{display:flex;flex-direction:column;min-width:0}.wn-t small{color:#8a7b6a;font-size:12px}
 .wcv-dq{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;font-weight:700;color:#4a3626}.wcv-ab.dng{color:#b42318;border-color:#f3c5c0}.wcv-dn{flex-basis:100%;font-size:11.5px;color:#8a7b6a;line-height:1.35}
 .wcv-at{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;padding:8px;border:1px solid var(--line);border-radius:14px;background:#fbf8f2}.wcv-at img{width:84px;height:84px;object-fit:cover;border-radius:10px;flex:none}.wcv-atr{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.wcv-atr b{font-size:14px}.wcv-atr small{font-size:12px;color:var(--mut)}.wcv-atr .i{margin:2px 0 0}.wcv-atb{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.tp{margin:10px 0 4px}.tp-h{font-size:12px;font-weight:800;letter-spacing:.1em;color:#7d6a58;margin:0 0 8px}.tp-g{display:flex;gap:10px;align-items:stretch}.tp-c{all:unset;box-sizing:border-box;flex:1;min-width:0;background:#fff;border:1.5px solid #e4d8c6;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer}.tp-c.on{background:#eef6ef;border:2px solid #3d7a4a;padding:11.5px}.tp-c:focus-visible{outline:3px solid #a5582f;outline-offset:2px}.tp-t{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;letter-spacing:.08em;color:#7d6a58}.tp-c.on .tp-t{color:#1d5e35}.tp-r{width:18px;height:18px;border-radius:99px;border:2px solid #cdbfa9;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:900}.tp-c.on .tp-r{background:#3d7a4a;border-color:#3d7a4a}.tp-n{font-size:16px;font-weight:800;line-height:1.15;color:#3b2416}.tp-d{font-size:12.5px;color:#6f5c4b;line-height:1.3}.tp-l{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#6f5c4b}.tp-l span{display:flex;gap:8px}.tp-l i{font-style:normal;color:#8a7765;min-width:10px}.tp-c.on .tp-l i{color:#3d7a4a}.tp-m{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #eadfce;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:700;min-height:44px;margin-top:10px}.tp-m input{width:20px;height:20px;accent-color:#3d7a4a;flex:none}.tp-u{margin-top:10px;width:100%}
 </style>
 </head>
 <body>
@@ -928,6 +929,16 @@ function stepsHtml(o,f){
     return `<li class="${st}"><${tap?'button':'div'} class="tl2-r${tap?' tap':''}"${at}${tap?` title="Mark as ${esc(x.l)}"`:''}><span class="tl2-c">${x.done?'✓':i+1}</span><span class="tl2-b"><b>${esc(x.l)}</b>${x.tag?T[x.tag]:''}${x.m?`<small>${esc(x.m)}</small>`:''}</span></${tap?'button':'div'}></li>`}).join('')}</ol>
   <div class="ohint">${f.cx?'Cancelled.':'Tap a step to mark it done. <span class="ftg auto">auto WhatsApp</span> steps send a message by themselves.'}</div>`
 }
+function termsPick(o,f,pk){
+  if(f.cx||(o.status!=='New'&&o.status!=='Confirmed'))return '';
+  const fn=esc(String(o.name).split(' ')[0]),t=(D.tp=D.tp||{})[o.id]||(D.tp[o.id]={sel:o.later?'B':'A',rem:true}),end=pk?'Collected':'Delivered';
+  const L=a=>a.map((x,i)=>`<span><i>${i+1}</i>${x}</span>`).join('');
+  const card=(k,ttl,sum,steps)=>`<button type="button" class="tp-c${t.sel===k?' on':''}" data-tpsel="${esc(o.id)}|${k}" aria-pressed="${t.sel===k}"><span class="tp-t"><span>STEPS ${k}</span><span class="tp-r">${t.sel===k?'✓':''}</span></span><span class="tp-n">${ttl}</span><span class="tp-d">${sum}</span><span class="tp-l">${L(steps)}</span></button>`;
+  const same=(t.sel==='B')===!!o.later;
+  return `<div class="tp"><div class="tp-h">HOW WILL ${fn.toUpperCase()} PAY?</div><div class="tp-g">${card('A','Advance first','50% before baking, 50% on '+(pk?'pickup':'delivery'),['Order placed','Confirmed','Advance paid','Ready','Balance paid',end])}${card('B','Pay later','No advance. Full payment after it is ready',['Order placed','Ready','Payment requested','Balance paid',end])}</div>
+  <label class="tp-m"><input type="checkbox" data-tprem="${esc(o.id)}"${t.rem?' checked':''}><span>Remember for ${fn}. Every new order follows ${t.sel}.</span></label>
+  <button class="btn sm tp-u" data-tpuse="${esc(o.id)}">${same&&!t.rem?'Keep steps '+t.sel:'Use steps '+t.sel}</button></div>`
+}
 function orderCard(o){
   if(!D.wa&&!D.waBusy&&nf('wa'))setTimeout(loadWa,0);
   const sc=o.status==='Advance received'?'Advance':o.status,cx=o.status==='Cancelled',pk=o.mode==='Pickup',f=payInfo(o);
@@ -940,6 +951,7 @@ function orderCard(o){
   return `<details class="card o ocrd${cx?' isx':''}" data-id="${esc(o.id)}"${D.oopen&&D.oopen[o.id]?' open':''}>
   <summary class="oc-sum"><span class="oc-chev">›</span><span class="oc-sm"><span class="oc-l1"><b>${esc(o.id)}</b> · ${esc(o.name)}</span><span class="oc-l2">${esc(prod)} · Ordered ${esc(plc)}</span><span class="oc-l3"><span class="oc-chip dl">${pk?'🛍':'🚚'} ${fmtD(o.date)}, ${esc(o.time)}</span><span class="oc-chip">${inr(o.total)}</span><span class="oc-chip">📞 ${esc(o.phone)}</span></span></span><span class="oc-rt"><span class="pill ${esc(sc)}">${esc(o.status==='Delivered'&&pk?'Collected':o.status)}</span>${pill}<span class="ocmw" data-id="${esc(o.id)}">${ocmHtml(o)}</span></span></summary>
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
+  ${termsPick(o,f,pk)}
   ${nextHtml(o,f)}
   ${D.payAsk===o.id?`<div class="wcf opay"><span><b>Which payment did you receive?</b> The confirmation PDF goes to the customer on WhatsApp straight away.</span><button class="btn sm" data-s="Advance received" data-pk="adv">50% advance · ${inr(Math.round(o.total/2))}</button><button class="btn sm" data-s="Advance received" data-pk="full">Paid in full · ${inr(o.total)}</button><button class="btn ol sm" data-s="Advance received" data-pk="" data-paycx="1">Cancel</button></div>`:''}
   ${cx||o.status==='Delivered'?'':`<div class="ocds" data-id="${esc(o.id)}">${ocdHtml(o)}</div>`}
@@ -951,7 +963,7 @@ function orderCard(o){
   <div class="oc-grid">
     <div class="oi"><small>${pk?'🛍 Pickup':'🚚 Delivery'}</small><b>${when}</b></div>
     <div class="oi"><small>📞 Customer</small><b><a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></b><button class="oi-wa" data-wchat="91${esc(ph)}">💬 Chat on WhatsApp</button></div>
-    <div class="oi wide"><small>💳 Payment terms</small><b>${o.later?'Pay later, no advance':'50% advance, balance on '+(pk?'pickup':'delivery')}</b>${cx||o.status==='Delivered'||o.status==='Ready'?'':o.later?`<button class="oi-wa" data-plorder="${esc(o.id)}|0">Ask for advance on this order</button><button class="oi-wa" data-plset="${esc(o.id)}|0">Not a pay-later client any more</button>`:`<button class="oi-wa" data-plset="${esc(o.id)}|1">Make ${esc(String(o.name).split(' ')[0])} a pay-later client</button>`}</div>
+    <div class="oi wide"><small>💳 Payment terms</small><b>${o.later?'Pay later, no advance':'50% advance, balance on '+(pk?'pickup':'delivery')}</b></div>
     ${o.address?`<div class="oi wide"><small>📍 Address</small><b>${esc(o.address)}</b></div>`:''}
     ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<div class="oi"><small>✉ Email</small><b>${esc(o.email)}</b></div>`:''}
   </div>
@@ -1015,6 +1027,17 @@ function epModal(){const o=EP.o;if(!o)return;const ph=String(o.phone).replace(/\
   ${EP.pdf?`<div class="ep-ma"><button class="btn" data-epsend="c">📲 Send to ${esc(o.name.split(' ')[0])} (+91 ${esc(ph)})</button><button class="btn ol sm" data-epdl="1">⬇ Download</button></div>
   <div class="ep-mt"><span>Send a test to:</span>${['Deepayan','Priyanka','Cravella'].map((n,i)=>`<button class="btn ol sm" data-epsend="${i}">${n}</button>`).join('')}</div>
   <div class="hint" style="margin:6px 0 0">The PDF goes on WhatsApp only to this order's mobile number. Test copies go only to your three approved numbers.</div>`:''}</div>`;m.classList.remove('hide')}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-tpsel],[data-tprem],[data-tpuse]');if(!b)return;
+  const re=()=>{saveCache&&saveCache();const y=scrollY;render();scrollTo(0,y)};
+  if(b.dataset.tprem!==undefined){const t=(D.tp=D.tp||{})[b.dataset.tprem];if(t)t.rem=b.checked;re();return}
+  e.preventDefault();e.stopPropagation();
+  if(b.dataset.tpsel!==undefined){const [id,k]=b.dataset.tpsel.split('|'),o=D.orders.find(x=>x.id===id);if(!o)return;const t=(D.tp=D.tp||{})[id]||(D.tp[id]={sel:o.later?'B':'A',rem:true});t.sel=k;re();return}
+  const id=b.dataset.tpuse,o=D.orders.find(x=>x.id===id);if(!o||b.disabled)return;const t=(D.tp||{})[id]||{sel:o.later?'B':'A',rem:true},on=t.sel==='B',fn=String(o.name).split(' ')[0];
+  if(on===!!o.later&&!t.rem){toast('Keeping steps '+t.sel);return}
+  b.disabled=true;
+  try{const r=t.rem?await api({action:'admin_wa_pl_set',id:o.id,phone:o.phone,name:o.name,on:on?1:0}):await api({action:'admin_wa_pl_order',id:o.id,on:on?1:0});
+    if(!r.ok){b.disabled=false;toast(r.error||'Could not save');return}
+    o.later=on;re();toast(on?'Steps B (pay later)'+(t.rem?' · '+fn+' is remembered as pay-later':''):'Steps A (advance first)'+(t.rem?' · '+fn+' goes back to advance first':''))}catch(_){b.disabled=false;toast('No connection')}},true);
 /* pay-later clients: terms switch, full payment request, mark paid (nothing is sent on "paid") */
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-plset],[data-plorder],[data-plreq],[data-plpaid]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.disabled)return;
   const id=(b.dataset.plset||b.dataset.plorder||b.dataset.plreq||b.dataset.plpaid).split('|')[0],on=(b.dataset.plset||b.dataset.plorder||'').split('|')[1]==='1',o=D.orders.find(x=>x.id===id);if(!o)return;
