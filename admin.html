@@ -864,6 +864,7 @@ function payInfo(o){
   const cut=balT||(advRec?o.paid.at:0),P=o.pays||[];
   const advShots=cut?P.filter(p=>p.t<=cut):P,balShots=cut?P.filter(p=>p.t>cut):[];
   const once=full&&!balT&&!balShots.length; // paid in full in one go
+  if(o.later){const lp=full?o.total:0,reqT=Number(o.plReq)||balT||0;return {cx,ix,full,advPaid:false,adv:0,paidAmt:lp,due:Math.max(0,o.total-lp),balT:reqT,reqT,rvT,advShots:P,balShots:[],once:false,later:true}}
   return {cx,ix,full,advPaid,adv,paidAmt,due,balT,rvT,advShots,balShots,once}
 }
 const shotBtns=(a,lb)=>a.map((p,i)=>`<button class="pm-sh" data-pay="${esc(p.m)}">${lb}${a.length>1?' '+(i+1):''}</button>`).join(' · ');
@@ -872,6 +873,8 @@ function nextHtml(o,f){
   const B=(c,ic,t,s,btn)=>`<div class="nx ${c}"><span class="nx-i">${ic}</span><div class="nx-t"><b>${t}</b>${s?`<small>${s}</small>`:''}</div>${btn?`<div class="nx-b">${btn}</div>`:''}</div>`;
   if(f.cx)return B('bad','✖','Order cancelled','Tap reopen if this was a mistake.',`<button class="btn sm" data-s="New">Reopen</button>`);
   const st=o.status;
+  if(f.later&&(st==='New'||st==='Confirmed'))return B('am','🎂','Bake it, then tap Ready','No advance for '+first+'. Payment is asked after the order is ready.',`<button class="btn sm" data-s="Ready">Ready</button>`);
+  if(f.later&&st==='Ready'&&f.due>0)return f.reqT?B('am','⏳',`Waiting for the ${inr(f.due)} payment`,`Payment request sent on WhatsApp at ${esc(tShort(f.reqT))} ✓`,`<button class="btn sm" data-plpaid="${esc(o.id)}">Mark payment received</button><button class="btn ol sm" data-plreq="${esc(o.id)}">Send again</button>`):B('am','💬',`Ask ${first} for the ${inr(f.due)} payment`,'Sends the full payment request on WhatsApp.',`<button class="btn sm" data-plreq="${esc(o.id)}">Request payment</button>`);
   if(st==='New')return B('am','📝','Confirm this order','Then send '+first+' the payment request.',`<button class="btn sm" data-s="Confirmed">Confirm</button>`);
   if(st==='Confirmed')return B('am','💰',`Waiting for the 50% advance (${inr(f.adv)})`,f.advShots.length?'A payment screenshot has come in. Check it, then tap.':'Tap when the advance comes in.',`<button class="btn sm" data-s="Advance received">Advance received</button>`);
   if(st==='Advance received')return B('bl','🎂','Bake it, then tap Ready',f.full?'Already paid in full.':bqOn?`The ${inr(f.due)} balance request goes out on WhatsApp by itself when you tap Ready.`:'Automatic balance request is off (Settings → WhatsApp).',`<button class="btn sm" data-s="Ready">Mark ready</button>`);
@@ -887,7 +890,8 @@ function moneyHtml(o,f){
   const row=(ok,t,s,right)=>`<div class="pm-r"><span class="pm-d ${ok?'ok':'wait'}">${ok?'✓':'₹'}</span><div class="pm-t"><b>${t}</b><small>${s}</small></div><div class="pm-a">${right}</div></div>`;
   const pd=o.paid&&o.paid.at?new Date(o.paid.at).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
   let rows='';
-  if(f.once)rows=row(true,'Paid in full',(pd?'Received '+pd:'Received')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(o.total));
+  if(f.later){const bs=f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):'';const canMark=!f.full&&!f.cx&&o.status==='Ready';rows=row(f.full,'Full payment',(f.full?'Received':'No advance asked. '+(o.status==='Ready'?(f.reqT?'Request sent.':'Request it now.'):'Request it once ready.'))+bs,canMark?`<button class="btn sm" data-plpaid="${esc(o.id)}">Mark received</button>`:inr(o.total))}
+  else if(f.once)rows=row(true,'Paid in full',(pd?'Received '+pd:'Received')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(o.total));
   else{
     rows=row(f.advPaid,'Advance 50%',(f.advPaid?'Received'+(o.paid&&o.paid.k==='adv'&&pd?' '+pd:''):'Not received yet')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(f.adv));
     const bs=f.balShots.length?' · '+shotBtns(f.balShots,'screenshot'):'';
@@ -909,12 +913,18 @@ function stepsHtml(o,f){
     pk?null:{l:'Send with Porter',done:dl,tag:'you',m:dl?'':'Book Porter once fully paid'},
     {l:pk?'Collected':'Delivered',s:'Delivered',done:dl,tag:rvOn?'auto':'you',m:f.rvT?'Google review request sent '+tShort(f.rvT):rvOn?'Thank-you + Google review link goes out by itself':''}
   ].filter(Boolean);
+  if(f.later){S.length=0;S.push({l:'Order placed',done:true,m:esc(String(o.placed||'').replace(/,.*$/,''))+' · no advance'},
+    {l:'Ready',s:'Ready',done:ix>=3,tag:'you',m:ix>=3?'':'Tap when baked and packed'},
+    {l:'Payment requested',pl:1,done:!!f.reqT||f.full,tag:'you',m:f.reqT?'Request sent '+tShort(f.reqT):'Sends the full '+inr(o.total)+' request on WhatsApp'},
+    {l:'Balance paid',pay:1,done:f.full,tag:'you',m:f.full?'Received':'Check the screenshot, then tap'});
+    if(!pk)S.push({l:'Send with Porter',done:dl,tag:'you',m:dl?'':'Book Porter once fully paid'});
+    S.push({l:pk?'Collected':'Delivered',s:'Delivered',done:dl,tag:rvOn?'auto':'you',m:f.rvT?'Google review request sent '+tShort(f.rvT):rvOn?'Thank-you + Google review link goes out by itself':''})}
   if(f.once)S.splice(4,1);
   let cur=-1;if(!f.cx&&!dl)cur=S.findIndex(x=>!x.done);
   return `<ol class="tl2${f.cx?' cx':''}">${S.map((x,i)=>{
     const st=f.cx?'todo':x.done?'done':i===cur?'now':'todo';
-    const tap=f.cx?x.s==='New':x.pay?(!x.done&&f.advPaid):(x.s&&!x.done);
-    const at=tap?(x.pay?` ${dl?'data-paylate':'data-payfull'}="${esc(o.id)}"`:` data-s="${esc(x.s)}"`):'';
+    const tap=f.cx?x.s==='New':x.pl?(!x.done&&ix>=3):x.pay?(!x.done&&(f.later?ix>=3:f.advPaid)):(x.s&&!x.done);
+    const at=tap?(x.pl?` data-plreq="${esc(o.id)}"`:x.pay&&f.later?` data-plpaid="${esc(o.id)}"`:x.pay?` ${dl?'data-paylate':'data-payfull'}="${esc(o.id)}"`:` data-s="${esc(x.s)}"`):'';
     return `<li class="${st}"><${tap?'button':'div'} class="tl2-r${tap?' tap':''}"${at}${tap?` title="Mark as ${esc(x.l)}"`:''}><span class="tl2-c">${x.done?'✓':i+1}</span><span class="tl2-b"><b>${esc(x.l)}</b>${x.tag?T[x.tag]:''}${x.m?`<small>${esc(x.m)}</small>`:''}</span></${tap?'button':'div'}></li>`}).join('')}</ol>
   <div class="ohint">${f.cx?'Cancelled.':'Tap a step to mark it done. <span class="ftg auto">auto WhatsApp</span> steps send a message by themselves.'}</div>`
 }
@@ -924,9 +934,9 @@ function orderCard(o){
   const when=o.split?`Cakes: ${fmtD(o.date)}, ${esc(o.time)} (${esc(o.mode)})<br>Other bakes: ${fmtD(o.split.date)}, ${esc(o.split.time)} (${esc(o.split.mode||o.mode)})`:`${fmtD(o.date)}, ${esc(o.time)}`;
   const ph=String(o.phone).replace(/\D/g,'').slice(-10),adv=f.adv,ix=f.ix;
   const rec=o.status==='New'?'c':o.status==='Confirmed'?'a':o.status==='Advance received'?'r':'';
-  const MI={c:1,a:2,r:3},wa=(k,t)=>cx||MI[k]<ix?'':`<button class="btn sm owa${rec===k?' rec':''}" data-wasend="${esc(o.id)}|${k}">${t}</button>`;
+  const MI={c:1,a:2,r:3},wa=(k,t)=>cx||MI[k]<ix||(o.later&&(k==='c'||k==='a'))?'':`<button class="btn sm owa${rec===k?' rec':''}" data-wasend="${esc(o.id)}|${k}">${t}</button>`;
   const first=o.lines.filter(Boolean),prod=first.length?lineRow(first[0]).n+(first.length>1?` +${first.length-1} more`:''):'',plc=String(o.placed||'').replace(/,.*$/,'');
-  const pill=o.status==='Ready'&&f.full?'<span class="pill pif">Paid in full</span>':'';
+  const pill=(o.later?'<span class="pill pif" style="background:#3b2416;color:#fbf4ea">Pay later</span>':'')+(o.status==='Ready'&&f.full?'<span class="pill pif">Paid in full</span>':'');
   return `<details class="card o ocrd${cx?' isx':''}" data-id="${esc(o.id)}"${D.oopen&&D.oopen[o.id]?' open':''}>
   <summary class="oc-sum"><span class="oc-chev">›</span><span class="oc-sm"><span class="oc-l1"><b>${esc(o.id)}</b> · ${esc(o.name)}</span><span class="oc-l2">${esc(prod)} · Ordered ${esc(plc)}</span><span class="oc-l3"><span class="oc-chip dl">${pk?'🛍':'🚚'} ${fmtD(o.date)}, ${esc(o.time)}</span><span class="oc-chip">${inr(o.total)}</span><span class="oc-chip">📞 ${esc(o.phone)}</span></span></span><span class="oc-rt"><span class="pill ${esc(sc)}">${esc(o.status==='Delivered'&&pk?'Collected':o.status)}</span>${pill}<span class="ocmw" data-id="${esc(o.id)}">${ocmHtml(o)}</span></span></summary>
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
@@ -941,6 +951,7 @@ function orderCard(o){
   <div class="oc-grid">
     <div class="oi"><small>${pk?'🛍 Pickup':'🚚 Delivery'}</small><b>${when}</b></div>
     <div class="oi"><small>📞 Customer</small><b><a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></b><button class="oi-wa" data-wchat="91${esc(ph)}">💬 Chat on WhatsApp</button></div>
+    <div class="oi wide"><small>💳 Payment terms</small><b>${o.later?'Pay later, no advance':'50% advance, balance on '+(pk?'pickup':'delivery')}</b>${cx||o.status==='Delivered'||o.status==='Ready'?'':o.later?`<button class="oi-wa" data-plorder="${esc(o.id)}|0">Ask for advance on this order</button><button class="oi-wa" data-plset="${esc(o.id)}|0">Not a pay-later client any more</button>`:`<button class="oi-wa" data-plset="${esc(o.id)}|1">Make ${esc(String(o.name).split(' ')[0])} a pay-later client</button>`}</div>
     ${o.address?`<div class="oi wide"><small>📍 Address</small><b>${esc(o.address)}</b></div>`:''}
     ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<div class="oi"><small>✉ Email</small><b>${esc(o.email)}</b></div>`:''}
   </div>
@@ -1004,6 +1015,16 @@ function epModal(){const o=EP.o;if(!o)return;const ph=String(o.phone).replace(/\
   ${EP.pdf?`<div class="ep-ma"><button class="btn" data-epsend="c">📲 Send to ${esc(o.name.split(' ')[0])} (+91 ${esc(ph)})</button><button class="btn ol sm" data-epdl="1">⬇ Download</button></div>
   <div class="ep-mt"><span>Send a test to:</span>${['Deepayan','Priyanka','Cravella'].map((n,i)=>`<button class="btn ol sm" data-epsend="${i}">${n}</button>`).join('')}</div>
   <div class="hint" style="margin:6px 0 0">The PDF goes on WhatsApp only to this order's mobile number. Test copies go only to your three approved numbers.</div>`:''}</div>`;m.classList.remove('hide')}
+/* pay-later clients: terms switch, full payment request, mark paid (nothing is sent on "paid") */
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-plset],[data-plorder],[data-plreq],[data-plpaid]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.disabled)return;
+  const id=(b.dataset.plset||b.dataset.plorder||b.dataset.plreq||b.dataset.plpaid).split('|')[0],on=(b.dataset.plset||b.dataset.plorder||'').split('|')[1]==='1',o=D.orders.find(x=>x.id===id);if(!o)return;
+  const fn=String(o.name).split(' ')[0],redo=()=>{saveCache();const y=scrollY;render();scrollTo(0,y)};
+  try{
+    if(b.dataset.plset!==undefined){if(on&&!confirm('Make '+fn+' a pay-later client? Their orders skip the advance, and we ask for the full payment once the order is ready.'))return;b.disabled=true;const r=await api({action:'admin_wa_pl_set',id:o.id,phone:o.phone,name:o.name,on:on?1:0});if(!r.ok){b.disabled=false;toast(r.error||'Could not save');return}o.later=on;redo();toast(on?fn+' is a pay-later client':fn+' will be asked for an advance again');return}
+    if(b.dataset.plorder!==undefined){b.disabled=true;const r=await api({action:'admin_wa_pl_order',id:o.id,on:on?1:0});if(!r.ok){b.disabled=false;toast(r.error||'Could not save');return}o.later=on;redo();toast('This order now follows the normal steps');return}
+    if(b.dataset.plreq!==undefined){const due=o.total-(o.paid&&o.paid.amt?Number(o.paid.amt):0);if(!confirm('Send '+fn+' the '+inr(due)+' payment request on WhatsApp now?'))return;b.disabled=true;toast('Sending…');const r=await api({action:'admin_wa_pl_req',id:o.id});b.disabled=false;if(!r.ok){toast(r.error||'Could not send');return}o.plReq=r.at;redo();toast('Payment request sent to '+fn+' on WhatsApp');return}
+    if(b.dataset.plpaid!==undefined){if(!confirm('Mark the '+inr(o.total)+' payment as received for '+o.id+'? Nothing is sent to the customer.'))return;b.disabled=true;const r=await api({action:'admin_wa_paid',id:o.id,kind:'full'});if(!r.ok){b.disabled=false;toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;redo();toast('Payment received · '+o.id+' is paid in full')}
+  }catch(_){b.disabled=false;toast('No connection')}},true);
 async function payMark(o,k){if(k!=='adv'&&k!=='full')return;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:k});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;saveCache();const y=scrollY;render();scrollTo(0,y);
   toast('Saved. Sending the confirmation PDF…');const p=await epMake(o);const s=await api({action:'admin_wa_send_pdf',id:o.id,pdf:p.b64,conf:1});toast(s.ok?'Confirmation PDF sent to '+String(o.name).split(' ')[0]+' on WhatsApp':'Payment saved, but the PDF was not sent: '+(s.error||'error'))}catch(_){toast('No connection')}}
 async function payLate(o,btn){if(D.plBusy)return;if(!confirm('Mark the '+inr(o.total-Math.round(o.total/2))+' balance as received for '+o.id+'? The order stays Delivered and nothing is sent to the customer.'))return;
