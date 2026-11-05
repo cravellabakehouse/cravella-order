@@ -423,7 +423,7 @@ body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 }
 body:not(.nav-on) .bn{
   transform:translateX(-50%) translateY(calc(100% + 30px)) scale(.9);opacity:0;visibility:hidden;pointer-events:none;
-  transition:transform .35s cubic-bezier(.5,0,.75,0),opacity .25s ease,visibility 0s linear .35s
+  transition:transform .26s cubic-bezier(.2,.8,.3,1),opacity .18s ease,visibility 0s linear .26s
 }
 body:not(.nav-on):not(.hasbar){padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 /* icons pop in one after another, like a dock launching */
@@ -1557,9 +1557,12 @@ if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'
     var t=e.target;if(!t||!t.closest||!t.closest('#panel'))return;
     if(t.closest('button,a,input,label,[role="button"],[tabindex],[data-cake],[data-pc],[data-ck],[data-gadd],[data-gp],[data-gm],[data-gzoom]')){homeHide=false;eng=true;sync()}
   },true);
-  /* coming back to the home screen hides the dock again (until the next tap on an item) */
-  var rp=window.renderPanel;if(typeof rp==='function')window.renderPanel=function(){var r=rp.apply(this,arguments);try{if(S.tab==='home'&&prev!=='home')homeHide=true;prev=S.tab}catch(_){}sync();return r};
-  var gh=window.goHome;if(typeof gh==='function')window.goHome=function(){var r=gh.apply(this,arguments);homeHide=true;sync();return r};
+  /* coming back to the home screen hides the dock again (until the next tap on an item).
+     The check runs BEFORE the screen redraws, so the dock starts sliding down straight away. */
+  function chk(){try{if(S.tab==='home'&&prev!=='home'){homeHide=true;sync()}prev=S.tab}catch(_){}}
+  var rt=window.renderTabs;if(typeof rt==='function')window.renderTabs=function(){chk();return rt.apply(this,arguments)};
+  var rp=window.renderPanel;if(typeof rp==='function')window.renderPanel=function(){chk();var r=rp.apply(this,arguments);sync();return r};
+  var gh=window.goHome;if(typeof gh==='function')window.goHome=function(){homeHide=true;sync();return gh.apply(this,arguments)};
   var rb=window.renderBar;if(typeof rb==='function')window.renderBar=function(){var r=rb.apply(this,arguments);sync();return r};
   var a=document.getElementById('acct');if(a&&window.MutationObserver)new MutationObserver(sync).observe(a,{attributes:true,attributeFilter:['class']});
   sync();
