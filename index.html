@@ -417,6 +417,9 @@ body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 .pcx-tx{min-width:0;flex:1}
 .pcx .t{font-size:19px;line-height:1.2}
 .pcx .d{font-size:14.5px;margin-top:4px}
+#panel>.sec{display:flex;align-items:center;justify-content:center;gap:12px;text-align:center;font:800 26px/1.15 'Bricolage Grotesque','Hanken Grotesk',sans-serif;letter-spacing:.04em;margin:26px 0 14px}
+#panel>.sec::before,#panel>.sec::after{content:"";flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,currentColor);opacity:.35}
+#panel>.sec::after{transform:scaleX(-1)}
 .pxd{margin:6px 0 0;font-size:13.5px;line-height:1.4;color:var(--mut);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .pcx .pxp{color:var(--ink);font-weight:800}
 .pcx .inord{font-size:13.5px}
