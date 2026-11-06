@@ -420,6 +420,13 @@ body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 #panel>.sec{display:flex;align-items:center;justify-content:center;gap:12px;text-align:center;font:800 26px/1.15 'Bricolage Grotesque','Hanken Grotesk',sans-serif;letter-spacing:.04em;margin:26px 0 14px}
 #panel>.sec::before,#panel>.sec::after{content:"";flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,currentColor);opacity:.35}
 #panel>.sec::after{transform:scaleX(-1)}
+#sh{position:fixed;left:12px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:7;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+#sh button{pointer-events:auto;width:40px;height:40px;border-radius:50%;border:2px solid #fff;background:linear-gradient(135deg,#0d4a2e,#1b8a4a);box-shadow:0 4px 14px rgba(15,60,35,.35);display:flex;align-items:center;justify-content:center;padding:0;opacity:0;transform:scale(.7);visibility:hidden;transition:opacity .2s,transform .2s,visibility .2s}
+#sh button.on{opacity:1;transform:none;visibility:visible}
+#sh svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+#sh .dn.on svg{animation:shb 1.6s ease-in-out infinite}
+@keyframes shb{0%,100%{transform:translateY(-2px)}50%{transform:translateY(3px)}}
+@media (prefers-reduced-motion:reduce){#sh .dn.on svg{animation:none}#sh button{transition:none}}
 .pxd{margin:6px 0 0;font-size:13.5px;line-height:1.4;color:var(--mut);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .pcx .pxp{color:var(--ink);font-weight:800}
 .pcx .inord{font-size:13.5px}
@@ -1662,5 +1669,17 @@ if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'
 })();
 </script>
 <!-- AI assistant (ai.js) turned off on 24 Oct 2026. To turn it back on, load ai.js here again. -->
+<div id="sh" aria-live="off"><button class="up" type="button" aria-label="Scroll to top"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button><button class="dn" type="button" aria-label="Scroll down for more"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></div>
+<script>
+(function(){var w=document.getElementById('sh');if(!w)return;var up=w.querySelector('.up'),dn=w.querySelector('.dn'),t=0;
+function upd(){t=0;var d=document.documentElement,y=window.pageYOffset||d.scrollTop||0,h=Math.max(d.scrollHeight,document.body.scrollHeight),v=window.innerHeight,scrollable=h>v+160;
+up.classList.toggle('on',scrollable&&y>240);dn.classList.toggle('on',scrollable&&y+v<h-140)}
+function q(){if(!t)t=requestAnimationFrame(upd)}
+addEventListener('scroll',q,{passive:true});addEventListener('resize',q);
+var pn=document.getElementById('panel');if(pn&&window.MutationObserver)new MutationObserver(q).observe(pn,{childList:true,subtree:true});
+up.addEventListener('click',function(){scrollTo({top:0,behavior:'smooth'})});
+dn.addEventListener('click',function(){scrollBy({top:Math.round(window.innerHeight*.8),behavior:'smooth'})});
+setTimeout(q,600);q()})();
+</script>
 </body>
 </html>
