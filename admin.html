@@ -135,6 +135,8 @@ body.hasSave{padding-bottom:calc(168px + env(safe-area-inset-bottom))}
 .up{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}.up:last-child{border-bottom:0}.up b{font-weight:700}.up small{display:block;color:var(--mut);font-size:12.5px}
 .sk{height:128px;border-radius:18px;background:linear-gradient(90deg,#f6f0e3 25%,#fbf7ee 37%,#f6f0e3 63%);background-size:400% 100%;animation:sh 1.2s infinite;margin:12px 0}
 @keyframes sh{0%{background-position:100% 0}100%{background-position:0 0}}
+.mback{display:inline-flex;align-items:center;gap:6px;padding:8px 14px 8px 10px;margin:0 0 6px;border-radius:999px;background:var(--card,#fff);border:1px solid var(--line);font-weight:700;font-size:15px;color:inherit;cursor:pointer}
+.mback:active{transform:scale(.97)}
 .mi{display:flex;align-items:center;gap:14px;width:100%;padding:14px 8px;border-bottom:1px solid var(--line);font-size:16px;font-weight:700;text-align:left}.mi i{font-style:normal;font-size:22px;width:30px;text-align:center}
 .empty{text-align:center;padding:30px 10px}.empty b{font-size:34px;display:block}
 @media print{.nav{display:none!important}}
@@ -656,11 +658,12 @@ $('brandHome').onclick=()=>{if(!tok)return;if($('moreSheet')&&!$('moreSheet').cl
 const TS=[];function goBack(){const p=TS.pop()||'home';if(p===tab&&!TS.length&&tab==='home')return;tab=p;render();scrollTo(0,0)}
 function goTab(k){if(k===tab)return;TS.push(tab);if(TS.length>30)TS.shift();tab=k;try{history.pushState({cb:'tab',tab},'')}catch(_){}render();scrollTo(0,0)}
 $('navIn').addEventListener('click',e=>{
-  if(e.target.closest('[data-more]')){const MM=Object.fromEntries(MAIN.concat(MORE).map(x=>[x[0],x]));$('moreIn').innerHTML=`<div class="sc" style="margin-top:0"><span>All pages</span></div>`+SECS.map(([sn,sc,sd,keys])=>`<div class="msec" style="--ac:${sc}"><b>${sn}</b><small>${sd}</small></div><div class="ng ngm">${keys.map(k=>MM[k]?niCard(k,MM[k][1],'',0,`data-tab="${k}"`):'').join('')}</div>`).join('')+`<button class="mi" id="moreOut"><i>🚪</i>Sign out</button>`;showSheet('moreSheet');return}
+  if(e.target.closest('[data-more]')){const MM=Object.fromEntries(MAIN.concat(MORE).map(x=>[x[0],x]));$('moreIn').innerHTML=`<button class="mback" id="moreBack" type="button" aria-label="Go back">&#8592; Go back</button><div class="sc" style="margin-top:0"><span>All pages</span></div>`+SECS.map(([sn,sc,sd,keys])=>`<div class="msec" style="--ac:${sc}"><b>${sn}</b><small>${sd}</small></div><div class="ng ngm">${keys.map(k=>MM[k]?niCard(k,MM[k][1],'',0,`data-tab="${k}"`):'').join('')}</div>`).join('')+`<button class="mi" id="moreOut"><i>🚪</i>Sign out</button>`;showSheet('moreSheet');return}
   if(e.target.closest('[data-back]')){goBack();return}
   const b=e.target.closest('[data-tab]');if(b)goTab(b.dataset.tab)});
 $('moreSheet').addEventListener('click',e=>{
   if(e.target.id==='moreSheet'){popSheet();return}
+  if(e.target.closest('#moreBack')){popSheet();return}
   if(e.target.closest('#moreOut')){$('moreSheet').classList.add('hide');try{if(history.state&&history.state.cb==='sheet')history.back()}catch(_){}$('out').click();return}
   const b=e.target.closest('[data-tab]');if(!b)return;
   $('moreSheet').classList.add('hide');const k=b.dataset.tab;
