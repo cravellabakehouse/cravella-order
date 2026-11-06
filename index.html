@@ -410,7 +410,9 @@ body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 /* bigger, cleaner product cards for phones (theme cake untouched) */
 .ph.lg{width:112px;height:112px;border:3px solid #fff;border-radius:20px;box-shadow:0 4px 14px rgba(70,40,20,.2)}
 .card.pcx{padding:14px}
-.pcx-in{display:block}
+.pcx-in{display:flex;flex-direction:column}
+.pcx .ctl{align-self:flex-end}
+.pcx .soldout{align-self:flex-end}
 .pcx-top{display:flex;gap:14px;align-items:center}
 .pcx-tx{min-width:0;flex:1}
 .pcx .t{font-size:19px;line-height:1.2}
