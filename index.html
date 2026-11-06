@@ -417,11 +417,15 @@ body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 .pcx .d{font-size:14.5px;margin-top:4px}
 .pcx .pxp{color:var(--ink);font-weight:800}
 .pcx .inord{font-size:13.5px}
-.pcx .ctl{display:flex;align-items:center;gap:10px!important;margin-top:12px;width:100%}
-.pcx .ctl .step{gap:6px}
-.pcx .ctl .step button{width:46px;height:46px;font-size:24px}
-.pcx .ctl .step span{min-width:44px;font-size:19px}
-.pcx .ctl .add{flex:1;min-height:46px;font-size:16.5px;padding:0 14px;border-radius:14px}
+.pcx .ctl{display:inline-flex;align-items:center;gap:8px!important;margin-top:12px;padding:5px;border-radius:999px;background:linear-gradient(135deg,#0d4a2e,#1b8a4a);box-shadow:0 3px 10px rgba(15,107,55,.3)}
+.pcx .ctl .step{gap:4px}
+.pcx .ctl .step button,.pcx .ctl .step button.p{width:38px;height:38px;font-size:22px;font-weight:700;border:0;background:rgba(255,255,255,.18);color:#fff}
+.pcx .ctl .step button.p{background:#fff;color:#0f6b37}
+.pcx .ctl .step span{min-width:30px;font-size:18px;font-weight:800;color:#fff}
+.pcx .ctl .add{flex:none;height:38px;min-height:0;padding:0 20px;font-size:15.5px;font-weight:800;border-radius:999px;background:#fff6cf;color:#0d4a2e}
+.card[data-cake] .add:not(.off){background:linear-gradient(135deg,#0d4a2e,#1b8a4a);color:#fff}
+body.fest .pcx .ctl .add{background:#fff6cf!important;color:#0d4a2e!important}
+body.fest .card[data-cake] .add:not(.off){background:linear-gradient(135deg,#0d4a2e,#1b8a4a)!important;color:#fff!important}
 .pcx .soldout{display:inline-block;margin-top:10px}
 </style>
 <link rel="stylesheet" href="glass-nav.css">
