@@ -417,6 +417,7 @@ body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 .pcx-tx{min-width:0;flex:1}
 .pcx .t{font-size:19px;line-height:1.2}
 .pcx .d{font-size:14.5px;margin-top:4px}
+.pxd{margin:6px 0 0;font-size:13.5px;line-height:1.4;color:var(--mut);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .pcx .pxp{color:var(--ink);font-weight:800}
 .pcx .inord{font-size:13.5px}
 .pcx .ctl{display:inline-flex;align-items:center;gap:8px!important;margin-top:12px;padding:5px;border-radius:999px;background:linear-gradient(135deg,#0d4a2e,#1b8a4a);box-shadow:0 3px 10px rgba(15,107,55,.3)}
@@ -685,6 +686,8 @@ function inCart(c){
   return `<div class="incart"><div class="d" style="font-weight:700;margin-bottom:4px">In your order</div>`+rows.map(({l,i})=>{const cr=c.creams.find(x=>x.id===l.cream),p=cakePrice(c,l.cream,l.kg);
     return `<div class="line" data-ci="${i}"><div class="l">${esc([cr&&cr.label,kgLabel(l.kg)].filter(Boolean).join(' · '))}<small>${inr(p.amount*l.q)}</small></div><div class="step"><button data-cm aria-label="Remove one">−</button><span>${l.q}</span><button class="p" data-cp aria-label="Add one">+</button></div></div>`}).join('')+`</div>`}
 function imgOf(d){const rp=phUrl(d.id),ph=IMG[d.id];return rp?{u:rp,c:1}:d.img?{u:d.img,c:1}:ph?{u:ph,c:0}:null}
+const PDESC={"cup0": "Soft chocolate cupcakes topped with a swirl of rich chocolate frosting.", "cup1": "Soft cupcakes with a pink strawberry frosting swirl. Sweet and fruity.", "cup2": "Fruity blueberry flavour with a pretty lilac frosting swirl on top.", "cup3": "A tangy-sweet raspberry flavour with a rosy frosting swirl.", "cup4": "Sunny mango flavour with a golden mango frosting swirl.", "muf0": "Moist banana muffins studded with chocolate chips. Lovely with tea.", "muf1": "Coffee-kissed chocolate muffins topped with crunchy almond flakes.", "muf2": "Rich chocolate muffins with tart cranberries for a sweet and tangy bite.", "muf3": "Soft vanilla muffins loaded with chocolate chips. A bakery classic.", "muf4": "Moist carrot muffins that are soft, gently sweet and comforting.", "muf5": "Pistachio and mawa (khoya) in a soft, rich bake, inspired by Indian mithai.", "brn0": "Fudgy brownies with a shiny, crackly crinkle top and chewy centre.", "brn1": "Fudgy chocolate brownies topped with crunchy walnuts.", "brn2": "Red velvet brownies swirled with tangy cream cheese.", "brn3": "A fudgy brownie packed with three kinds of chocolate, for serious chocolate lovers.", "brn4": "Fudgy brownies with cookies-and-cream crunch in every bite.", "brn5": "Fudgy brownies with the caramelised flavour of Lotus Biscoff biscuits.", "brn6": "A coffee-and-cocoa brownie inspired by tiramisu. Rich and indulgent.", "bld0": "Chewy blondies with pistachio and a delicate hint of rose.", "bld1": "Soft, chewy blondies with a sweet coconut flavour.", "cok0": "Crisp-edged cookies with a bold coffee flavour.", "cok1": "Chocolate chip cookies with a soft, gooey filled centre.", "cok2": "Classic two-tone vanilla and chocolate checkerboard cookies.", "cok3": "Wholesome digestive-style cookies made with atta and jaggery.", "cok4": "Gluten-free and vegan cookies for anyone who avoids gluten or dairy.", "cok5": "Classic melt-in-the-mouth butter cookies."};
+const pxd=d=>PDESC[d.id]?`<p class="pxd">${esc(PDESC[d.id])}</p>`:'';
 function thumbHtml(d,big,lg){const o=imgOf(d);if(!o)return '';
   const st=o.c?`background:#fff url('${esc(o.u)}') center/cover`:`background:url('${o.u}') center 42%/62% no-repeat,linear-gradient(135deg,#fff6cf,#ffe3c6)`;
   return `<span class="ph${big?' big':''}${lg?' lg':''}" data-zoom="${esc(d.id)}" role="button" aria-label="View photo of ${esc(d.name)}" style="${st}"></span>`}
@@ -714,13 +717,13 @@ function inBlock(id,lab,amt,desc){
 }
 function pcCard(d,unit){
   const q=S.pc[d.id]||0,bx=q/d.size,pe=S.pend[d.id]!==undefined?S.pend[d.id]:q,pb=pe/d.size;
-  return `<div class="card pcx" data-pc="${d.id}"><div class="pcx-in"><div class="pcx-top">${thumbHtml(d,0,1)}<div class="pcx-tx"><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · <b class="pxp">${inr(d.box)}</b></div>${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div></div>
+  return `<div class="card pcx" data-pc="${d.id}"><div class="pcx-in"><div class="pcx-top">${thumbHtml(d,0,1)}<div class="pcx-tx"><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · <b class="pxp">${inr(d.box)}</b></div>${pxd(d)}${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div></div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'pc',pe,pe)}</div>
   ${pe&&pe!==q?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}</div>`;
 }
 function cookieCard(d){
   const g=S.cookie[d.id]||0,pe=S.pend[d.id]!==undefined?S.pend[d.id]:g;
-  return `<div class="card pcx" data-ck="${d.id}"><div class="pcx-in"><div class="pcx-top">${thumbHtml(d,0,1)}<div class="pcx-tx"><div class="t">${esc(d.name)}</div><div class="d"><b class="pxp">${inr(d.rate)}</b> per 250 g</div>${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div></div>
+  return `<div class="card pcx" data-ck="${d.id}"><div class="pcx-in"><div class="pcx-top">${thumbHtml(d,0,1)}<div class="pcx-tx"><div class="t">${esc(d.name)}</div><div class="d"><b class="pxp">${inr(d.rate)}</b> per 250 g</div>${pxd(d)}${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div></div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'ck',pe,pe?gLabel(pe):'0')}</div>
   ${pe&&pe!==g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}</div>`;
 }
