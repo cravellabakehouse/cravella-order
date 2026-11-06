@@ -407,6 +407,22 @@ body .bar .go,body.fest .bar .go{position:relative;width:58px;height:58px;paddin
 .bar .go i{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:11px;background:#fff;color:#1446b8;font:800 12.5px/22px system-ui,sans-serif;text-align:center;font-style:normal;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 @media (prefers-reduced-motion:no-preference){.bar{transition:transform .2s}}
+/* bigger, cleaner product cards for phones (theme cake untouched) */
+.ph.lg{width:112px;height:112px;border:3px solid #fff;border-radius:20px;box-shadow:0 4px 14px rgba(70,40,20,.2)}
+.card.pcx{padding:14px}
+.pcx-in{display:block}
+.pcx-top{display:flex;gap:14px;align-items:center}
+.pcx-tx{min-width:0;flex:1}
+.pcx .t{font-size:19px;line-height:1.2}
+.pcx .d{font-size:14.5px;margin-top:4px}
+.pcx .pxp{color:var(--ink);font-weight:800}
+.pcx .inord{font-size:13.5px}
+.pcx .ctl{display:flex;align-items:center;gap:10px!important;margin-top:12px;width:100%}
+.pcx .ctl .step{gap:6px}
+.pcx .ctl .step button{width:46px;height:46px;font-size:24px}
+.pcx .ctl .step span{min-width:44px;font-size:19px}
+.pcx .ctl .add{flex:1;min-height:46px;font-size:16.5px;padding:0 14px;border-radius:14px}
+.pcx .soldout{display:inline-block;margin-top:10px}
 </style>
 <link rel="stylesheet" href="glass-nav.css">
 <style>
@@ -663,9 +679,9 @@ function inCart(c){
   return `<div class="incart"><div class="d" style="font-weight:700;margin-bottom:4px">In your order</div>`+rows.map(({l,i})=>{const cr=c.creams.find(x=>x.id===l.cream),p=cakePrice(c,l.cream,l.kg);
     return `<div class="line" data-ci="${i}"><div class="l">${esc([cr&&cr.label,kgLabel(l.kg)].filter(Boolean).join(' · '))}<small>${inr(p.amount*l.q)}</small></div><div class="step"><button data-cm aria-label="Remove one">−</button><span>${l.q}</span><button class="p" data-cp aria-label="Add one">+</button></div></div>`}).join('')+`</div>`}
 function imgOf(d){const rp=phUrl(d.id),ph=IMG[d.id];return rp?{u:rp,c:1}:d.img?{u:d.img,c:1}:ph?{u:ph,c:0}:null}
-function thumbHtml(d,big){const o=imgOf(d);if(!o)return '';
+function thumbHtml(d,big,lg){const o=imgOf(d);if(!o)return '';
   const st=o.c?`background:#fff url('${esc(o.u)}') center/cover`:`background:url('${o.u}') center 42%/62% no-repeat,linear-gradient(135deg,#fff6cf,#ffe3c6)`;
-  return `<span class="ph${big?' big':''}" data-zoom="${esc(d.id)}" role="button" aria-label="View photo of ${esc(d.name)}" style="${st}"></span>`}
+  return `<span class="ph${big?' big':''}${lg?' lg':''}" data-zoom="${esc(d.id)}" role="button" aria-label="View photo of ${esc(d.name)}" style="${st}"></span>`}
 function trustLine(){
   const R=(typeof CFG!=='undefined'&&CFG&&CFG.reviews)||{};
   const rv=R.rating&&R.count?`<span style="color:#b8860b">★</span> ${Number(R.rating).toFixed(1)} · ${R.count} Google reviews · `:'';
@@ -676,8 +692,8 @@ function cakeCard(c){
   const WS=c.weights||MENU.weights,kg=other?s.kg:WS[s.wi],p=ready?cakePrice(c,s.cream,kg):null;
   const pv=i=>cr?cr.prices[i]:Math.min(...c.creams.map(x=>x.prices[i]));
   const miss=needCream&&needSize?'frosting and size':needCream?'a frosting':'a size';
-  if(isOff(c.id))return `<div class="card" data-cake="${c.id}" style="opacity:.7"><div class="row" style="align-items:center;justify-content:space-between;gap:10px"><div style="display:flex;gap:12px;align-items:center">${thumbHtml(c,1)}<div><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div></div></div><span class="soldout">Sold out</span></div></div>`;
-  return `<div class="card" data-cake="${c.id}"><div style="display:flex;gap:12px;align-items:flex-start">${thumbHtml(c,1)}<div style="min-width:0"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div>${trustLine()}</div></div>
+  if(isOff(c.id))return `<div class="card" data-cake="${c.id}" style="opacity:.7"><div class="row" style="align-items:center;justify-content:space-between;gap:10px"><div style="display:flex;gap:12px;align-items:center">${thumbHtml(c,1,!c.custom)}<div><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div></div></div><span class="soldout">Sold out</span></div></div>`;
+  return `<div class="card" data-cake="${c.id}"><div style="display:flex;gap:14px;align-items:flex-start">${thumbHtml(c,1,!c.custom)}<div style="min-width:0"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div>${trustLine()}</div></div>
   ${c.creams.length>1?`<div class="d" style="font-weight:700;margin:10px 0 4px">Choice of Frosting</div><div class="chips fr">${c.creams.map(x=>`<button class="chip cr ${x.id===s.cream?'on':''}" data-cream="${x.id}">${x.label}</button>`).join('')}</div>`:''}
   <div class="chips">${WS.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${cr&&!c.custom?'':'from '}${inr(pv(i))}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
   ${other?`<div class="kg"><span>Weight</span><div class="step"><button data-kgm>−</button><span>${kgLabel(s.kg)}</span><button class="p" data-kgp>+</button></div></div>`:''}
@@ -692,13 +708,13 @@ function inBlock(id,lab,amt,desc){
 }
 function pcCard(d,unit){
   const q=S.pc[d.id]||0,bx=q/d.size,pe=S.pend[d.id]!==undefined?S.pend[d.id]:q,pb=pe/d.size;
-  return `<div class="card" data-pc="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div style="display:flex;gap:10px;align-items:center;min-width:0;flex:1">${thumbHtml(d)}<div><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · ${inr(d.box)}</div>${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div></div>
+  return `<div class="card pcx" data-pc="${d.id}"><div class="pcx-in"><div class="pcx-top">${thumbHtml(d,0,1)}<div class="pcx-tx"><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · <b class="pxp">${inr(d.box)}</b></div>${q?`<div class="inord">✓ In your order: ${bx} ${bx>1?'boxes':'box'} (${q}) · ${inr(pcAmount(d,q))}</div>`:''}</div></div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'pc',pe,pe)}</div>
   ${pe&&pe!==q?`<div class="row" style="margin-top:6px"><span class="d">${pb} ${pb>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(d,pe))}</span></div>`:''}</div>`;
 }
 function cookieCard(d){
   const g=S.cookie[d.id]||0,pe=S.pend[d.id]!==undefined?S.pend[d.id]:g;
-  return `<div class="card" data-ck="${d.id}"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div style="display:flex;gap:10px;align-items:center;min-width:0;flex:1">${thumbHtml(d)}<div><div class="t">${esc(d.name)}</div><div class="d">${inr(d.rate)} per 250 g</div>${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div></div>
+  return `<div class="card pcx" data-ck="${d.id}"><div class="pcx-in"><div class="pcx-top">${thumbHtml(d,0,1)}<div class="pcx-tx"><div class="t">${esc(d.name)}</div><div class="d"><b class="pxp">${inr(d.rate)}</b> per 250 g</div>${g?`<div class="inord">✓ In your order: ${gLabel(g)} · ${inr(cookieAmount(d,g))}</div>`:''}</div></div>
   ${isOff(d.id)?'<span class="soldout">Sold out</span>':ctlHtml(d.id,'ck',pe,pe?gLabel(pe):'0')}</div>
   ${pe&&pe!==g?`<div class="row" style="margin-top:6px"><span class="d">${gLabel(pe)}</span><span class="pr" style="font-size:15px">${inr(cookieAmount(d,pe))}</span></div>`:''}</div>`;
 }
