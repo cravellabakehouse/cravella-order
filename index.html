@@ -408,12 +408,12 @@ body .bar .go,body.fest .bar .go{position:relative;width:58px;height:58px;paddin
 body.hasbar{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
 @media (prefers-reduced-motion:no-preference){.bar{transition:transform .2s}}
 /* bigger, cleaner product cards for phones (theme cake untouched) */
-.ph.lg{width:112px;height:112px;border:3px solid #fff;border-radius:20px;box-shadow:0 4px 14px rgba(70,40,20,.2)}
+.ph.lg{width:clamp(124px,37vw,148px);height:clamp(124px,37vw,148px);border:3px solid #fff;border-radius:20px;box-shadow:0 4px 14px rgba(70,40,20,.2)}
 .card.pcx{padding:14px}
 .pcx-in{display:flex;flex-direction:column}
 .pcx .ctl{align-self:flex-end}
 .pcx .soldout{align-self:flex-end}
-.pcx-top{display:flex;gap:14px;align-items:center}
+.pcx-top{display:flex;gap:18px;align-items:center}
 .pcx-tx{min-width:0;flex:1}
 .pcx .t{font-size:19px;line-height:1.2}
 .pcx .d{font-size:14.5px;margin-top:4px}
