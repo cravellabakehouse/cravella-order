@@ -8,7 +8,7 @@
   function facts(){
     var L = [], M = window.MENU || (typeof MENU !== 'undefined' ? MENU : null);
     if (!M) return '';
-    L.push('BAKERY: CRAVELLA BAKE HOUSE BY PRIYANKA LLP, 100% eggless home bakery, Yelahanka, Bengaluru. Pre-orders only. No palm oil, no preservatives. FSSAI 21225177003525.');
+    L.push('BAKERY: CRAVELLA BAKE HOUSE, 100% eggless home bakery, Yelahanka, Bengaluru. Pre-orders only. No palm oil, no preservatives. FSSAI 21225177003525.');
     L.push('CONTACT: WhatsApp 81477 33224 (chat and order help). Call 98459-04310.');
     L.push('HOW TO ORDER: add items on this website, pick a date and pickup or delivery, then check out. Pickup/delivery time slots: 10 AM to 8 PM.');
     L.push('NOTICE: cakes need 2 days (48 hours) notice. Cupcakes, muffins, brownies, blondies and cookies need 1 day (24 hours) notice.');
