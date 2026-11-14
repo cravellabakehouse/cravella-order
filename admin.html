@@ -80,10 +80,10 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .stat span{font-size:12px;color:var(--mut)}
 .stat.ac-k div{border:0;color:#fff;box-shadow:var(--shadow)}.stat.ac-k span{color:rgba(255,255,255,.88);font-weight:600}
 .stat.ac-k .k1{background:linear-gradient(135deg,#7a4fd0,#a07be6)}.stat.ac-k .k2{background:linear-gradient(135deg,#2f9e6b,#5cc592)}.stat.ac-k .k3{background:linear-gradient(135deg,#d9822b,#f0a85c)}.stat.ac-k .k4{background:linear-gradient(135deg,#2b79c2,#5aa2e0)}.stat.ac-k .k5{background:linear-gradient(135deg,#c1478a,#e27cb3)}
-.acx{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-top:6px;box-shadow:var(--shadow)}
-.acx-in{min-width:900px}
-.acx-h,.acx-r{display:grid;grid-template-columns:minmax(120px,1.1fr) 108px minmax(110px,1fr) minmax(140px,1.4fr) 54px 78px 68px 68px 68px 74px;align-items:center}
-.acx-h>span{padding:11px 8px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;border-left:1px solid rgba(255,255,255,.28)}.acx-h>span:first-child{border-left:0}
+.acx{overflow-x:auto;border:1px solid var(--line);border-radius:14px;clip-path:inset(0 round 14px);background:var(--card);margin-top:6px;box-shadow:var(--shadow)}
+.acx-in{min-width:920px}
+.acx-h,.acx-r{display:grid;grid-template-columns:minmax(120px,1.1fr) 108px minmax(110px,1fr) minmax(140px,1.4fr) 54px 78px 76px 76px 76px 74px;align-items:center}
+.acx-h{border-left:6px solid transparent}.acx-h>span{padding:12px 6px;font-size:10.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap;align-self:stretch;display:flex;align-items:center;text-transform:uppercase;color:#fff;border-left:1px solid rgba(255,255,255,.28)}.acx-h>span:first-child{border-left:0}
 .acx-h .c1{background:#7a4fd0}.acx-h .c2{background:#2b79c2}.acx-h .c3{background:#1f9aa8}.acx-h .c4{background:#2f9e6b}.acx-h .c5{background:#d9822b}.acx-h .c6{background:#c1478a}.acx-h .c7{background:#7d6a58}.acx-h .c8{background:#7d6a58}.acx-h .c9{background:#7d6a58}.acx-h .c10{background:#4b3a2c}
 .acx-r{border-top:1px solid var(--line);border-left:6px solid var(--rc);background:var(--rc-bg)}
 .acx-r.ord{--rc:#2f9e6b;--rc-bg:#f1faf5}.acx-r.non{--rc:#e09030;--rc-bg:#fff7ea}
@@ -1280,14 +1280,14 @@ function accHtml(){
   <div class="row" style="margin:8px 0;gap:8px;flex-wrap:wrap"><select class="i" id="aSort" style="width:auto;padding:7px 10px">${[['new','Sort: newest sign-up'],['last','Sort: last sign-in'],['spent','Sort: most spent'],['orders','Sort: most orders'],['name','Sort: name A–Z']].map(([k,n])=>`<option value="${k}"${asrt===k?' selected':''}>${n}</option>`).join('')}</select>
   <span><button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
   <div class="hint" style="margin-bottom:6px">${L.length} of ${all.length} accounts</div>`;
-  const hd='<div class="acx-h"><span class="c1">Account</span><span class="c2">Mobile</span><span class="c3">Email</span><span class="c4">Address</span><span class="c5">Orders</span><span class="c6">Spent</span><span class="c7">Signed up</span><span class="c8">Last login</span><span class="c9">Last order</span><span class="c10">Contact</span></div>';
+  const hd='<div class="acx-h"><span class="c1">Account</span><span class="c2">Mobile</span><span class="c3">Email</span><span class="c4">Address</span><span class="c5">Orders</span><span class="c6">Spent</span><span class="c7">Joined</span><span class="c8">Last login</span><span class="c9">Last order</span><span class="c10">Contact</span></div>';
   const lane=(c,l,v)=>`<div class="${c}"><span class="l">${l}</span>${v}</div>`,nn='<span class="acx-none">–</span>';
   h+=L.length?'<div class="acx"><div class="acx-in">'+hd+L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10),seed=String(a.name||a.phone||a.email||'?'),hue=[...seed].reduce((x,c)=>(x*31+c.charCodeAt(0))%360,7),ini=(String(a.name||'').trim()[0]||'#').toUpperCase(),adr=accAddr(a);
     return `<div class="acx-r ${a.orders?'ord':'non'}" style="--h:${hue}">`
     +`<div class="a-nm"><span class="acx-nm"><span class="acx-av">${esc(ini)}</span><b class="${a.name?'':'no'}">${a.name?esc(a.name):'No name yet'}</b></span><span class="acx-pl"><span class="acx-p ${a.orders?'g':'o'}">${a.orders?'Has ordered':'Not ordered yet'}</span>${a.reg?'':'<span class="acx-p v">Form not filled</span>'}<span class="acx-p ${a.via==='WhatsApp'?'w':'e'}">${esc(a.via)}</span></span></div>`
     +lane('a-ph','Mobile',ph?esc(ph.slice(0,5)+' '+ph.slice(5)):nn)+lane('a-em','Email',a.email?esc(a.email):nn)+lane('a-adr','Address',adr?esc(adr):'<span class="acx-none">No address yet</span>')
     +lane('a-or','Orders','<span class="acx-n">'+a.orders+'</span>')+lane('a-sp','Spent','<span class="acx-n sp">'+inr(a.spent)+'</span>')
-    +lane('a-d1','Signed up','<span class="acx-d">'+dShort(a.created)+'</span>')+lane('a-d2','Last login','<span class="acx-d">'+dShort(a.last)+'</span>')+lane('a-d3','Last order','<span class="acx-d">'+(a.lastOrder?dShort(a.lastOrder):'–')+'</span>')
+    +lane('a-d1','Joined','<span class="acx-d">'+dShort(a.created)+'</span>')+lane('a-d2','Last login','<span class="acx-d">'+dShort(a.last)+'</span>')+lane('a-d3','Last order','<span class="acx-d">'+(a.lastOrder?dShort(a.lastOrder):'–')+'</span>')
     +`<div class="a-ac acx-ac"><span class="l">Contact</span>${ph?`<a class="btn ol sm" href="tel:+91${ph}" title="Call" aria-label="Call">📞<span class="t"> Call</span></a> <a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}" title="WhatsApp" aria-label="WhatsApp">💬<span class="t"> WhatsApp</span></a>`:nn}</div></div>`}).join('')+'</div></div>':`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
   return h}
 function accCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',dt=ms=>ms?new Date(ms).toLocaleString('en-IN'):'';
