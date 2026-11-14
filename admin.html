@@ -91,7 +91,7 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .acx-r .l{display:none}
 .acx-nm{display:flex;gap:9px;align-items:center}.acx-av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 15px 'Bricolage Grotesque',system-ui;color:#fff;background:hsl(var(--h) 55% 48%)}.acx-nm b{font-size:14px;line-height:1.2}.acx-nm b.no{font-weight:600;color:var(--mut)}
 .acx-pl{display:flex;flex-wrap:wrap;gap:4px}
-.acx-p{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.acx-p.g{background:#d7f1e2;color:#1d6b43}.acx-p.o{background:#ffe6c2;color:#9a5a08}.acx-p.v{background:#e9defa;color:#5b32a8}.acx-p.w{background:#d6f5df;color:#17803f}.acx-p.e{background:#dcebfb;color:#1f5f9f}
+.acx-p{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.acx-p.g{background:#d7f1e2;color:#1d6b43}.acx-p.o{background:#ffe6c2;color:#9a5a08}.acx-p.v{background:#e9defa;color:#5b32a8}.acx-p.w{background:#d6f5df;color:#17803f}.acx-p.e{background:#dcebfb;color:#1f5f9f}.acx-p.a{background:#fde3f0;color:#a3226b}
 .acx-n{font:700 17px 'Bricolage Grotesque',system-ui;font-variant-numeric:tabular-nums}.acx-r.ord .acx-n.sp{color:#1d6b43}.acx-r.non .acx-n.sp{color:#9a5a08}
 .acx-d{color:var(--mut);font-variant-numeric:tabular-nums}.acx-ac{flex-direction:row!important;gap:6px!important;flex-wrap:wrap;align-items:center;justify-content:center}.acx-del{color:#b3261e}.acx-ac .btn{padding:6px 9px}.a-ph{white-space:nowrap}.acx-r .a-ac .t{display:none}.acx-r .a-ac .l{display:none}
 .acx-none{color:var(--mut)}.acx-h .c11{background:#b8860b}
@@ -1286,16 +1286,16 @@ function accHtml(){
   <div class="stat ac-k"><div class="k4"><b>${all.filter(a=>a.reg).length}</b><span>Completed sign-up form</span></div><div class="k5"><b>${all.filter(a=>a.via==='WhatsApp').length} / ${all.filter(a=>a.via==='Email').length}</b><span>WhatsApp / email sign-in</span></div></div>
   <input class="i" id="aSearch" placeholder="Search name, mobile, email, address, city or pincode" value="${esc(aq)}">
   <div class="row" style="margin:8px 0;gap:8px;flex-wrap:wrap"><select class="i" id="aSort" style="width:auto;padding:7px 10px">${[['new','Sort: newest sign-up'],['last','Sort: last sign-in'],['spent','Sort: most spent'],['orders','Sort: most orders'],['name','Sort: name A–Z']].map(([k,n])=>`<option value="${k}"${asrt===k?' selected':''}>${n}</option>`).join('')}</select>
-  <span>${arcN||ashow?`<button class="chip ${ashow?'on':''}" data-ashow="1">🗂 Archived (${arcN})</button> `:''}<button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
+  <span><button class="btn sm" data-aadd="1">➕ Add customer</button> ${arcN||ashow?`<button class="chip ${ashow?'on':''}" data-ashow="1">🗂 Archived (${arcN})</button> `:''}<button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
   <div class="hint" style="margin-bottom:6px">${L.length} of ${all.length} ${ashow?'archived ':''}accounts${ashow?' · these are hidden from your main list':''}</div>`;
   const hd='<div class="acx-h"><span class="c1">Account</span><span class="c2">Mobile</span><span class="c3">Email</span><span class="c4">Address</span><span class="c5">Orders</span><span class="c6">Spent</span><span class="c7">Joined</span><span class="c8">Last login</span><span class="c9">Last order</span><span class="c11">Coupon</span><span class="c10">Actions</span></div>';
   const lane=(c,l,v)=>`<div class="${c}"><span class="l">${l}</span>${v}</div>`,nn='<span class="acx-none">–</span>';
   h+=L.length?'<div class="acx"><div class="acx-in">'+hd+L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10),seed=String(a.name||a.phone||a.email||'?'),hue=[...seed].reduce((x,c)=>(x*31+c.charCodeAt(0))%360,7),ini=(String(a.name||'').trim()[0]||'#').toUpperCase(),adr=accAddr(a);
     return `<div class="acx-r ${a.orders?'ord':'non'}" style="--h:${hue}">`
-    +`<div class="a-nm"><span class="acx-nm"><span class="acx-av">${esc(ini)}</span><b class="${a.name?'':'no'}">${a.name?esc(a.name):'No name yet'}</b></span><span class="acx-pl"><span class="acx-p ${a.orders?'g':'o'}">${a.orders?'Has ordered':'Not ordered yet'}</span>${a.reg?'':'<span class="acx-p v">Form not filled</span>'}<span class="acx-p ${a.via==='WhatsApp'?'w':'e'}">${esc(a.via)}</span></span></div>`
+    +`<div class="a-nm"><span class="acx-nm"><span class="acx-av">${esc(ini)}</span><b class="${a.name?'':'no'}">${a.name?esc(a.name):'No name yet'}</b></span><span class="acx-pl"><span class="acx-p ${a.orders?'g':'o'}">${a.orders?'Has ordered':'Not ordered yet'}</span>${a.reg?'':'<span class="acx-p v">Form not filled</span>'}<span class="acx-p ${a.via==='WhatsApp'?'w':a.via==='Added'?'a':'e'}">${a.via==='Added'?'Added by you':esc(a.via)}</span></span></div>`
     +lane('a-ph','Mobile',ph?esc(ph.slice(0,5)+' '+ph.slice(5)):nn)+lane('a-em','Email',a.email?esc(a.email):nn)+lane('a-adr','Address',adr?esc(adr):'<span class="acx-none">No address yet</span>')
     +lane('a-or','Orders','<span class="acx-n">'+a.orders+'</span>')+lane('a-sp','Spent','<span class="acx-n sp">'+inr(a.spent)+'</span>')
-    +lane('a-d1','Joined','<span class="acx-d">'+dShort(a.created)+'</span>')+lane('a-d2','Last login','<span class="acx-d">'+dShort(a.last)+'</span>')+lane('a-d3','Last order','<span class="acx-d">'+(a.lastOrder?dShort(a.lastOrder):'–')+'</span>')
+    +lane('a-d1','Joined','<span class="acx-d">'+dShort(a.created)+'</span>')+lane('a-d2','Last login','<span class="acx-d">'+(a.last?dShort(a.last):'–')+'</span>')+lane('a-d3','Last order','<span class="acx-d">'+(a.lastOrder?dShort(a.lastOrder):'–')+'</span>')
     +`<div class="a-cp"><span class="l">Coupon</span>${cpnCell(a)}</div>`
     +`<div class="a-ac acx-ac"><span class="l">Actions</span>${ph?`<a class="btn ol sm" href="tel:+91${ph}" title="Call" aria-label="Call">📞<span class="t"> Call</span></a>`:''}${ph?`<button class="btn ol sm" data-wchat="91${ph}" title="Message on WhatsApp" aria-label="Message">💬<span class="t"> Message</span></button>`:(a.email?`<a class="btn ol sm" href="mailto:${esc(a.email)}" title="Email" aria-label="Message">💬<span class="t"> Message</span></a>`:'')}${accKey(a)?`<button class="btn ol sm" data-apref="${esc(accKey(a))}" title="Preferences and notes" aria-label="Preferences">⭐<span class="t"> Preference</span></button>${isArc(a)?`<button class="btn ol sm" data-aunarc="${esc(accKey(a))}" title="Restore" aria-label="Restore">↩<span class="t"> Restore</span></button>`:`<button class="btn ol sm acx-del" data-aarc="${esc(accKey(a))}" data-an="${esc(a.name||ph||a.email||'this customer')}" title="Delete" aria-label="Delete">🗑<span class="t"> Delete</span></button>`}`:''}</div></div>`}).join('')+'</div></div>':`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
   return h}
@@ -1386,11 +1386,35 @@ $('cpSheet').addEventListener('click',async e=>{
   if(e.target===$('cpSheet')||e.target.closest('#cpClose')){closeCust();return}
   const ctg=e.target.closest('[data-ctag]');if(ctg){syncCE();const t=ctg.dataset.ctag,i=CE.tags.indexOf(t);if(i<0)CE.tags.push(t);else CE.tags.splice(i,1);$('cpIn').innerHTML=cpBody();return}
   if(e.target.closest('#cpTagAdd')){syncCE();const v=($('cpTagNew').value||'').trim().slice(0,24);if(v&&!CE.tags.includes(v)&&CE.tags.length<8)CE.tags.push(v);$('cpIn').innerHTML=cpBody();return}
+  if(e.target.closest('#acSave')){saveAccAdd();return}
   if(e.target.closest('#cpSave')){saveCrm();return}
   const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
 });
+function accAddHtml(){const f=(id,l,ph,v,ex)=>`<label class="f" for="${id}">${l}</label><input class="i" id="${id}" placeholder="${ph}" value="${esc(v||'')}" ${ex||''}>`;
+  return `<div style="margin:4px 0 8px"><b style="font-size:18px;display:block">Add a customer</b><div class="hint">For someone who has not signed up on the website. Only you can see this, and it is saved in your customer list.</div></div>
+  ${f('acName','Name *','e.g. Ananya Rao','','maxlength="80" autocomplete="off"')}
+  <div class="row" style="gap:10px"><div style="flex:1">${f('acPh','Mobile (10 digits)','98765 43210','','inputmode="numeric" maxlength="14"')}</div><div style="flex:1">${f('acEm','Email (optional)','name@email.com','','inputmode="email" maxlength="120" autocapitalize="off"')}</div></div>
+  ${f('acLine','House / street','e.g. 12, 4th Cross, Sunrise Layout','','maxlength="200"')}
+  ${f('acLm','Landmark','e.g. near Yelahanka Lake','','maxlength="100"')}
+  <div class="row" style="gap:10px"><div style="flex:1">${f('acCity','City','','Bengaluru','maxlength="60"')}</div><div style="flex:1">${f('acSt','State','','Karnataka','maxlength="60"')}</div><div style="flex:1">${f('acPin','Pincode','560064','','inputmode="numeric" maxlength="6"')}</div></div>
+  <div class="err" id="acErr" style="min-height:18px;margin-top:6px"></div>
+  <button class="btn" id="acSave" style="width:100%;margin-top:6px">Save customer</button>
+  <div class="hint" style="margin-top:8px">Add tags, notes and tastes afterwards with the ⭐ Preference button on their row.</div>`}
+function openAccAdd(){cOpen='add';CE={tags:[],add:1};$('cpIn').innerHTML=accAddHtml();showSheet('cpSheet')}
+async function saveAccAdd(){const g=id=>($(id).value||'').trim(),err=m=>{$('acErr').textContent=m},b=$('acSave');
+  const name=g('acName'),ph=g('acPh').replace(/\D/g,'').replace(/^(91|0)(?=\d{10}$)/,''),em=g('acEm');
+  if(name.length<2)return err('Please enter the customer name.');
+  if(ph&&!/^[6-9]\d{9}$/.test(ph))return err('Please enter a valid 10-digit mobile number.');
+  if(!ph&&!em)return err('Please enter a mobile number or an email.');
+  if(em&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return err('That email does not look right.');
+  if(g('acPin')&&!/^\d{6}$/.test(g('acPin')))return err('Pincode should be 6 digits.');
+  err('');b.disabled=true;b.textContent='Saving…';
+  try{const r=await api({action:'admin_acc_add',name,phone:ph,email:em,line:g('acLine'),landmark:g('acLm'),city:g('acCity'),state:g('acSt'),pin:g('acPin')});
+    if(r.ok){toast(r.existed?'Customer details updated':'Customer saved');closeCust();D.acc=D.acc||null;loadAcc(true)}
+    else err(r.error==='Unknown request.'?'Saving new customers needs the latest backend update, which is not live yet.':(r.error||'Could not save.'))}
+  catch(_){err('No connection. Not saved.')}finally{const c=$('acSave');if(c){c.disabled=false;c.textContent='Save customer'}}}
 const cpBody=()=>CE.acc?accPrefHtml():custProfile(CE.k);
-function accPrefHtml(){return `<div class="hd" style="margin-top:4px"><b style="font-size:18px">${esc(CE.an||'Customer')}</b><div class="hint">Preferences and notes</div></div>`+crmEdit(CE.k)}
+function accPrefHtml(){return `<div style="margin:4px 0 8px"><b style="font-size:18px;display:block">${esc(CE.an||'Customer')}</b><div class="hint">Preferences and notes</div></div>`+crmEdit(CE.k)}
 function openAccPref(k,an){cOpen=k;const m=crmOf(k);CE={k,acc:1,an,tags:(m.tags||[]).slice(),notes:m.notes||'',pref:m.pref||'',bday:m.bday||'',anniv:m.anniv||''};$('cpIn').innerHTML=accPrefHtml();showSheet('cpSheet')}
 async function accArc(k,on){const m=crmOf(k),t=(m.tags||[]).filter(x=>x!=='Archived');if(on)t.push('Archived');
   try{const r=await api({action:'admin_crm_save',key:k,rec:{notes:m.notes||'',pref:m.pref||'',bday:m.bday||'',anniv:m.anniv||'',tags:t}});
@@ -1467,6 +1491,7 @@ $('panel').addEventListener('click',async e=>{
   const ap=e.target.closest('[data-apref]');if(ap){const row=ap.closest('.acx-r'),nm=row&&row.querySelector('.acx-nm b');openAccPref(ap.dataset.apref,nm?nm.textContent:'');return}
   const aa=e.target.closest('[data-aarc]');if(aa){if(confirm('Delete '+aa.dataset.an+' from this list?\n\nThey are hidden, not erased: the account and past orders are kept, and you can bring them back from Archived.'))accArc(aa.dataset.aarc,true);return}
   const au=e.target.closest('[data-aunarc]');if(au){accArc(au.dataset.aunarc,false);return}
+  if(e.target.closest('[data-aadd]')){openAccAdd();return}
   if(e.target.closest('[data-ashow]')){ashow=!ashow;render();return}
   if(e.target.closest('[data-accref]')){D.acc=D.acc||null;loadAcc(true);toast('Refreshing…');return}
   if(e.target.closest('[data-acsv]')){if(D.acc&&D.acc.length)accCsv();else toast('No accounts to download yet');return}
