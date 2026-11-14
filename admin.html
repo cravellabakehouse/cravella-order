@@ -1343,7 +1343,7 @@ function custHtml(){
   <div class="stat"><div><b>${inr(rev)}</b><span>Lifetime sales</span></div><div><b>${all.length?inr(rev/all.length):'–'}</b><span>Per customer</span></div></div>
   <input class="i" id="cSearch" placeholder="Search name, phone, email, tag or note" value="${esc(cq)}">
   <div class="chips" style="margin:8px 0">${CH.map(([k,n])=>`<button class="chip ${cf===k?'on':''}" data-cf="${k}">${n} ${cnt(k)}</button>`).join('')}</div>
-  <div class="row" style="margin:4px 0 8px"><select class="i" id="cSort" style="width:auto;padding:7px 10px"><option value="recent"${cs==='recent'?' selected':''}>Sort: latest order</option><option value="spend"${cs==='spend'?' selected':''}>Sort: most spent</option><option value="orders"${cs==='orders'?' selected':''}>Sort: most orders</option><option value="gap"${cs==='gap'?' selected':''}>Sort: longest since order</option></select><button class="btn ol sm" id="cCsv">⬇ Export CSV</button></div>`;
+  <div class="row" style="margin:4px 0 8px"><select class="i" id="cSort" style="width:auto;padding:7px 10px"><option value="recent"${cs==='recent'?' selected':''}>Sort: latest order</option><option value="spend"${cs==='spend'?' selected':''}>Sort: most spent</option><option value="orders"${cs==='orders'?' selected':''}>Sort: most orders</option><option value="gap"${cs==='gap'?' selected':''}>Sort: longest since order</option></select><span><button class="btn sm" data-aadd="1">➕ Add customer</button> <button class="btn ol sm" id="cCsv">⬇ Export CSV</button></span></div>`;
   h+=L.length?L.map(c=>{const l=c.l;
     return `<div class="card" data-cp="${esc(c.k)}" style="cursor:pointer"><div class="row"><span class="id" style="font-weight:700">${esc(l.name)} ${segTag(c.seg)}</span><b>${inr(c.sp)}</b></div>
     <div class="m">${esc(l.phone)}${c.email?' · '+esc(c.email):''}</div>
@@ -1410,7 +1410,7 @@ async function saveAccAdd(){const g=id=>($(id).value||'').trim(),err=m=>{$('acEr
   if(g('acPin')&&!/^\d{6}$/.test(g('acPin')))return err('Pincode should be 6 digits.');
   err('');b.disabled=true;b.textContent='Saving…';
   try{const r=await api({action:'admin_acc_add',name,phone:ph,email:em,line:g('acLine'),landmark:g('acLm'),city:g('acCity'),state:g('acSt'),pin:g('acPin')});
-    if(r.ok){toast(r.existed?'Customer details updated':'Customer saved');closeCust();D.acc=D.acc||null;loadAcc(true)}
+    if(r.ok){toast(r.existed?'Customer details updated':'Customer saved');closeCust();if(tab==='cust'&&cv!=='acc'){cv='acc';render()}D.acc=D.acc||null;loadAcc(true)}
     else err(r.error==='Unknown request.'?'Saving new customers needs the latest backend update, which is not live yet.':(r.error||'Could not save.'))}
   catch(_){err('No connection. Not saved.')}finally{const c=$('acSave');if(c){c.disabled=false;c.textContent='Save customer'}}}
 const cpBody=()=>CE.acc?accPrefHtml():custProfile(CE.k);
