@@ -81,8 +81,8 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .stat.ac-k div{border:0;color:#fff;box-shadow:var(--shadow)}.stat.ac-k span{color:rgba(255,255,255,.88);font-weight:600}
 .stat.ac-k .k1{background:linear-gradient(135deg,#7a4fd0,#a07be6)}.stat.ac-k .k2{background:linear-gradient(135deg,#2f9e6b,#5cc592)}.stat.ac-k .k3{background:linear-gradient(135deg,#d9822b,#f0a85c)}.stat.ac-k .k4{background:linear-gradient(135deg,#2b79c2,#5aa2e0)}.stat.ac-k .k5{background:linear-gradient(135deg,#c1478a,#e27cb3)}
 .acx{overflow-x:auto;border:1px solid var(--line);border-radius:14px;clip-path:inset(0 round 14px);background:var(--card);margin-top:6px;box-shadow:var(--shadow)}
-.acx-in{min-width:920px}
-.acx-h,.acx-r{display:grid;grid-template-columns:minmax(120px,1.1fr) 108px minmax(110px,1fr) minmax(140px,1.4fr) 54px 78px 76px 76px 76px 74px;align-items:center}
+.acx-in{min-width:924px}
+.acx-h,.acx-r{display:grid;grid-template-columns:minmax(120px,1.1fr) 108px minmax(100px,1fr) minmax(130px,1.4fr) 54px 78px 76px 76px 76px 100px;align-items:center}
 .acx-h{border-left:6px solid transparent}.acx-h>span{padding:12px 6px;font-size:10.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap;align-self:stretch;display:flex;align-items:center;text-transform:uppercase;color:#fff;border-left:1px solid rgba(255,255,255,.28)}.acx-h>span:first-child{border-left:0}
 .acx-h .c1{background:#7a4fd0}.acx-h .c2{background:#2b79c2}.acx-h .c3{background:#1f9aa8}.acx-h .c4{background:#2f9e6b}.acx-h .c5{background:#d9822b}.acx-h .c6{background:#c1478a}.acx-h .c7{background:#7d6a58}.acx-h .c8{background:#7d6a58}.acx-h .c9{background:#7d6a58}.acx-h .c10{background:#4b3a2c}
 .acx-r{border-top:1px solid var(--line);border-left:6px solid var(--rc);background:var(--rc-bg)}
@@ -93,7 +93,7 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .acx-pl{display:flex;flex-wrap:wrap;gap:4px}
 .acx-p{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.acx-p.g{background:#d7f1e2;color:#1d6b43}.acx-p.o{background:#ffe6c2;color:#9a5a08}.acx-p.v{background:#e9defa;color:#5b32a8}.acx-p.w{background:#d6f5df;color:#17803f}.acx-p.e{background:#dcebfb;color:#1f5f9f}
 .acx-n{font:700 17px 'Bricolage Grotesque',system-ui;font-variant-numeric:tabular-nums}.acx-r.ord .acx-n.sp{color:#1d6b43}.acx-r.non .acx-n.sp{color:#9a5a08}
-.acx-d{color:var(--mut);font-variant-numeric:tabular-nums}.acx-ac{flex-direction:row!important;gap:6px!important;flex-wrap:wrap;align-items:center}.acx-ac .btn{padding:6px 9px}.a-ph{white-space:nowrap}.acx-r .a-ac .t{display:none}.acx-r .a-ac .l{display:none}
+.acx-d{color:var(--mut);font-variant-numeric:tabular-nums}.acx-ac{flex-direction:row!important;gap:6px!important;flex-wrap:wrap;align-items:center;justify-content:center}.acx-del{color:#b3261e}.acx-ac .btn{padding:6px 9px}.a-ph{white-space:nowrap}.acx-r .a-ac .t{display:none}.acx-r .a-ac .l{display:none}
 .acx-none{color:var(--mut)}
 @media(max-width:759px){
  .acx{overflow:visible;border:0;background:none;box-shadow:none}.acx-in{min-width:0}.acx-h{display:none}
@@ -1262,7 +1262,9 @@ function histBox(o){const a=CM[keyOf(o)]||[];return a.length>1?`<div class="hist
 function mailNote(o){const m=D.mails[String(o.id).toLowerCase()];return m?`<div class="hint">✉ Emailed ${m.n} time${m.n>1?'s':''} · last ${new Date(m.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</div>`:''}
 /* ---------- customer insights ---------- */
 let cf='all',cs='recent',cOpen='',CE={tags:[]};
-let cv='orders',aq='',asrt='new';
+let cv='orders',aq='',asrt='new',ashow=false;
+const accKey=a=>{const p=String(a.phone||'').replace(/\D/g,'').slice(-10);return p.length===10?'p'+p:(a.email?'e'+String(a.email).toLowerCase():'')};
+const isArc=a=>{const k=accKey(a);return !!(k&&(crmOf(k).tags||[]).includes('Archived'))};
 const cvSw=()=>`<div class="chips" style="margin:10px 0 2px"><button class="chip ${cv==='orders'?'on':''}" data-cv="orders">Customers who ordered</button><button class="chip ${cv==='acc'?'on':''}" data-cv="acc">Signed-up accounts${D.acc?' '+D.acc.length:''}</button></div>`;
 async function loadAcc(force){if(D.accBusy||(!force&&D.acc&&Date.now()-D.accAt<60000))return;D.accBusy=1;
   try{const r=await api({action:'admin_accounts'});if(r.ok){D.acc=r.list||[];D.accAt=Date.now()}else D.accErr=r.error||'Could not load accounts.'}catch(_){D.accErr='Could not connect.'}
@@ -1271,16 +1273,17 @@ const accAddr=a=>a.line?a.line+(a.landmark?', near '+a.landmark:'')+(a.city?', '
 function accHtml(){
   if(!D.acc){loadAcc();return cvSw()+`<div class="hint" style="margin:14px 0">${D.accErr?esc(D.accErr):'Loading accounts…'}</div>`}
   loadAcc();
-  const all=D.acc,s=aq.trim().toLowerCase(),wk=Date.now()-7*864e5;
+  if(!D.crm&&nf('crm'))loadCrm();
+  const every=D.acc,arcN=every.filter(isArc).length,all=ashow?every.filter(isArc):every.filter(a=>!isArc(a)),s=aq.trim().toLowerCase(),wk=Date.now()-7*864e5;
   let L=all.filter(a=>!s||[a.name,a.phone,a.email,a.line,a.landmark,a.city,a.state,a.pin,a.address].join(' ').toLowerCase().includes(s));
   L.sort(asrt==='spent'?(x,y)=>y.spent-x.spent:asrt==='orders'?(x,y)=>y.orders-x.orders:asrt==='last'?(x,y)=>y.last-x.last:asrt==='name'?(x,y)=>(x.name||'~').localeCompare(y.name||'~'):(x,y)=>y.created-x.created);
   let h=cvSw()+`<div class="stat ac-k"><div class="k1"><b>${all.length}</b><span>Accounts</span></div><div class="k2"><b>${all.filter(a=>a.created>=wk).length}</b><span>New this week</span></div><div class="k3"><b>${all.filter(a=>!a.orders).length}</b><span>Not ordered yet</span></div></div>
   <div class="stat ac-k"><div class="k4"><b>${all.filter(a=>a.reg).length}</b><span>Completed sign-up form</span></div><div class="k5"><b>${all.filter(a=>a.via==='WhatsApp').length} / ${all.filter(a=>a.via==='Email').length}</b><span>WhatsApp / email sign-in</span></div></div>
   <input class="i" id="aSearch" placeholder="Search name, mobile, email, address, city or pincode" value="${esc(aq)}">
   <div class="row" style="margin:8px 0;gap:8px;flex-wrap:wrap"><select class="i" id="aSort" style="width:auto;padding:7px 10px">${[['new','Sort: newest sign-up'],['last','Sort: last sign-in'],['spent','Sort: most spent'],['orders','Sort: most orders'],['name','Sort: name A–Z']].map(([k,n])=>`<option value="${k}"${asrt===k?' selected':''}>${n}</option>`).join('')}</select>
-  <span><button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
-  <div class="hint" style="margin-bottom:6px">${L.length} of ${all.length} accounts</div>`;
-  const hd='<div class="acx-h"><span class="c1">Account</span><span class="c2">Mobile</span><span class="c3">Email</span><span class="c4">Address</span><span class="c5">Orders</span><span class="c6">Spent</span><span class="c7">Joined</span><span class="c8">Last login</span><span class="c9">Last order</span><span class="c10">Contact</span></div>';
+  <span>${arcN||ashow?`<button class="chip ${ashow?'on':''}" data-ashow="1">🗂 Archived (${arcN})</button> `:''}<button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
+  <div class="hint" style="margin-bottom:6px">${L.length} of ${all.length} ${ashow?'archived ':''}accounts${ashow?' · these are hidden from your main list':''}</div>`;
+  const hd='<div class="acx-h"><span class="c1">Account</span><span class="c2">Mobile</span><span class="c3">Email</span><span class="c4">Address</span><span class="c5">Orders</span><span class="c6">Spent</span><span class="c7">Joined</span><span class="c8">Last login</span><span class="c9">Last order</span><span class="c10">Actions</span></div>';
   const lane=(c,l,v)=>`<div class="${c}"><span class="l">${l}</span>${v}</div>`,nn='<span class="acx-none">–</span>';
   h+=L.length?'<div class="acx"><div class="acx-in">'+hd+L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10),seed=String(a.name||a.phone||a.email||'?'),hue=[...seed].reduce((x,c)=>(x*31+c.charCodeAt(0))%360,7),ini=(String(a.name||'').trim()[0]||'#').toUpperCase(),adr=accAddr(a);
     return `<div class="acx-r ${a.orders?'ord':'non'}" style="--h:${hue}">`
@@ -1288,7 +1291,7 @@ function accHtml(){
     +lane('a-ph','Mobile',ph?esc(ph.slice(0,5)+' '+ph.slice(5)):nn)+lane('a-em','Email',a.email?esc(a.email):nn)+lane('a-adr','Address',adr?esc(adr):'<span class="acx-none">No address yet</span>')
     +lane('a-or','Orders','<span class="acx-n">'+a.orders+'</span>')+lane('a-sp','Spent','<span class="acx-n sp">'+inr(a.spent)+'</span>')
     +lane('a-d1','Joined','<span class="acx-d">'+dShort(a.created)+'</span>')+lane('a-d2','Last login','<span class="acx-d">'+dShort(a.last)+'</span>')+lane('a-d3','Last order','<span class="acx-d">'+(a.lastOrder?dShort(a.lastOrder):'–')+'</span>')
-    +`<div class="a-ac acx-ac"><span class="l">Contact</span>${ph?`<a class="btn ol sm" href="tel:+91${ph}" title="Call" aria-label="Call">📞<span class="t"> Call</span></a> <a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}" title="WhatsApp" aria-label="WhatsApp">💬<span class="t"> WhatsApp</span></a>`:nn}</div></div>`}).join('')+'</div></div>':`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
+    +`<div class="a-ac acx-ac"><span class="l">Actions</span>${ph?`<a class="btn ol sm" href="tel:+91${ph}" title="Call" aria-label="Call">📞<span class="t"> Call</span></a>`:''}${ph?`<button class="btn ol sm" data-wchat="91${ph}" title="Message on WhatsApp" aria-label="Message">💬<span class="t"> Message</span></button>`:(a.email?`<a class="btn ol sm" href="mailto:${esc(a.email)}" title="Email" aria-label="Message">💬<span class="t"> Message</span></a>`:'')}${accKey(a)?`<button class="btn ol sm" data-apref="${esc(accKey(a))}" title="Preferences and notes" aria-label="Preferences">⭐<span class="t"> Preference</span></button>${isArc(a)?`<button class="btn ol sm" data-aunarc="${esc(accKey(a))}" title="Restore" aria-label="Restore">↩<span class="t"> Restore</span></button>`:`<button class="btn ol sm acx-del" data-aarc="${esc(accKey(a))}" data-an="${esc(a.name||ph||a.email||'this customer')}" title="Delete" aria-label="Delete">🗑<span class="t"> Delete</span></button>`}`:''}</div></div>`}).join('')+'</div></div>':`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
   return h}
 function accCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',dt=ms=>ms?new Date(ms).toLocaleString('en-IN'):'';
   const rows=[['Name','Mobile','Email','Signs in with','Address','Landmark','City','State','Pincode','Full address','Signed up','Last sign-in','Orders','Total spent (Rs)','Last order','Sign-up form filled']].concat((D.acc||[]).map(a=>[a.name,a.phone,a.email,a.via,a.line,a.landmark,a.city,a.state,a.pin,accAddr(a),dt(a.created),dt(a.last),a.orders,a.spent,dt(a.lastOrder),a.reg?'Yes':'No']));
@@ -1375,15 +1378,22 @@ function custCsv(){
 function openCust(k){cOpen=k;const m=crmOf(k);CE={k,tags:(m.tags||[]).slice(),notes:m.notes||'',pref:m.pref||'',bday:m.bday||'',anniv:m.anniv||''};$('cpIn').innerHTML=custProfile(k);showSheet('cpSheet')}
 $('cpSheet').addEventListener('click',async e=>{
   if(e.target===$('cpSheet')||e.target.closest('#cpClose')){closeCust();return}
-  const ctg=e.target.closest('[data-ctag]');if(ctg){syncCE();const t=ctg.dataset.ctag,i=CE.tags.indexOf(t);if(i<0)CE.tags.push(t);else CE.tags.splice(i,1);$('cpIn').innerHTML=custProfile(CE.k);return}
-  if(e.target.closest('#cpTagAdd')){syncCE();const v=($('cpTagNew').value||'').trim().slice(0,24);if(v&&!CE.tags.includes(v)&&CE.tags.length<8)CE.tags.push(v);$('cpIn').innerHTML=custProfile(CE.k);return}
+  const ctg=e.target.closest('[data-ctag]');if(ctg){syncCE();const t=ctg.dataset.ctag,i=CE.tags.indexOf(t);if(i<0)CE.tags.push(t);else CE.tags.splice(i,1);$('cpIn').innerHTML=cpBody();return}
+  if(e.target.closest('#cpTagAdd')){syncCE();const v=($('cpTagNew').value||'').trim().slice(0,24);if(v&&!CE.tags.includes(v)&&CE.tags.length<8)CE.tags.push(v);$('cpIn').innerHTML=cpBody();return}
   if(e.target.closest('#cpSave')){saveCrm();return}
   const ml=e.target.closest('[data-mail]');if(ml){openMail(ml.dataset.mail,'confirm');return}
 });
+const cpBody=()=>CE.acc?accPrefHtml():custProfile(CE.k);
+function accPrefHtml(){return `<div class="hd" style="margin-top:4px"><b style="font-size:18px">${esc(CE.an||'Customer')}</b><div class="hint">Preferences and notes</div></div>`+crmEdit(CE.k)}
+function openAccPref(k,an){cOpen=k;const m=crmOf(k);CE={k,acc:1,an,tags:(m.tags||[]).slice(),notes:m.notes||'',pref:m.pref||'',bday:m.bday||'',anniv:m.anniv||''};$('cpIn').innerHTML=accPrefHtml();showSheet('cpSheet')}
+async function accArc(k,on){const m=crmOf(k),t=(m.tags||[]).filter(x=>x!=='Archived');if(on)t.push('Archived');
+  try{const r=await api({action:'admin_crm_save',key:k,rec:{notes:m.notes||'',pref:m.pref||'',bday:m.bday||'',anniv:m.anniv||'',tags:t}});
+    if(r.ok){D.crm=D.crm||{};if(r.rec)D.crm[k]=r.rec;else delete D.crm[k];toast(on?'Customer archived (hidden from this list)':'Customer restored');const y=scrollY;render();scrollTo(0,y)}else toast(r.error||'Could not save')}
+  catch(_){toast('No connection. Nothing changed.')}}
 function syncCE(){if(!$('cpNotes'))return;CE.notes=$('cpNotes').value;CE.pref=$('cpPref').value;CE.bday=$('cpBd').value;CE.anniv=$('cpAn').value}
 async function saveCrm(){syncCE();const b=$('cpSave');b.disabled=true;b.textContent='Saving…';const k=CE.k;
   try{const r=await api({action:'admin_crm_save',key:k,rec:{notes:CE.notes,pref:CE.pref,bday:CE.bday,anniv:CE.anniv,tags:CE.tags}});
-    if(r.ok){D.crm=D.crm||{};if(r.rec)D.crm[k]=r.rec;else delete D.crm[k];toast('Customer details saved');const y=scrollY;render();scrollTo(0,y)}else toast(r.error||'Could not save')}
+    if(r.ok){D.crm=D.crm||{};if(r.rec)D.crm[k]=r.rec;else delete D.crm[k];toast('Customer details saved');const y=scrollY;if(CE.acc)closeCust();render();scrollTo(0,y)}else toast(r.error||'Could not save')}
   catch(_){toast('No connection. Not saved.')}finally{const c=$('cpSave');if(c){c.disabled=false;c.textContent='Save customer details'}}}
 function closeCust(){cOpen='';$('cpSheet').classList.add('hide');popSheet()}
 
@@ -1448,6 +1458,10 @@ $('panel').addEventListener('click',async e=>{
     api({action:'admin_wa_order_send',id:wid,kind:wk}).then(r=>{toast(r.ok?'WhatsApp message sent':(r.error||'Could not send'));ws.textContent=r.ok?'✓ Sent':lab;ws.disabled=!!r.ok&&false;if(!r.ok)ws.disabled=false;else setTimeout(()=>{ws.textContent=lab;ws.disabled=false},4000)}).catch(()=>{toast('No connection');ws.textContent=lab;ws.disabled=false});return}
   const cfb=e.target.closest('[data-cf]');if(cfb){cf=cfb.dataset.cf;render();return}
   const cvb=e.target.closest('[data-cv]');if(cvb){cv=cvb.dataset.cv;render();if(cv==='acc')loadAcc(true);return}
+  const ap=e.target.closest('[data-apref]');if(ap){const row=ap.closest('.acx-r'),nm=row&&row.querySelector('.acx-nm b');openAccPref(ap.dataset.apref,nm?nm.textContent:'');return}
+  const aa=e.target.closest('[data-aarc]');if(aa){if(confirm('Delete '+aa.dataset.an+' from this list?\n\nThey are hidden, not erased: the account and past orders are kept, and you can bring them back from Archived.'))accArc(aa.dataset.aarc,true);return}
+  const au=e.target.closest('[data-aunarc]');if(au){accArc(au.dataset.aunarc,false);return}
+  if(e.target.closest('[data-ashow]')){ashow=!ashow;render();return}
   if(e.target.closest('[data-accref]')){D.acc=D.acc||null;loadAcc(true);toast('Refreshing…');return}
   if(e.target.closest('[data-acsv]')){if(D.acc&&D.acc.length)accCsv();else toast('No accounts to download yet');return}
   if(e.target.closest('#cCsv')){custCsv();return}
