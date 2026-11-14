@@ -78,6 +78,19 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .stat div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .stat b{display:block;font:700 22px 'Bricolage Grotesque'}
 .stat span{font-size:12px;color:var(--mut)}
+.stat.ac-k div{border:0;color:#fff;box-shadow:var(--shadow)}.stat.ac-k span{color:rgba(255,255,255,.88);font-weight:600}
+.stat.ac-k .k1{background:linear-gradient(135deg,#7a4fd0,#a07be6)}.stat.ac-k .k2{background:linear-gradient(135deg,#2f9e6b,#5cc592)}.stat.ac-k .k3{background:linear-gradient(135deg,#d9822b,#f0a85c)}.stat.ac-k .k4{background:linear-gradient(135deg,#2b79c2,#5aa2e0)}.stat.ac-k .k5{background:linear-gradient(135deg,#c1478a,#e27cb3)}
+.acr{display:grid;grid-template-columns:46px 1fr auto;gap:6px 12px;align-items:start;margin:10px 0;padding:12px 14px;border-radius:16px;border:1px solid var(--rc-b);border-left:6px solid var(--rc);background:var(--rc-bg);box-shadow:var(--shadow)}
+.acr.ord{--rc:#2f9e6b;--rc-b:#cfe9da;--rc-bg:#f1faf5}.acr.non{--rc:#e09030;--rc-b:#f4dcb8;--rc-bg:#fff7ea}
+.acr-av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font:700 19px 'Bricolage Grotesque',system-ui;color:#fff;background:hsl(var(--h) 55% 48%);grid-row:1/3}
+.acr-main{min-width:0}.acr-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.acr-nm{font-size:16px}.acr-nm.no{font-weight:600;color:var(--mut)}
+.acr-p{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
+.acr-p.g{background:#d7f1e2;color:#1d6b43}.acr-p.o{background:#ffe6c2;color:#9a5a08}.acr-p.v{background:#e9defa;color:#5b32a8}.acr-p.w{background:#d6f5df;color:#17803f}.acr-p.e{background:#dcebfb;color:#1f5f9f}
+.acr-ct{display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:5px;font-size:13.5px}.acr-ad{margin-top:3px;font-size:13.5px}
+.acr-dt{margin-top:5px;font-size:12.5px;color:var(--mut)}
+.acr-side{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}.acr-sp{font:700 19px 'Bricolage Grotesque',system-ui;color:var(--rc)}.acr-or{font-size:12px;color:var(--mut);font-weight:600}
+.acr-side .acts{margin-top:8px;justify-content:flex-end}
+@media(max-width:520px){.acr{grid-template-columns:46px 1fr}.acr-side{grid-column:1/3;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;text-align:left;border-top:1px dashed var(--rc-b);padding-top:8px;margin-top:4px}.acr-side .acts{margin-top:0}.acr-av{grid-row:auto}}
 table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}td:last-child{text-align:right;font-weight:700;white-space:nowrap}
 .tm{display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:6px;font-size:13.5px;font-weight:700}
 .tm .g{color:var(--mut);font-weight:600}.tm .ok{color:var(--ok)}.tm .w{color:var(--warn)}.tm .r{color:var(--bad)}
@@ -1249,18 +1262,19 @@ function accHtml(){
   const all=D.acc,s=aq.trim().toLowerCase(),wk=Date.now()-7*864e5;
   let L=all.filter(a=>!s||[a.name,a.phone,a.email,a.line,a.landmark,a.city,a.state,a.pin,a.address].join(' ').toLowerCase().includes(s));
   L.sort(asrt==='spent'?(x,y)=>y.spent-x.spent:asrt==='orders'?(x,y)=>y.orders-x.orders:asrt==='last'?(x,y)=>y.last-x.last:asrt==='name'?(x,y)=>(x.name||'~').localeCompare(y.name||'~'):(x,y)=>y.created-x.created);
-  let h=cvSw()+`<div class="stat"><div><b>${all.length}</b><span>Accounts</span></div><div><b>${all.filter(a=>a.created>=wk).length}</b><span>New this week</span></div><div><b>${all.filter(a=>!a.orders).length}</b><span>Not ordered yet</span></div></div>
-  <div class="stat"><div><b>${all.filter(a=>a.reg).length}</b><span>Completed sign-up form</span></div><div><b>${all.filter(a=>a.via==='WhatsApp').length} / ${all.filter(a=>a.via==='Email').length}</b><span>WhatsApp / email sign-in</span></div></div>
+  let h=cvSw()+`<div class="stat ac-k"><div class="k1"><b>${all.length}</b><span>Accounts</span></div><div class="k2"><b>${all.filter(a=>a.created>=wk).length}</b><span>New this week</span></div><div class="k3"><b>${all.filter(a=>!a.orders).length}</b><span>Not ordered yet</span></div></div>
+  <div class="stat ac-k"><div class="k4"><b>${all.filter(a=>a.reg).length}</b><span>Completed sign-up form</span></div><div class="k5"><b>${all.filter(a=>a.via==='WhatsApp').length} / ${all.filter(a=>a.via==='Email').length}</b><span>WhatsApp / email sign-in</span></div></div>
   <input class="i" id="aSearch" placeholder="Search name, mobile, email, address, city or pincode" value="${esc(aq)}">
   <div class="row" style="margin:8px 0;gap:8px;flex-wrap:wrap"><select class="i" id="aSort" style="width:auto;padding:7px 10px">${[['new','Sort: newest sign-up'],['last','Sort: last sign-in'],['spent','Sort: most spent'],['orders','Sort: most orders'],['name','Sort: name A–Z']].map(([k,n])=>`<option value="${k}"${asrt===k?' selected':''}>${n}</option>`).join('')}</select>
   <span><button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
   <div class="hint" style="margin-bottom:6px">${L.length} of ${all.length} accounts</div>`;
-  h+=L.length?L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10);
-    return `<div class="card"><div class="row"><span class="id" style="font-weight:700">${a.name?esc(a.name):'<span class="hint">No name yet</span>'}</span><b>${inr(a.spent)}</b></div>
-    <div class="m">📱 ${ph?'+91 '+esc(ph):'–'} · ✉ ${a.email?esc(a.email):'–'} <span class="hint">(signs in with ${a.via})</span></div>
-    <div class="m">📍 ${accAddr(a)?esc(accAddr(a)):'<span class="hint">No address yet</span>'}</div>
-    <div class="m">Signed up ${dShort(a.created)} · last sign-in ${dShort(a.last)} · ${a.orders} order${a.orders==1?'':'s'}${a.lastOrder?' · last order '+dShort(a.lastOrder):''}${a.reg?'':' · <span class="rep">Sign-up form not filled</span>'}</div>
-    ${ph?`<div class="acts" style="margin-top:8px"><a class="btn ol sm" href="tel:+91${ph}">📞 Call</a> <a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a></div>`:''}</div>`}).join(''):`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
+  h+=L.length?L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10),seed=String(a.name||a.phone||a.email||'?'),hue=[...seed].reduce((x,c)=>(x*31+c.charCodeAt(0))%360,7),ini=(String(a.name||'').trim()[0]||'#').toUpperCase(),adr=accAddr(a);
+    return `<div class="acr ${a.orders?'ord':'non'}" style="--h:${hue}"><div class="acr-av">${esc(ini)}</div>
+    <div class="acr-main"><div class="acr-top"><b class="acr-nm${a.name?'':' no'}">${a.name?esc(a.name):'No name yet'}</b><span class="acr-p ${a.orders?'g':'o'}">${a.orders?'Has ordered':'Not ordered yet'}</span>${a.reg?'':'<span class="acr-p v">Form not filled</span>'}<span class="acr-p ${a.via==='WhatsApp'?'w':'e'}">${esc(a.via)}</span></div>
+    <div class="acr-ct"><span>📱 ${ph?'+91 '+esc(ph):'–'}</span><span>✉ ${a.email?esc(a.email):'–'}</span></div>
+    <div class="acr-ad">📍 ${adr?esc(adr):'<span class="hint">No address yet</span>'}</div>
+    <div class="acr-dt">Signed up ${dShort(a.created)} · Last sign-in ${dShort(a.last)}${a.lastOrder?' · Last order '+dShort(a.lastOrder):''}</div></div>
+    <div class="acr-side"><div><div class="acr-sp">${inr(a.spent)}</div><div class="acr-or">${a.orders} order${a.orders==1?'':'s'}</div></div>${ph?`<div class="acts"><a class="btn ol sm" href="tel:+91${ph}">📞 Call</a> <a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a></div>`:''}</div></div>`}).join(''):`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
   return h}
 function accCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',dt=ms=>ms?new Date(ms).toLocaleString('en-IN'):'';
   const rows=[['Name','Mobile','Email','Signs in with','Address','Landmark','City','State','Pincode','Full address','Signed up','Last sign-in','Orders','Total spent (Rs)','Last order','Sign-up form filled']].concat((D.acc||[]).map(a=>[a.name,a.phone,a.email,a.via,a.line,a.landmark,a.city,a.state,a.pin,accAddr(a),dt(a.created),dt(a.last),a.orders,a.spent,dt(a.lastOrder),a.reg?'Yes':'No']));
