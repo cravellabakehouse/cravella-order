@@ -80,17 +80,29 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .stat span{font-size:12px;color:var(--mut)}
 .stat.ac-k div{border:0;color:#fff;box-shadow:var(--shadow)}.stat.ac-k span{color:rgba(255,255,255,.88);font-weight:600}
 .stat.ac-k .k1{background:linear-gradient(135deg,#7a4fd0,#a07be6)}.stat.ac-k .k2{background:linear-gradient(135deg,#2f9e6b,#5cc592)}.stat.ac-k .k3{background:linear-gradient(135deg,#d9822b,#f0a85c)}.stat.ac-k .k4{background:linear-gradient(135deg,#2b79c2,#5aa2e0)}.stat.ac-k .k5{background:linear-gradient(135deg,#c1478a,#e27cb3)}
-.acr{display:grid;grid-template-columns:46px 1fr auto;gap:6px 12px;align-items:start;margin:10px 0;padding:12px 14px;border-radius:16px;border:1px solid var(--rc-b);border-left:6px solid var(--rc);background:var(--rc-bg);box-shadow:var(--shadow)}
-.acr.ord{--rc:#2f9e6b;--rc-b:#cfe9da;--rc-bg:#f1faf5}.acr.non{--rc:#e09030;--rc-b:#f4dcb8;--rc-bg:#fff7ea}
-.acr-av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font:700 19px 'Bricolage Grotesque',system-ui;color:#fff;background:hsl(var(--h) 55% 48%);grid-row:1/3}
-.acr-main{min-width:0}.acr-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.acr-nm{font-size:16px}.acr-nm.no{font-weight:600;color:var(--mut)}
-.acr-p{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
-.acr-p.g{background:#d7f1e2;color:#1d6b43}.acr-p.o{background:#ffe6c2;color:#9a5a08}.acr-p.v{background:#e9defa;color:#5b32a8}.acr-p.w{background:#d6f5df;color:#17803f}.acr-p.e{background:#dcebfb;color:#1f5f9f}
-.acr-ct{display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:5px;font-size:13.5px}.acr-ad{margin-top:3px;font-size:13.5px}
-.acr-dt{margin-top:5px;font-size:12.5px;color:var(--mut)}
-.acr-side{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}.acr-sp{font:700 19px 'Bricolage Grotesque',system-ui;color:var(--rc)}.acr-or{font-size:12px;color:var(--mut);font-weight:600}
-.acr-side .acts{margin-top:8px;justify-content:flex-end}
-@media(max-width:520px){.acr{grid-template-columns:46px 1fr}.acr-side{grid-column:1/3;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;text-align:left;border-top:1px dashed var(--rc-b);padding-top:8px;margin-top:4px}.acr-side .acts{margin-top:0}.acr-av{grid-row:auto}}
+.acx{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-top:6px;box-shadow:var(--shadow)}
+.acx-in{min-width:900px}
+.acx-h,.acx-r{display:grid;grid-template-columns:minmax(120px,1.1fr) 108px minmax(110px,1fr) minmax(140px,1.4fr) 54px 78px 68px 68px 68px 74px;align-items:center}
+.acx-h>span{padding:11px 8px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;border-left:1px solid rgba(255,255,255,.28)}.acx-h>span:first-child{border-left:0}
+.acx-h .c1{background:#7a4fd0}.acx-h .c2{background:#2b79c2}.acx-h .c3{background:#1f9aa8}.acx-h .c4{background:#2f9e6b}.acx-h .c5{background:#d9822b}.acx-h .c6{background:#c1478a}.acx-h .c7{background:#7d6a58}.acx-h .c8{background:#7d6a58}.acx-h .c9{background:#7d6a58}.acx-h .c10{background:#4b3a2c}
+.acx-r{border-top:1px solid var(--line);border-left:6px solid var(--rc);background:var(--rc-bg)}
+.acx-r.ord{--rc:#2f9e6b;--rc-bg:#f1faf5}.acx-r.non{--rc:#e09030;--rc-bg:#fff7ea}
+.acx-r>div{padding:10px 8px;min-width:0;font-size:13.5px;border-left:1px solid color-mix(in srgb,var(--rc) 22%,#fff);overflow-wrap:anywhere;align-self:stretch;display:flex;flex-direction:column;justify-content:center;gap:4px}.acx-r>div:first-child{border-left:0}
+.acx-r .l{display:none}
+.acx-nm{display:flex;gap:9px;align-items:center}.acx-av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 15px 'Bricolage Grotesque',system-ui;color:#fff;background:hsl(var(--h) 55% 48%)}.acx-nm b{font-size:14px;line-height:1.2}.acx-nm b.no{font-weight:600;color:var(--mut)}
+.acx-pl{display:flex;flex-wrap:wrap;gap:4px}
+.acx-p{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}.acx-p.g{background:#d7f1e2;color:#1d6b43}.acx-p.o{background:#ffe6c2;color:#9a5a08}.acx-p.v{background:#e9defa;color:#5b32a8}.acx-p.w{background:#d6f5df;color:#17803f}.acx-p.e{background:#dcebfb;color:#1f5f9f}
+.acx-n{font:700 17px 'Bricolage Grotesque',system-ui;font-variant-numeric:tabular-nums}.acx-r.ord .acx-n.sp{color:#1d6b43}.acx-r.non .acx-n.sp{color:#9a5a08}
+.acx-d{color:var(--mut);font-variant-numeric:tabular-nums}.acx-ac{flex-direction:row!important;gap:6px!important;flex-wrap:wrap;align-items:center}.acx-ac .btn{padding:6px 9px}.a-ph{white-space:nowrap}.acx-r .a-ac .t{display:none}.acx-r .a-ac .l{display:none}
+.acx-none{color:var(--mut)}
+@media(max-width:759px){
+ .acx{overflow:visible;border:0;background:none;box-shadow:none}.acx-in{min-width:0}.acx-h{display:none}
+ .acx-r{grid-template-columns:repeat(6,1fr);margin:10px 0;border:1px solid color-mix(in srgb,var(--rc) 30%,#fff);border-left:6px solid var(--rc);border-radius:14px;overflow:hidden}
+ .acx-r>div{border-left:0;border-top:1px dashed color-mix(in srgb,var(--rc) 25%,#fff);padding:8px 12px}
+ .acx-r>div{grid-column:span 2}.acx-r>div:first-child{grid-column:1/-1;border-top:0}.acx-r .a-ph,.acx-r .a-em,.acx-r .a-adr,.acx-r .a-ac{grid-column:1/-1}.acx-r .a-or,.acx-r .a-sp{grid-column:span 3}
+ .acx-r .a-ac .t{display:inline}.acx-r .a-ac .l{display:block}
+ .acx-r .l{display:block;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rc)}
+}
 table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}td:last-child{text-align:right;font-weight:700;white-space:nowrap}
 .tm{display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:6px;font-size:13.5px;font-weight:700}
 .tm .g{color:var(--mut);font-weight:600}.tm .ok{color:var(--ok)}.tm .w{color:var(--warn)}.tm .r{color:var(--bad)}
@@ -1268,13 +1280,15 @@ function accHtml(){
   <div class="row" style="margin:8px 0;gap:8px;flex-wrap:wrap"><select class="i" id="aSort" style="width:auto;padding:7px 10px">${[['new','Sort: newest sign-up'],['last','Sort: last sign-in'],['spent','Sort: most spent'],['orders','Sort: most orders'],['name','Sort: name A–Z']].map(([k,n])=>`<option value="${k}"${asrt===k?' selected':''}>${n}</option>`).join('')}</select>
   <span><button class="btn ol sm" data-accref="1">↻ Refresh</button> <button class="btn ol sm" data-acsv="1">⬇ Download (Excel / CSV)</button></span></div>
   <div class="hint" style="margin-bottom:6px">${L.length} of ${all.length} accounts</div>`;
-  h+=L.length?L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10),seed=String(a.name||a.phone||a.email||'?'),hue=[...seed].reduce((x,c)=>(x*31+c.charCodeAt(0))%360,7),ini=(String(a.name||'').trim()[0]||'#').toUpperCase(),adr=accAddr(a);
-    return `<div class="acr ${a.orders?'ord':'non'}" style="--h:${hue}"><div class="acr-av">${esc(ini)}</div>
-    <div class="acr-main"><div class="acr-top"><b class="acr-nm${a.name?'':' no'}">${a.name?esc(a.name):'No name yet'}</b><span class="acr-p ${a.orders?'g':'o'}">${a.orders?'Has ordered':'Not ordered yet'}</span>${a.reg?'':'<span class="acr-p v">Form not filled</span>'}<span class="acr-p ${a.via==='WhatsApp'?'w':'e'}">${esc(a.via)}</span></div>
-    <div class="acr-ct"><span>📱 ${ph?'+91 '+esc(ph):'–'}</span><span>✉ ${a.email?esc(a.email):'–'}</span></div>
-    <div class="acr-ad">📍 ${adr?esc(adr):'<span class="hint">No address yet</span>'}</div>
-    <div class="acr-dt">Signed up ${dShort(a.created)} · Last sign-in ${dShort(a.last)}${a.lastOrder?' · Last order '+dShort(a.lastOrder):''}</div></div>
-    <div class="acr-side"><div><div class="acr-sp">${inr(a.spent)}</div><div class="acr-or">${a.orders} order${a.orders==1?'':'s'}</div></div>${ph?`<div class="acts"><a class="btn ol sm" href="tel:+91${ph}">📞 Call</a> <a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}">WhatsApp</a></div>`:''}</div></div>`}).join(''):`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
+  const hd='<div class="acx-h"><span class="c1">Account</span><span class="c2">Mobile</span><span class="c3">Email</span><span class="c4">Address</span><span class="c5">Orders</span><span class="c6">Spent</span><span class="c7">Signed up</span><span class="c8">Last login</span><span class="c9">Last order</span><span class="c10">Contact</span></div>';
+  const lane=(c,l,v)=>`<div class="${c}"><span class="l">${l}</span>${v}</div>`,nn='<span class="acx-none">–</span>';
+  h+=L.length?'<div class="acx"><div class="acx-in">'+hd+L.map(a=>{const ph=String(a.phone||'').replace(/\D/g,'').slice(-10),seed=String(a.name||a.phone||a.email||'?'),hue=[...seed].reduce((x,c)=>(x*31+c.charCodeAt(0))%360,7),ini=(String(a.name||'').trim()[0]||'#').toUpperCase(),adr=accAddr(a);
+    return `<div class="acx-r ${a.orders?'ord':'non'}" style="--h:${hue}">`
+    +`<div class="a-nm"><span class="acx-nm"><span class="acx-av">${esc(ini)}</span><b class="${a.name?'':'no'}">${a.name?esc(a.name):'No name yet'}</b></span><span class="acx-pl"><span class="acx-p ${a.orders?'g':'o'}">${a.orders?'Has ordered':'Not ordered yet'}</span>${a.reg?'':'<span class="acx-p v">Form not filled</span>'}<span class="acx-p ${a.via==='WhatsApp'?'w':'e'}">${esc(a.via)}</span></span></div>`
+    +lane('a-ph','Mobile',ph?esc(ph.slice(0,5)+' '+ph.slice(5)):nn)+lane('a-em','Email',a.email?esc(a.email):nn)+lane('a-adr','Address',adr?esc(adr):'<span class="acx-none">No address yet</span>')
+    +lane('a-or','Orders','<span class="acx-n">'+a.orders+'</span>')+lane('a-sp','Spent','<span class="acx-n sp">'+inr(a.spent)+'</span>')
+    +lane('a-d1','Signed up','<span class="acx-d">'+dShort(a.created)+'</span>')+lane('a-d2','Last login','<span class="acx-d">'+dShort(a.last)+'</span>')+lane('a-d3','Last order','<span class="acx-d">'+(a.lastOrder?dShort(a.lastOrder):'–')+'</span>')
+    +`<div class="a-ac acx-ac"><span class="l">Contact</span>${ph?`<a class="btn ol sm" href="tel:+91${ph}" title="Call" aria-label="Call">📞<span class="t"> Call</span></a> <a class="btn ol sm" target="_blank" rel="noopener" href="https://wa.me/91${ph}" title="WhatsApp" aria-label="WhatsApp">💬<span class="t"> WhatsApp</span></a>`:nn}</div></div>`}).join('')+'</div></div>':`<div class="hint" style="margin:14px 0">${all.length?'No accounts match your search.':'No accounts yet.'}</div>`;
   return h}
 function accCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',dt=ms=>ms?new Date(ms).toLocaleString('en-IN'):'';
   const rows=[['Name','Mobile','Email','Signs in with','Address','Landmark','City','State','Pincode','Full address','Signed up','Last sign-in','Orders','Total spent (Rs)','Last order','Sign-up form filled']].concat((D.acc||[]).map(a=>[a.name,a.phone,a.email,a.via,a.line,a.landmark,a.city,a.state,a.pin,accAddr(a),dt(a.created),dt(a.last),a.orders,a.spent,dt(a.lastOrder),a.reg?'Yes':'No']));
