@@ -52,6 +52,7 @@ main{padding:6px 16px 0;max-width:640px;margin:0 auto}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .chip{padding:7px 11px;border:1px solid var(--line);border-radius:11px;font-size:13px;text-align:center;line-height:1.25;background:var(--bg)}
 .chip b{display:block;font-weight:700}
+.sgb{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);font:600 12px/1 inherit;cursor:pointer}.sgb:active{transform:scale(.98)}
 .chip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 .chip.cr{padding:7px 13px;font-weight:600}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:11px}
@@ -716,6 +717,7 @@ function cakeCard(c){
   return `<div class="card" data-cake="${c.id}"><div style="display:flex;gap:14px;align-items:flex-start">${thumbHtml(c,1,!c.custom)}<div style="min-width:0"><div class="t">${esc(c.name)}</div><div class="d">${esc(c.desc)}</div>${trustLine()}</div></div>
   ${c.creams.length>1?`<div class="d" style="font-weight:700;margin:10px 0 4px">Choice of Frosting</div><div class="chips fr">${c.creams.map(x=>`<button class="chip cr ${x.id===s.cream?'on':''}" data-cream="${x.id}">${x.label}</button>`).join('')}</div>`:''}
   <div class="chips">${WS.map((w,i)=>`<button class="chip ${s.wi===i?'on':''}" data-wi="${i}">${kgLabel(w)}<b>${cr&&!c.custom?'':'from '}${inr(pv(i))}</b></button>`).join('')}<button class="chip ${other?'on':''}" data-wi="o">Other kg<b>3 kg+</b></button></div>
+  <button type="button" class="sgb" data-sg aria-label="Cake Serving Guide"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7M5 16.5c2 1.4 3 1.4 5 0s3-1.4 5 0 3 1.2 4 .3M12 12V9M12 5.2c.7.9.7 1.9 0 2.6-.7-.7-.7-1.7 0-2.6z"/></svg>Cake Serving Guide</button>
   ${other?`<div class="kg"><span>Weight</span><div class="step"><button data-kgm>−</button><span>${kgLabel(s.kg)}</span><button class="p" data-kgp>+</button></div></div>`:''}
   ${inCart(c)}
   <div class="row"><div class="pr">${ready?inr(p.amount):'Choose '+miss}<small>${ready?(p.exact?'as per menu':(c.custom?'starting price · final after design':'estimate · we\'ll confirm')):'to see the price'}</small></div><button class="add${ready?'':' off'}" data-add>Add</button></div></div>`;
@@ -1682,5 +1684,6 @@ up.addEventListener('click',function(){scrollTo({top:0,behavior:'smooth'})});
 dn.addEventListener('click',function(){scrollBy({top:Math.round(window.innerHeight*.8),behavior:'smooth'})});
 setTimeout(q,600);q()})();
 </script>
+<script src="serving-guide.js"></script>
 </body>
 </html>
