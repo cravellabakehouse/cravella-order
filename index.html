@@ -52,7 +52,7 @@ main{padding:6px 16px 0;max-width:640px;margin:0 auto}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .chip{padding:7px 11px;border:1px solid var(--line);border-radius:11px;font-size:13px;text-align:center;line-height:1.25;background:var(--bg)}
 .chip b{display:block;font-weight:700}
-.sgb{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:7px 13px;border:0;border-radius:999px;background:linear-gradient(135deg,#1d4ed8,#38a3ff);color:#fff;font-family:inherit;font-weight:700;font-size:12px;line-height:1;cursor:pointer;transform-origin:left center;box-shadow:0 0 12px rgba(56,163,255,.7);animation:sgpulse 1.8s ease-in-out infinite}
+.sgb{display:flex;width:max-content;margin-left:auto;align-items:center;gap:6px;margin-top:10px;padding:7px 13px;border:0;border-radius:999px;background:linear-gradient(135deg,#1d4ed8,#38a3ff);color:#fff;font-family:inherit;font-weight:700;font-size:12px;line-height:1;cursor:pointer;transform-origin:right center;box-shadow:0 0 12px rgba(56,163,255,.7);animation:sgpulse 1.8s ease-in-out infinite}
 @keyframes sgpulse{0%,100%{transform:scale(1.07);box-shadow:0 0 18px rgba(56,163,255,.95),0 0 32px rgba(29,78,216,.55)}50%{transform:scale(.94);box-shadow:0 0 6px rgba(56,163,255,.5)}}
 @media (prefers-reduced-motion:reduce){.sgb{animation:none}}
 .chip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
