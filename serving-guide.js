@@ -2,7 +2,7 @@
 'use strict';
 var RANGE={small:[6,7],regular:[4,6],generous:[3,4]};
 var DRAW={small:7,regular:6,generous:4};
-var STY=[['small','Small'],['regular','Regular'],['generous','Generous']];
+var STY=[['small','Small','70–85 g',34],['regular','Regular','85–125 g',52],['generous','Generous','125–165 g',76]];
 var MAXDRAW=28,CUT='#fff4dc';
 var st={c:null,kg:1,sty:'regular'},ov=null;
 
@@ -13,6 +13,9 @@ function css(){
   '.sgs{font-size:12.5px;color:var(--mut);margin:2px 0 10px}'+
   '.sgl{font-size:12px;font-weight:700;color:var(--mut);margin:10px 0 5px}'+
   '.sgrow{display:flex;flex-wrap:wrap;gap:6px}'+
+  '.sgrow.sc{flex-wrap:nowrap}.sgc{flex:1 1 0;min-width:0;padding:7px 3px 6px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);text-align:center;cursor:pointer;font:inherit}'+
+  '.sgc.on{border:2px solid var(--ok);padding:6px 2px 5px;background:var(--bg)}.sgc svg{width:42px;height:42px;display:block;margin:0 auto}'+
+  '.sgc b{display:block;font-size:13px;margin-top:1px}.sgc span{display:block;font-size:11px;color:var(--mut)}'+
   '.sgp{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);font:600 12.5px/1 inherit;cursor:pointer}'+
   '.sgp.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}'+
   '.sgsum{margin:12px 0 4px;padding:10px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:13px;color:var(--ink)}'+
@@ -41,6 +44,14 @@ function squareSvg(n){
   for(k=1;k<r;k++){var y=24+152*k/r;s+=ln([24,y],[176,y])}
   return {svg:s,count:r*c};
 }
+function wedge(deg){
+  var r=26,cx=30,cy=32,rad=Math.PI/180,a0=(-90-deg/2)*rad,a1=(-90+deg/2)*rad;
+  var x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+  return '<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="32" r="26" fill="none" style="stroke:var(--line)" stroke-dasharray="2 3"/><path d="M'+cx+' '+cy+' L'+x0.toFixed(1)+' '+y0.toFixed(1)+' A'+r+' '+r+' 0 0 1 '+x1.toFixed(1)+' '+y1.toFixed(1)+' Z" fill="#5a2e1e"/></svg>';
+}
+function styleCards(cur){
+  return STY.map(function(x){return '<button type="button" class="sgc'+(x[0]===cur?' on':'')+'" data-sgs="'+x[0]+'">'+wedge(x[3])+'<b>'+x[1]+'</b><span>~'+x[2]+'</span></button>'}).join('');
+}
 function weights(c){
   var w=(c.weights||MENU.weights).slice();
   if(w.indexOf(st.kg)<0){w.push(st.kg);w.sort(function(a,b){return a-b})}
@@ -57,13 +68,13 @@ function render(){
     diag='<div class="sgg"><figure><svg viewBox="0 0 200 200" role="img" aria-label="Round cake cut into '+n+' slices">'+roundSvg(n)+'</svg><figcaption>Round<b>'+n+' slices</b></figcaption></figure>'+
          '<figure><svg viewBox="0 0 200 200" role="img" aria-label="Square cake cut into '+q.count+' pieces">'+q.svg+'</svg><figcaption>Square<b>'+q.count+' pieces</b></figcaption></figure></div>';
   }
-  var note=n<=MAXDRAW?'Cuts shown are a guide. Square pieces are rounded to a neat grid.':'For a cake this big, message us on WhatsApp and we\'ll suggest how to cut it.';
+  var note=n<=MAXDRAW?'Slice weights are approximate and include frosting. Cuts shown are a guide. Square pieces are rounded to a neat grid.':'For a cake this big, message us on WhatsApp and we\'ll suggest how to cut it.';
   if(c.custom)note+=' Fondant-decorated cakes are usually cut into smaller slices, so plan a few extra.';
   ov.querySelector('.dwbt').innerHTML=
     '<div class="sgt">Cake Serving Guide</div><div class="sgs">'+esc(c.name)+'</div>'+
     '<div class="sgl">Cake size</div><div class="sgrow">'+pills(weights(c).map(function(w){return [w,kgLabel(w)]}),st.kg,'data-sgk')+'</div>'+
-    '<div class="sgl">Slice size</div><div class="sgrow">'+pills(STY,st.sty,'data-sgs')+'</div>'+
-    '<div class="sgsum">Serves about <b>'+(r[0]*f)+'–'+(r[1]*f)+' people</b><small>'+st.sty+' slices · '+kgLabel(st.kg)+'</small></div>'+
+    '<div class="sgl">Slice size</div><div class="sgrow sc">'+styleCards(st.sty)+'</div>'+
+    '<div class="sgsum">Serves about <b>'+(r[0]*f)+'–'+(r[1]*f)+' people</b><small>'+st.sty+' slices, about '+STY.filter(function(x){return x[0]===st.sty})[0][2]+' each · '+kgLabel(st.kg)+'</small></div>'+
     diag+'<p class="sgn">'+note+'</p>';
 }
 function close(){if(ov){ov.classList.remove('on');ov.remove();ov=null;document.removeEventListener('keydown',onKey)}}
