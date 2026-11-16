@@ -863,6 +863,7 @@ function todayHtml(){
 }
 /* ---------- orders ---------- */
 const ACTIVE=['New','Confirmed','Advance received','Ready'];
+function confirmDelivered(o){const t=todayS(),dd=[o.date,o.split&&o.split.date].filter(Boolean).sort().pop()||'',fut=dd&&dd>t;return confirm((fut?'This order is due '+new Date(dd+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+', not today yet.\n\n':'')+'Mark '+o.id+' as '+(o.mode==='Pickup'?'collected':'delivered')+'? This sends the customer a thank-you and a Google review request on WhatsApp.')}
 function visible(){
   const t=todayS(),s=q.trim().toLowerCase();
   return D.orders.filter(o=>{
@@ -1520,6 +1521,7 @@ $('panel').addEventListener('click',async e=>{
     if(st==='Advance received'&&!pk){D.payAsk=D.payAsk===id?null:id;const y0=scrollY;render();scrollTo(0,y0);return}
     if(pk){D.payAsk=null;if(o.status===st){payMark(o,pk);return}}
     if(st==='Cancelled'&&!confirm('Cancel order '+id+'?'))return;
+    if(st==='Delivered'&&!confirmDelivered(o))return;
     const nc=card.querySelector('[data-notify]'),notify=st!=='Confirmed'&&(nc?nc.checked:!!o.email);
     const prev=o.status;o.status=st;let y=scrollY;render();scrollTo(0,y);   // show the change at once, save in the background
     try{const r=await api({action:'admin_status',id,status:st,notify});

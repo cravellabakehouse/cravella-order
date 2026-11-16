@@ -287,6 +287,7 @@ async function setBaking(id,on){
  if(on)baking.add(String(id));else baking.delete(String(id));
  if(localBake){SS('cb_kds_bake',JSON.stringify([...baking]));return true}
  try{const r=await api({action:'admin_wa_kds_set',id,on});if(r.ok)return true;toast(r.error||'Could not save');return false}catch(_){toast('No connection');return false}}
+function confirmDelivered(o){const t=new Date().toLocaleDateString('en-CA'),dd=[o.date,o.split&&o.split.date].filter(Boolean).sort().pop()||'',fut=dd&&dd>t;return confirm((fut?'This order is due '+new Date(dd+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+', not today yet.\n\n':'')+'Mark '+o.id+' as '+(o.mode==='Pickup'?'collected':'delivered')+'? This sends the customer a thank-you and a Google review request on WhatsApp.')}
 async function setStatus(id,st){
  const o=orders.find(x=>x.id===id);if(!o)return;
  const prev=o.status;o.status=st;render();
@@ -298,7 +299,7 @@ $('board').addEventListener('click',async e=>{
  const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.id;
  if(a==='photo'){$('lbi').src=b.dataset.u;$('lb').classList.remove('hide');return}
  if(b.disabled)return;
- if(a==='s'){b.disabled=true;await setStatus(id,b.dataset.s);return}
+ if(a==='s'){if(b.dataset.s==='Delivered'){const o=orders.find(x=>x.id===id);if(o&&!confirmDelivered(o))return}b.disabled=true;await setStatus(id,b.dataset.s);return}
  if(a==='bake'){b.disabled=true;if(!await setBaking(id,true))baking.delete(String(id));render();return}
  if(a==='unbake'){b.disabled=true;await setBaking(id,false);render();return}
  if(a==='step'){
