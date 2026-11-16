@@ -1023,7 +1023,7 @@ function orderCard(o){
   ${o.notes?`<div class="note">📝 ${esc(o.notes)}</div>`:''}
   ${o.photos.filter(u=>/^https:\/\//.test(u)).length?`<div class="ph">${o.photos.filter(u=>/^https:\/\//.test(u)).map((u,i)=>`<a class="btn ol sm" href="${esc(u)}" target="_blank" rel="noopener">🖼 Reference photo${o.photos.length>1?' '+(i+1):''}</a>`).join(' ')}</div>`:''}
   <div class="osec">Message the customer</div>
-  <div class="oacts">${wa('c','✅ Confirm + payment request')}${wa('a','💰 Advance received')}${wa('r','🎂 Order ready')}<button class="btn ol sm" data-epdf="${esc(o.id)}">📄 Estimate PDF</button><button class="btn ol sm" data-mail="${esc(o.id)}">✉ Email</button>${histBtn(o)}</div>
+  <div class="oacts">${wa('c','✅ Confirm + payment request')}${wa('a','💰 Advance received')}${wa('r','🎂 Order ready')}<button class="btn ol sm" data-epdf="${esc(o.id)}">📄 ${o.paid?'Confirmation':'Estimate'} PDF</button><button class="btn ol sm" data-epget="${esc(o.id)}">⬇ Download PDF</button><button class="btn ol sm" data-mail="${esc(o.id)}">✉ Email</button>${histBtn(o)}</div>
   ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status</label>`:''}
   ${mailNote(o)}
   <div class="ofoot">${cx||o.status==='Delivered'?'':`<button class="btn ol sm ocx" data-s="Cancelled">✖ Cancel order</button>`}${odelBtn(o)}</div>${odelBox(o)}${histBox(o)}</div></details>`
@@ -1073,7 +1073,7 @@ async function epMake(o){await epLoad();if(document.fonts&&document.fonts.ready)
     const b64=pdf.output('datauristring').split(',')[1];return {b64,preview:cv.toDataURL('image/jpeg',0.75),pages:pdf.getNumberOfPages()}}
   finally{host.remove()}}
 function epModal(){const o=EP.o;if(!o)return;const ph=String(o.phone).replace(/\D/g,'').slice(-10);let m=$('epM');if(!m){m=document.createElement('div');m.id='epM';m.className='ep-m';document.body.appendChild(m)}
-  m.innerHTML=`<div class="ep-mi"><div class="ep-mh"><b>📄 Estimate PDF · ${esc(o.id)}</b><button class="btn ol sm" data-epx="1">Close</button></div>
+  m.innerHTML=`<div class="ep-mi"><div class="ep-mh"><b>📄 ${o.paid?'Confirmation':'Estimate'} PDF · ${esc(o.id)}</b><button class="btn ol sm" data-epx="1">Close</button></div>
   <div class="ep-pv">${EP.pdf?`<img src="${EP.pdf.preview}" alt="PDF preview">`:`<div class="hint" style="padding:30px;text-align:center">${EP.err?esc(EP.err):'Making the PDF…'}</div>`}</div>
   ${EP.pdf?`<div class="ep-ma"><button class="btn" data-epsend="c">📲 Send to ${esc(o.name.split(' ')[0])} (+91 ${esc(ph)})</button><button class="btn ol sm" data-epdl="1">⬇ Download</button></div>
   <div class="ep-mt"><span>Send a test to:</span>${['Deepayan','Priyanka','Cravella'].map((n,i)=>`<button class="btn ol sm" data-epsend="${i}">${n}</button>`).join('')}</div>
@@ -1115,9 +1115,10 @@ async function payLate(o,btn){if(D.plBusy)return;if(!confirm('Mark the '+inr(o.t
 document.addEventListener('click',e=>{const b=e.target.closest('[data-paylate]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.paylate);if(o)payLate(o,b)},true);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-payfull]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.payfull);if(o){b.disabled=true;payMark(o,'full')}},true);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-payfullup]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.payfullup);if(!o)return;if(!confirm('Mark the full '+inr(o.total)+' as received for '+o.id+'? This also sends the booked confirmation PDF to the customer on WhatsApp.'))return;b.disabled=true;payMark(o,'full')},true);
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-epget]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.epget);if(!o||b.disabled)return;b.disabled=true;const t0=b.textContent;b.textContent='Preparing…';try{const p=await epMake(o);const a=document.createElement('a');a.href='data:application/pdf;base64,'+p.b64;a.download='Cravella-'+(o.paid?'Confirmation':'Estimate')+'-'+o.id+'.pdf';document.body.appendChild(a);a.click();a.remove();toast('PDF downloaded. Nothing was sent to the customer.')}catch(_){toast('Could not make the PDF. Check the connection and try again.')}finally{b.disabled=false;b.textContent=t0}},true);
 document.addEventListener('click',async e=>{const t=e.target.closest('[data-epdf],[data-epx],[data-epsend],[data-epdl]');if(!t)return;e.preventDefault();e.stopPropagation();
   if(t.dataset.epx){$('epM').classList.add('hide');return}
-  if(t.dataset.epdl){const a=document.createElement('a');a.href='data:application/pdf;base64,'+EP.pdf.b64;a.download='Cravella-Estimate-'+EP.o.id+'.pdf';a.click();return}
+  if(t.dataset.epdl){const a=document.createElement('a');a.href='data:application/pdf;base64,'+EP.pdf.b64;a.download='Cravella-'+(EP.o.paid?'Confirmation':'Estimate')+'-'+EP.o.id+'.pdf';a.click();return}
   if(t.dataset.epdf){const o=D.orders.find(x=>x.id===t.dataset.epdf);if(!o)return;EP.o=o;EP.pdf=null;EP.err='';epModal();try{EP.pdf=await epMake(o)}catch(er){EP.err='Could not make the PDF. Check the connection and try again.'}epModal();return}
   if(t.dataset.epsend!==undefined){const k=t.dataset.epsend,test=k!=='c';t.disabled=true;const tx=t.textContent;t.textContent='Sending…';
     try{const r=await api(Object.assign({action:'admin_wa_send_pdf',id:EP.o.id,pdf:EP.pdf.b64},test?{test:+k}:{},EP.o.paid?{conf:1}:{}));if(r.ok){toast(test?'Test PDF sent on WhatsApp':'Estimate PDF sent to '+EP.o.name.split(' ')[0]);t.textContent='✓ Sent'}else{toast(r.error||'Could not send');t.disabled=false;t.textContent=tx}}catch(_){toast('No connection');t.disabled=false;t.textContent=tx}}},true);
