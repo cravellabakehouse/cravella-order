@@ -618,7 +618,7 @@ function selOf(id){if(!S.sel[id]){const cs=findCake(id).creams;S.sel[id]={cream:
 function lines(){
   const out=[];
   S.cakes.forEach((l,i)=>{const c=findCake(l.id),p=cakePrice(c,l.cream,l.kg),cr=c.creams.find(x=>x.id===l.cream);
-    out.push({ref:['cake',i],name:c.name,sub:[cr&&cr.label,kgLabel(l.kg)+(l.q>1?' × '+l.q:''),p.exact?'':(c.custom?'custom design – final price confirmed':'estimate – we\'ll confirm')].filter(Boolean).join(' · '),q:l.q,qLabel:'×'+l.q,amount:p.amount*l.q,flag:!p.exact,kind:'cake'})});
+    out.push({ref:['cake',i],name:c.name,sub:[cr&&cr.label,kgLabel(l.kg)+(l.q>1?' × '+l.q:''),p.exact?'':(c.custom?'custom design – final price confirmed':'estimate – we\'ll confirm')].filter(Boolean).join(' · '),q:l.q,qLabel:'×'+l.q,amount:p.amount*l.q,flag:!p.exact,kind:'cake',p100:p.amount?per100(p.amount,l.kg):''})});
   for(const id in S.pc){const q=S.pc[id];if(!q)continue;const d=findPc(id);
     out.push({ref:['pc',id],name:d.name+' '+kindName(id),sub:q+' pcs · '+(q/d.size)+(q/d.size>1?' boxes':' box')+' of '+d.size,q,amount:pcAmount(d,q),kind:'other'})}
   for(const id in S.cookie){const g=S.cookie[id];if(!g)continue;const d=findCookie(id);
@@ -1139,7 +1139,7 @@ function setCpn(m,k){const e=$('cpnMsg');e.textContent=m;e.className='cmsg'+(k?'
 function renderReview(){saveCart();
   const t=totals();
   if(!t.count){closeReview();return}
-  $('revLines').innerHTML=t.L.map((l,i)=>`<div class="line" data-i="${i}"><div class="l"><b>${esc(l.name)}</b><small>${esc(l.sub)}</small></div>
+  $('revLines').innerHTML=t.L.map((l,i)=>`<div class="line" data-i="${i}"><div class="l"><b>${esc(l.name)}</b><small>${esc(l.sub)}</small>${l.p100?`<small>${l.p100}</small>`:''}</div>
    <div style="text-align:right"><b>${inr(l.amount)}</b><div class="step" style="margin-top:4px;justify-content:flex-end"><button data-rm>−</button><button class="p" data-ad>+</button></div></div></div>`).join('');
   if(S.coupon&&t.sub<S.coupon.min){setCpn('Coupon '+S.coupon.code+' needs an order of at least '+inr(S.coupon.min)+'.','bad');S.coupon=null;const t2=totals();Object.assign(t,t2)}
   $('revSub').textContent=inr(t.sub);$('revTot').textContent=inr(t.tot);
