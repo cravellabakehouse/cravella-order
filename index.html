@@ -926,7 +926,7 @@ function reviewsHtml(){
 const MORIG={};
 function applyOrder(){const ord=(CFG&&CFG.order)||[],rk={};ord.forEach((id,i)=>rk[id]=i);
   ['cakes','cupcakes','muffins','brownies','blondies','cookies'].forEach(k=>{if(!MENU[k])return;if(!MORIG[k])MORIG[k]=MENU[k].slice();
-    let a=MORIG[k].map((d,i)=>[d,(d.id in rk)?rk[d.id]:1e6+i]).sort((x,y)=>x[1]-y[1]).map(x=>x[0]);
+    let pr=-1,a=MORIG[k].map((d,i)=>{if(d.id in rk){pr=rk[d.id];return [d,pr]}return [d,(k==='cakes'&&pr>=0)?pr+0.5+i/1e4:1e6+i]}).sort((x,y)=>x[1]-y[1]).map(x=>x[0]);
     if(k==='cakes'){const gs=[],by={};a.forEach(d=>{const g=d.group||'';if(!by[g]){by[g]=[];gs.push(g)}by[g].push(d)});a=[].concat(...gs.map(g=>by[g]))}
     const dl=(CFG&&CFG.del)||[];a=a.filter(d=>d.custom||!dl.includes(d.id));
     MENU[k].length=0;MENU[k].push(...a)})}
