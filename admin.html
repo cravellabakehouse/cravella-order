@@ -880,7 +880,7 @@ function visible(){
 function ordersHtml(){
   const t=todayS(),act=D.orders.filter(o=>ACTIVE.includes(o.status)),tod=D.orders.filter(o=>o.status!=='Cancelled'&&(o.date===t||(o.split&&o.split.date===t)));
   const adv=act.filter(o=>o.status==='Confirmed').length;
-  let h=`  <div class="chips">${[['active','Active'],['new','New'],['today','Today'],['all','All']].map(([k,n])=>`<button class="chip ${filt===k?'on':''}" data-f="${k}">${n}</button>`).join('')}<button class="chip" id="refresh">↻ Refresh</button></div>
+  let h=`  <div class="chips">${[['active','Active'],['new','New'],['today','Today'],['all','All']].map(([k,n])=>`<button class="chip ${filt===k?'on':''}" data-f="${k}">${n}</button>`).join('')}<button class="chip" id="refresh">↻ Refresh</button><button class="chip" data-po-open="1">➕ New phone order</button></div>
   <input class="i" id="search" placeholder="Search name, phone or order number" value="${esc(q)}">`;
   const L=visible();
   h+=L.length?L.map(orderCard).join(''):`<div class="card"><div class="hint">No orders here.</div></div>`;
@@ -1390,6 +1390,63 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-gsti
   if(!off){const g=Math.round(o.total*5/105);if(!confirm('Treat '+o.name+'\'s total of '+inr(o.total)+' as GST-inclusive?\n\nThe customer still pays '+inr(o.total)+'. The invoice will show taxable value '+inr(o.total-g)+' + GST '+inr(g)+' (5%).'))return}
   else if(!confirm('Remove GST-included from this order?'))return;
   b.disabled=true;try{const r=await api({action:'admin_gst_incl',id:o.id,on:!off});if(r&&r.ok){o.gst=r.gst;o.gstRate=r.gstRate;o.gstIncl=r.gstIncl;saveCache();render();toast(off?'Removed':'GST included at '+inr(r.gst))}else{toast(r&&r.error||'Could not update');b.disabled=false}}catch(_){toast('Could not update. Check the connection.');b.disabled=false}},true);
+/* ---------- New phone order (staff enters an order taken by phone) ---------- */
+const PO={open:0,busy:0,it:[],ex:[],f:{mode:'Pickup',time:'12:00 PM'},a:{t:'cake',q:1,boxes:1,g:500}},POTIMES=['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
+const poWl=w=>w<1?(w*1000)+' g':w+' kg';
+function poFind(){const B=D.pr.base,a=PO.a;return{cake:B.cakes.find(d=>d.id===a.id)||B.cakes[0],pcs:[].concat(...B.pc.map(g=>g.items)),ck:B.cookies}}
+function poLine(x){const B=D.pr.base,E=prEff();
+  if(x.t==='cake'){const d=B.cakes.find(c=>c.id===x.id),cr=d.creams.find(c=>(c.id||'')===x.cream)||d.creams[0];return{n:d.name+' · '+(cr.label?cr.label+' · ':'')+poWl(x.kg)+(x.q>1?' × '+x.q:''),a:(+E['c|'+x.id+'|'+(cr.id||'_')+'|'+x.wi]||0)*x.q}}
+  if(x.t==='pc'){const d=[].concat(...B.pc.map(g=>g.items)).find(c=>c.id===x.id);return{n:d.name+' · '+(x.q/d.size)+' box'+(x.q/d.size>1?'es':'')+' of '+d.size,a:Math.round((+E['p|'+x.id+'|box']||0)*x.q/d.size)}}
+  const d=B.cookies.find(c=>c.id===x.id);return{n:d.name+' Cookies · '+x.q+' g',a:Math.round((+E['k|'+x.id]||0)*x.q/250)}}
+function poHtml(){
+  if(!D.pr)return '<div class="hint" style="padding:20px">Loading menu…</div>';
+  const B=D.pr.base,a=PO.a,F=PO.f,{cake,pcs,ck}=poFind(),opt=(v,l,sel)=>`<option value="${esc(v)}"${sel?' selected':''}>${esc(l)}</option>`,E=prEff();
+  const cr=cake.creams.find(c=>(c.id||'')===(a.cream||''))||cake.creams[0],ws=cake.weights||B.weights;
+  const rows=PO.it.map((x,i)=>{const l=poLine(x);return `<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)"><span style="flex:1">${esc(l.n)}</span><b>${inr(l.a)}</b><button class="btn ol sm" data-poRm="i${i}">✕</button></div>`}).concat(PO.ex.map((x,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)"><span style="flex:1">${esc(x.desc)} <small style="color:var(--mut)">(custom)</small></span><b>${inr(x.amount)}</b><button class="btn ol sm" data-poRm="e${i}">✕</button></div>`)).join('');
+  const sub=PO.it.reduce((s,x)=>s+poLine(x).a,0)+PO.ex.reduce((s,x)=>s+x.amount,0),disc=Math.min(sub,Math.round(+F.disc||0)),g=GST.on?Math.round((sub-disc)*GST.rate/100):0;
+  const sel='class="i" style="margin-top:6px"';
+  return `<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">New phone order</b><button class="btn ol sm" data-poX="1">✕ Close</button></div>
+<div class="hint" style="margin:4px 0 10px">Enter what the customer ordered by phone. It joins your Orders list, then confirm it and send the payment QR as usual.</div>
+<input class="i" data-pof="phone" inputmode="numeric" placeholder="Customer mobile (10 digits)" value="${esc(F.phone||'')}"><input class="i" data-pof="name" placeholder="Customer name" value="${esc(F.name||'')}" style="margin-top:6px">
+<div style="display:flex;gap:6px;margin-top:6px"><select class="i" data-pof="mode" style="flex:1">${opt('Pickup','Pickup',F.mode==='Pickup')}${opt('Delivery','Delivery',F.mode==='Delivery')}</select><input class="i" type="date" data-pof="date" value="${esc(F.date||'')}" style="flex:1"><select class="i" data-pof="time" style="flex:1">${POTIMES.map(t=>opt(t,t,F.time===t)).join('')}</select></div>
+${F.mode==='Delivery'?`<textarea class="i" data-pof="address" placeholder="Delivery address" style="margin-top:6px">${esc(F.address||'')}</textarea>`:''}
+<div style="margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fbf6ee"><b>Add an item</b>
+<select ${sel} data-poa="t">${opt('cake','Cake',a.t==='cake')}${opt('pc','Cupcakes, muffins, brownies (boxes)',a.t==='pc')}${opt('cookie','Cookies',a.t==='cookie')}</select>
+${a.t==='cake'?`<select ${sel} data-poa="id">${B.cakes.map(d=>opt(d.id,d.name,d.id===cake.id)).join('')}</select>${cake.creams.length>1?`<select ${sel} data-poa="cream">${cake.creams.map(c=>opt(c.id||'',c.label||'Standard',(c.id||'')===(cr.id||''))).join('')}</select>`:''}<select ${sel} data-poa="wi">${ws.map((w,i)=>opt(i,poWl(w)+' · '+inr(+E['c|'+cake.id+'|'+(cr.id||'_')+'|'+i]||0),+a.wi===i||(a.wi==null&&i===0))).join('')}</select><input ${sel} data-poa="q" inputmode="numeric" placeholder="Quantity" value="${a.q}">`:''}
+${a.t==='pc'?`<select ${sel} data-poa="pid">${pcs.map(d=>opt(d.id,d.name+' (box of '+d.size+')',d.id===(a.pid||pcs[0].id))).join('')}</select><input ${sel} data-poa="boxes" inputmode="numeric" placeholder="Number of boxes" value="${a.boxes}">`:''}
+${a.t==='cookie'?`<select ${sel} data-poa="kid">${ck.map(d=>opt(d.id,d.name,d.id===(a.kid||ck[0].id))).join('')}</select><select ${sel} data-poa="g">${[250,500,750,1000,1500,2000].map(v=>opt(v,v+' g',+a.g===v)).join('')}</select>`:''}
+<button class="btn sm" data-poAdd="1" style="margin-top:8px">➕ Add item</button></div>
+<div style="margin-top:10px;display:flex;gap:6px"><input class="i" id="poXd" placeholder="Custom item, e.g. Custom theme cake" style="flex:2"><input class="i" id="poXa" inputmode="numeric" placeholder="₹ price" style="flex:1"><button class="btn ol sm" data-poAddX="1">Add</button></div>
+<div style="margin-top:10px">${rows||'<div class="hint">No items yet.</div>'}</div>
+<div style="display:flex;gap:6px;margin-top:8px"><input class="i" data-pof="disc" inputmode="numeric" placeholder="Discount ₹ (optional)" value="${esc(F.disc||'')}" style="flex:1"><input class="i" data-pof="notes" placeholder="Notes, e.g. message on cake" value="${esc(F.notes||'')}" style="flex:2"></div>
+<div style="margin:12px 0;padding:10px 12px;background:#2a1a10;color:#fff;border-radius:12px;display:flex;justify-content:space-between"><span>Estimated total${GST.on?' (incl. GST '+GST.rate+'%)':''}</span><b>${inr(sub-disc+g)}</b></div>
+<button class="btn" data-poSave="1" style="width:100%"${PO.busy?' disabled':''}>${PO.busy?'Saving…':'Save phone order'}</button>`}
+function poRender(){let o=document.getElementById('poOv');if(!PO.open){o&&o.remove();return}
+  if(!o){o=document.createElement('div');o.id='poOv';o.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(40,26,16,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:14px';o.innerHTML='<div id="poIn" style="background:#fff;border-radius:16px;padding:16px;width:100%;max-width:520px"></div>';document.body.appendChild(o)}
+  const y=o.scrollTop;document.getElementById('poIn').innerHTML=poHtml();o.scrollTop=y}
+async function poOpen(){PO.open=1;PO.it=[];PO.ex=[];PO.f={mode:'Pickup',time:'12:00 PM'};PO.a={t:'cake',q:1,boxes:1,g:500};poRender();if(!D.pr){await loadPrices();poRender()}}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-po-open],[data-poX],[data-poAdd],[data-poAddX],[data-poRm],[data-poSave]');if(!t)return;e.preventDefault();e.stopPropagation();
+  if(t.hasAttribute('data-po-open')){poOpen();return}
+  if(t.dataset.poX){PO.open=0;poRender();return}
+  if(t.dataset.poAdd){const a=PO.a,{cake,pcs,ck}=poFind();
+    if(a.t==='cake'){const d=cake,cr=d.creams.find(c=>(c.id||'')===(a.cream||''))||d.creams[0],ws=d.weights||D.pr.base.weights,wi=a.wi==null?0:+a.wi,q=Math.max(1,Math.min(20,Math.round(+a.q)||1));PO.it.push({t:'cake',id:d.id,cream:cr.id||'',kg:ws[wi],wi,q})}
+    else if(a.t==='pc'){const d=pcs.find(c=>c.id===(a.pid||pcs[0].id)),b=Math.max(1,Math.min(20,Math.round(+a.boxes)||1));PO.it.push({t:'pc',id:d.id,q:b*d.size})}
+    else PO.it.push({t:'cookie',id:a.kid||ck[0].id,q:+a.g||500});
+    poRender();return}
+  if(t.dataset.poAddX){const d=($('poXd').value||'').trim(),m=Math.round(+$('poXa').value);if(!d||!(m>0)){toast('Enter the item and its price');return}PO.ex.push({desc:d,amount:m});poRender();return}
+  if(t.dataset.poRm){const k=t.dataset.poRm;(k[0]==='i'?PO.it:PO.ex).splice(+k.slice(1),1);poRender();return}
+  if(t.dataset.poSave){const F=PO.f;if(!PO.it.length&&!PO.ex.length){toast('Add at least one item');return}
+    if(!F.phone||!F.name||!F.date){toast('Enter mobile, name and date');return}
+    PO.busy=1;poRender();
+    try{const r=await api({action:'admin_order_create',phone:F.phone,name:F.name,mode:F.mode,address:F.address||'',date:F.date,time:F.time,notes:F.notes||'',discount:Math.round(+F.disc||0),items:PO.it.map(x=>({t:x.t,id:x.id,cream:x.cream,kg:x.kg,q:x.q})),extra:PO.ex});
+      PO.busy=0;if(r&&r.ok){PO.open=0;poRender();await loadOrders();filt='all';render();toast('Order '+r.id+' saved · '+inr(r.total))}else{poRender();toast(r&&r.error||'Could not save the order')}}
+    catch(_){PO.busy=0;poRender();toast('Could not save. Check the connection.')}}},true);
+document.addEventListener('input',e=>{const f=e.target.closest('[data-pof]');if(!f)return;const k=f.dataset.pof;PO.f[k]=f.value;
+  if(k==='phone'){const ph=f.value.replace(/\D/g,'').slice(-10);if(ph.length===10){const o=(D.orders||[]).filter(x=>String(x.phone||'').replace(/\D/g,'').slice(-10)===ph).pop();if(o){if(!PO.f.name){PO.f.name=o.name;const n=document.querySelector('[data-pof="name"]');if(n)n.value=o.name}if(!PO.f.address&&o.address&&PO.f.mode==='Delivery'){PO.f.address=o.address;poRender()}}}}
+  if(k==='disc')poRender()});
+document.addEventListener('change',e=>{const f=e.target.closest('[data-pof]'),a=e.target.closest('[data-poa]');if(f&&(f.dataset.pof==='mode'||f.dataset.pof==='time'||f.dataset.pof==='date')){PO.f[f.dataset.pof]=f.value;poRender();return}
+  if(a){const k=a.dataset.poa;PO.a[k]=a.value;if(k==='t'||k==='id'){PO.a.wi=null;PO.a.cream=''}poRender()}});
+document.addEventListener('input',e=>{const a=e.target.closest('[data-poa]');if(a&&(a.tagName==='INPUT'))PO.a[a.dataset.poa]=a.value});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-billt]');if(!b)return;D.billT=b.dataset.billt;D.gstMo=D.billT==='mon'?'':D.gstMo;render()});
 document.addEventListener('input',e=>{if(e.target.id!=='billQ')return;D.billQ=e.target.value;const l=$('billList');if(l)l.innerHTML=billInvRows()});
 document.addEventListener('change',e=>{const s=e.target.closest('[data-gsts]');if(!s)return;if(s.dataset.gsts==='fy'){D.gstFy=s.value}else D.gstMo=s.value;render()});
