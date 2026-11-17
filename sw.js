@@ -1,4 +1,4 @@
-const V='cb-v1';
+const V='cb-v2';
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
@@ -7,6 +7,8 @@ self.addEventListener('fetch',e=>{
   e.respondWith(caches.open(V).then(async c=>{
     const hit=await c.match(r);
     const net=fetch(r,{cache:'no-cache'}).then(res=>{if(res&&res.ok&&res.type==='basic')c.put(r,res.clone());return res}).catch(()=>hit);
+    const isDoc=r.mode==='navigate'||(r.headers.get('accept')||'').includes('text/html');
+    if(hit&&isDoc)return net.then(x=>x||hit);
     if(hit){e.waitUntil(net);return hit}
     return net;
   }));
