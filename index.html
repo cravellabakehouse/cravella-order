@@ -181,7 +181,7 @@ body.acct-open .bar{z-index:25}body.acct-open .bn{z-index:24}
 .o .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .o .w{font-size:13px;color:var(--mut);margin-top:4px}
 .o .it{font-size:14px;margin-top:8px;white-space:pre-line}
-.o .f2{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.o .f2{display:flex;justify-content:space-between;align-items:center;margin-top:10px}.o .payr{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}.o .payr .hint{flex-basis:100%;margin:0}
 .oit{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
 .oit th{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);text-align:left;padding:0 0 4px}
 .oit td{padding:7px 0;border-top:1px dashed var(--line);vertical-align:top}
@@ -1480,6 +1480,38 @@ function prefill(){const p=A.profile;if(!p)return;
   if(!$('fPin').value&&/^\d{6}$/.test(p.pin||''))$('fPin').value=p.pin}
 const STL={New:'Received',Confirmed:'Confirmed','Advance received':'Advance received',Delivered:'Completed',Cancelled:'Cancelled'};
 const stCls=s=>s==='Advance received'?'Advance':s;
+/* Razorpay Standard Checkout: the customer pays an order online. The amount is always worked out on our server. */
+/* Hidden rollout: online payment shows only on a device opened once with ?pay=1 (clear it with ?pay=0). Remove this switch to open it to everyone. */
+const payOn=()=>{try{const q=new URLSearchParams(location.search).get('pay');if(q==='1')localStorage.setItem('cb_pay','1');else if(q==='0')localStorage.removeItem('cb_pay');return localStorage.getItem('cb_pay')==='1'}catch(_){return false}};
+function payRow(o){
+  if(!payOn()||!live()||!o||o.status==='Cancelled'||o.status==='Delivered'||o.status==='New')return '';
+  const pd=o.paid,tot=Math.round(o.total||0);let b='';
+  if(!pd&&o.status==='Confirmed')b=`<button class="add sm" data-act="pay" data-id="${esc(o.id)}" data-kind="adv">Pay advance ${inr(Math.round(tot/2))}</button><button class="add sm" data-act="pay" data-id="${esc(o.id)}" data-kind="full">Pay full ${inr(tot)}</button>`;
+  else if(pd&&pd.k==='adv'&&tot-pd.amt>=1)b=`<button class="add sm" data-act="pay" data-id="${esc(o.id)}" data-kind="bal">Pay balance ${inr(tot-pd.amt)}</button>`;
+  return b?`<div class="payr">${b}<span class="hint" id="pm-${esc(o.id)}">Secure online payment by Razorpay (UPI, cards, netbanking).</span></div>`:''}
+function rzpLoad(){return new Promise((ok,no)=>{if(window.Razorpay)return ok();const s=document.createElement('script');s.src='https://checkout.razorpay.com/v1/checkout.js';s.onload=ok;s.onerror=()=>no(new Error('load'));document.head.appendChild(s)})}
+async function rzpPay(btn){
+  const id=btn.dataset.id,kind=btn.dataset.kind,msg=$('pm-'+id),say=t=>{if(msg){msg.textContent=t;msg.style.color='#9b1c1c'}else toast(t)},label=btn.textContent;
+  if(!A.tok){say('Please sign in to pay online.');return}
+  btn.disabled=true;btn.textContent='Please wait…';
+  const done=()=>{btn.disabled=false;btn.textContent=label};
+  try{
+    await rzpLoad();
+    const c=await api({action:'rzp_order',token:A.tok,id:id,kind:kind});
+    if(!c.ok){say(c.error||'Could not start the payment. Please try again.');done();return}
+    const rz=new Razorpay({key:c.key_id,order_id:c.order_id,amount:c.amount,currency:c.currency,name:c.name,description:c.description,prefill:c.prefill||{},theme:{color:'#3b2416'},
+      handler:async r=>{
+        btn.textContent='Confirming payment…';
+        try{const v=await api({action:'rzp_verify',token:A.tok,id:id,razorpay_payment_id:r.razorpay_payment_id,razorpay_order_id:r.razorpay_order_id,razorpay_signature:r.razorpay_signature});
+          if(v.ok){toast('Payment received. Thank you!');A.orders=null;await loadMe();acRender();return}
+          say(v.error||'We could not confirm the payment. If money was deducted, please WhatsApp us on 98459-04310.')
+        }catch(_){say('We could not confirm the payment. If money was deducted, please WhatsApp us on 98459-04310.')}
+        done()},
+      modal:{ondismiss:()=>{done();if(msg){msg.textContent='Payment cancelled. You can try again any time.';msg.style.color=''}}}});
+    rz.on('payment.failed',r=>{say((r&&r.error&&r.error.description)||'The payment failed. Please try again.');done()});
+    rz.open();
+  }catch(_){say('Could not open the payment window. Please check your connection and try again.');done()}
+}
 function orderHtml(o,i){
   const md=m=>m==='Delivery'?'Delivery':'Pickup',slot=(m,d,t)=>md(m)+': '+(d?fmtDate(d):'')+(t?', '+t:'');
   const when=o.split?'Cakes – '+slot(o.mode,o.date,o.time)+'<br>Other bakes – '+slot(o.split.mode||o.mode,o.split.date,o.split.time):slot(o.mode,o.date,o.time);
@@ -1490,6 +1522,7 @@ function orderHtml(o,i){
   <div class="w">Ordered on ${esc(o.placed)}</div>
   <div class="w">${esc(when).replace(/&lt;br&gt;/g,'<br>')}</div>
   <table class="oit"><thead><tr><th>Item</th><th class="q">Qty</th><th class="p">Price</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>
+  ${payRow(o)}
   <div class="f2"><span class="hint">Order ID: ${esc(o.id)}</span>${o.items.length&&o.status!=='Cancelled'?`<button class="add sm" data-act="re" data-i="${i}">Order again</button>`:''}</div></div>`}
 const IN_GEO={'Karnataka':['Bengaluru','Mysuru','Mangaluru','Hubballi','Dharwad','Belagavi','Kalaburagi','Davanagere','Ballari','Tumakuru','Shivamogga','Udupi','Hassan','Mandya','Chikkamagaluru','Bidar','Vijayapura','Raichur','Kolar','Chitradurga'],
 'Andhra Pradesh':['Visakhapatnam','Vijayawada','Guntur','Tirupati','Nellore','Kurnool','Kakinada','Rajahmundry','Anantapur'],'Arunachal Pradesh':['Itanagar','Naharlagun','Pasighat'],'Assam':['Guwahati','Silchar','Dibrugarh','Jorhat','Tezpur'],
@@ -1606,6 +1639,7 @@ $('acBody').addEventListener('click',e=>{
       if(A.view==='reg'){A.view='home';const inReview=$('review').classList.contains('on');closeAcct();if(inReview)prefill();else scrollTo({top:Math.max(0,$('tabs').offsetTop),behavior:'smooth'});toast('Welcome to Cravella! Your account is ready.');loadMe()}
       else toast('Details saved')}else if(r.error==='auth'){setTok('');A.view='in';A.msg='Please sign in again.'}else A.msg=r.error});
   if(a==='out')return acDo(x,async()=>{const t=A.tok;setTok('');A.profile=null;A.orders=null;A.view='in';A.email='';accBtn();clearOrder();try{sessionStorage.removeItem('cb_contact')}catch(_){}try{await api({action:'logout',token:t})}catch(_){}});
+  if(a==='pay'){rzpPay(x);return}
   if(a==='re'){const o=A.orders[+x.dataset.i];if(!o)return;
     S.cakes=[];S.pc={};S.cookie={};S.gift={};S.pend={};
     o.items.forEach(it=>{
