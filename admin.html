@@ -177,6 +177,69 @@ details[open]>.vsh::after{transform:rotate(180deg)}
 @media (min-width:760px){.wrap{max-width:960px}.nav .in{max-width:900px}.nav button{font-size:14.5px}.nav button i{font-size:24px}.hd h2{font-size:31px}.top h1{font-size:24px}.top small{font-size:13.5px}.top .lg{height:50px}.vgrid{grid-template-columns:1fr 1fr}.kp b{font-size:26px}}
 @media (min-width:1200px){.wrap{max-width:1160px}.vgrid{grid-template-columns:1fr 1fr 1fr}.chip{font-size:15px}}
 @media (max-width:380px){.nav button{font-size:12px}.chip{font-size:13.5px;padding:6px 10px}}
+/* billing tabs + pro-forma quotation */
+.bts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.bts .bt:last-child{grid-column:1/-1}
+.bt{display:flex;align-items:center;gap:10px;min-height:58px;padding:8px 12px 8px 8px;border-radius:16px;font:inherit;font-weight:700;font-size:14.5px;line-height:1.2;text-align:left;cursor:pointer;background:var(--tb);border:1.5px solid var(--tbd);color:var(--ink)}
+.bt .bi{display:flex;align-items:center;justify-content:center;flex:none;width:40px;height:40px;border-radius:12px;background:var(--tc);color:#fff}
+.bt.on{background:var(--tc);border-color:var(--tc);color:#fff;box-shadow:0 4px 12px rgba(60,36,22,.28)}
+.bt.on .bi{background:rgba(255,255,255,.22)}
+.qx{margin:12px 0}
+.qxc{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);margin:0 0 12px}
+.qxh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px;background:#3b2416;color:#fff}
+.qxh small{display:block;font-size:11px;letter-spacing:.14em;font-weight:700;color:#e9c9a7}
+.qxh h1{margin:2px 0 0;font-size:28px;letter-spacing:.04em;color:#fff}
+.qxh .st{display:inline-block;padding:4px 10px;border-radius:999px;background:#fbe9a8;color:#3b2416;font-size:12px;font-weight:700}
+.qxh .no{margin-top:6px;font-size:12px;color:#e9d9c6;text-align:right}
+.qxb{padding:2px 16px 18px}
+.qxs{display:flex;align-items:center;gap:10px;margin:22px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.qxs b{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#3b2416;color:#fff;font-size:12.5px}
+.qxs h2{margin:0;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+.qx .i{min-height:46px;border-color:#d9cbb0;border-radius:10px;font-size:15px}
+.qxf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
+.qxfw{grid-column:1/-1}
+.qxfl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.qxfl small{font-size:12px;font-weight:700;color:var(--mut)}
+.qxth{display:none}
+.qxl{border:1px solid var(--line);border-radius:14px;background:#fffdf8;padding:12px;margin-top:12px}
+.qxlh{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.qxn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--acc);color:#fff;font-size:12.5px;font-weight:700;flex:none}
+.qxlt{flex:1;font-size:13.5px}
+.qxx{width:40px;height:40px;border:1px solid #e3b5b3;border-radius:10px;background:#fff;color:#b3302e;font-size:16px;cursor:pointer}
+.qxp{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.qxlq{display:grid;grid-template-columns:70px 18px minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px}
+.qxm{text-align:center;color:var(--mut)}
+.qxa{min-width:92px;text-align:right;font-size:15px}
+.qxadd{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:12px;border:1.5px dashed var(--acc);border-radius:12px;background:#fff7f1;color:#9a421d;font:inherit;font-weight:700;cursor:pointer}
+.qxdg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.qxbox{border:1px solid var(--line);border-radius:14px;background:#fbf6ee;padding:10px 14px}
+.qxr{display:flex;justify-content:space-between;padding:5px 0;font-size:15px}
+.qxtt{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;padding-top:10px;border-top:2px solid #3b2416}
+.qxtt b:first-child{font-size:17px}.qxtt b:last-child{font-size:26px;color:var(--acc)}
+.qxw{margin-top:4px;font-size:12.5px;font-style:italic;color:var(--mut)}
+.qac{position:sticky;bottom:calc(66px + env(safe-area-inset-bottom));z-index:6;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:10px;padding:10px;margin:0 0 12px;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:16px;box-shadow:0 -4px 14px rgba(60,36,22,.12)}
+.qac .btn{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;font-size:15px}
+.qac .clr{grid-column:1/-1;text-align:center;font-size:13.5px;font-weight:600;color:var(--mut);background:none;border:0;cursor:pointer;padding:4px}
+@media (min-width:700px){.bts{grid-template-columns:repeat(5,minmax(0,1fr))}.bts .bt:last-child{grid-column:auto}.bt{min-height:64px;font-size:15.5px}.bt .bi{width:44px;height:44px}}
+@media (min-width:1200px){
+ .qx{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-areas:"d t" "d a" "d ." "n .";grid-template-rows:auto auto 1fr auto;gap:0 20px;align-items:start}
+ .qd{grid-area:d}.qt{grid-area:t}.qn{grid-area:n}.qac{grid-area:a}
+ .qac{position:static;grid-template-columns:1fr;box-shadow:var(--shadow)}
+ .qxfw{grid-column:auto}
+ .qxt{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+ .qxth{display:grid;grid-template-columns:34px minmax(0,1fr) 64px 96px 112px 40px;gap:12px;padding:10px 12px;background:#f4ece4;font-size:12px;font-weight:700;letter-spacing:.05em;color:#5a4636}
+ .qxl{display:grid;grid-template-columns:34px minmax(0,1fr) 64px 96px 112px 40px;gap:12px;align-items:start;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:14px 12px;margin:0}
+ .qxlh,.qxlq{display:contents}
+ .qxlt,.qxm{display:none}
+ .qxn{grid-column:1;grid-row:1;margin-top:10px}
+ .qxlb{grid-column:2;grid-row:1}
+ .qxlq input:nth-of-type(1){grid-column:3;grid-row:1;text-align:right}
+ .qxlq input:nth-of-type(2){grid-column:4;grid-row:1;text-align:right}
+ .qxa{grid-column:5;grid-row:1;line-height:46px}
+ .qxx{grid-column:6;grid-row:1;width:40px;height:46px}
+ .qxp{margin-bottom:8px}
+}
+
 /* bottom tabs: 25% bigger text, glass look */
 .nav{background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,248,236,.72))!important;-webkit-backdrop-filter:blur(20px) saturate(1.7)!important;backdrop-filter:blur(20px) saturate(1.7)!important;border-top:1px solid rgba(255,255,255,.75)!important;box-shadow:0 -6px 24px rgba(59,36,22,.10),inset 0 1px 0 rgba(255,255,255,.9)}
 .nav .in{gap:6px}
@@ -1370,7 +1433,7 @@ async function gstPdf(rows,fy,mo){await epLoad();const {jsPDF}=window.jspdf,p=ne
   p.setDrawColor(40,26,16);p.line(12,y-3.5,285,y-3.5);p.setFont('helvetica','bold');p.text('Total ('+S.n+' invoice'+(S.n===1?'':'s')+')',12,y+2);[S.t,S.c,S.s,S.i,S.g,S.v].forEach((v,i)=>p.text(gFmt(v),C[i+3][1],y+2,{align:'right'}));foot();
   const a=document.createElement('a');a.href=URL.createObjectURL(p.output('blob'));a.download='Cravella-GST-sales-'+gTitle(fy,mo).replace(/[^\dA-Za-z]+/g,'-')+'.pdf';a.click()}
 /* ---------- Billing: GST register, invoices, awaiting payment, monthly summary ---------- */
-const BILLT=[['gst','🧾 GST register'],['inv','📄 Invoices'],['due','⏳ Awaiting payment'],['quo','📝 Quotation'],['mon','📅 Monthly summary']];
+const BILLT=[['gst','GST register','#e7f3ea','#bcdcc7','#2f7d4f','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>'],['inv','Invoices','#e6eef8','#bcd2ea','#2f6fb3','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>'],['due','Awaiting payment','#fbf0dc','#ecd29e','#96600f','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>'],['quo','Quotation','#fbeae0','#efc8b3','#b4532a','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'],['mon','Monthly summary','#efe9f8','#cfc1e6','#6b4aa0','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>']];
 const bK=(l,v,c)=>`<div style="flex:1;min-width:110px;background:#fbf6ee;border:1px solid var(--line);border-radius:12px;padding:9px 11px"><small style="color:var(--mut)">${l}</small><div style="font-weight:800;font-size:16px;${c?'color:'+c:''}">${v}</div></div>`;
 function billDue(){return (D.orders||[]).filter(o=>o.status!=='Cancelled'&&!o.noGst&&o.total>0&&!(o.paid&&o.paid.k==='full')).map(o=>({o,f:payInfo(o)})).filter(x=>x.f.due>0).sort((a,b)=>String(b.o.id).localeCompare(String(a.o.id),undefined,{numeric:true}))}
 function billInvRows(){const q=String(D.billQ||'').trim().toLowerCase(),{rows}=gstSel(),have=new Set((D.orders||[]).map(o=>o.id));
@@ -1380,7 +1443,7 @@ function billInvRows(){const q=String(D.billQ||'').trim().toLowerCase(),{rows}=g
 function billMonths(rows){const by={};rows.forEach(x=>{const k=gMon(x.at);(by[k]=by[k]||[]).push(x)});return Object.keys(by).map(Number).sort((a,b)=>a-b).map(k=>({m:GM[k],...gSum(by[k])}))}
 function billHtml(){
   if(!D.gst)return '<div class="hint">Loading…</div>';
-  const t=D.billT||'gst',tabs=`<div class="card" style="padding:8px"><div style="display:flex;gap:6px;flex-wrap:wrap">${BILLT.map(b=>`<button class="chip ${b[0]===t?'on':''}" data-billt="${b[0]}">${b[1]}</button>`).join('')}</div></div>`;
+  const t=D.billT||'gst',tabs=`<div class="bts">${BILLT.map(b=>`<button class="bt ${b[0]===t?'on':''}" data-billt="${b[0]}" style="--tb:${b[2]};--tbd:${b[3]};--tc:${b[4]}"><span class="bi">${b[5]}</span>${b[1]}</button>`).join('')}</div>`;
   if(t==='gst')return tabs+gstHtml();
   if(t==='quo')return tabs+quoHtml();
   const {fys,fy,mo,rows}=gstSel(),sel=`<select class="i" data-gsts="fy" style="flex:1">${fys.length?fys.map(f=>`<option value="${f}"${f===fy?' selected':''}>FY 20${f.slice(0,2)}-${f.slice(3)}</option>`).join(''):'<option>No invoices yet</option>'}</select>`;
@@ -1408,7 +1471,7 @@ function quoCat(){const out=[];if(!D.pr||!D.pr.base)return out;try{const B=D.pr.
 function quoWords(n){n=Math.round((+n||0)*100)/100;const o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'],b=x=>x<20?o[x]:t[Math.floor(x/10)]+(x%10?' '+o[x%10]:''),h=x=>(x>99?o[Math.floor(x/100)]+' Hundred'+(x%100?' ':''):'')+(x%100?b(x%100):'');
   const w=x=>{if(!x)return'';let r=[],c=Math.floor(x/1e7),l=Math.floor(x/1e5)%100,k=Math.floor(x/1e3)%100,r2=x%1000;if(c)r.push(w(c)+' Crore');if(l)r.push(b(l)+' Lakh');if(k)r.push(b(k)+' Thousand');if(r2)r.push(h(r2));return r.join(' ')};
   const ru=Math.floor(n),ps=Math.round((n-ru)*100);return 'Rupees '+(ru?w(ru):'Zero')+(ps?' and '+b(ps)+' Paise':'')+' Only'}
-function quoTotHtml(){const t=quoT(QU);return `<div style="display:flex;justify-content:space-between;padding:3px 0"><span>Subtotal</span><b>${inr2(t.sub)}</b></div>`+(t.disc?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>Discount</span><b>- ${inr2(t.disc)}</b></div>`:'')+(t.g?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>GST ${+QU.gst}%</span><b>${inr2(t.g)}</b></div>`:'')+(t.ship?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>Delivery / other</span><b>${inr2(t.ship)}</b></div>`:'')+`<div style="display:flex;justify-content:space-between;padding:8px 0 0;border-top:1px solid var(--line);margin-top:4px;font-size:16px"><span><b>Total</b></span><b style="color:#b4532a">${inr2(t.tot)}</b></div>`}
+function quoTotHtml(){const t=quoT(QU),r=(l,v)=>`<div class="qxr"><span>${l}</span><b>${v}</b></div>`;return r('Subtotal',inr2(t.sub))+(t.disc?r('Discount','- '+inr2(t.disc)):'')+(t.g?r('GST '+(+QU.gst)+'%',inr2(t.g)):'')+(t.ship?r('Delivery / other',inr2(t.ship)):'')+`<div class="qxtt"><b class="t">Total</b><b class="t">${inr2(t.tot)}</b></div><div class="qxw">${esc(quoWords(t.tot))}</div>`}
 function quoMenu(){if(!D.pr||!D.pr.base)return null;const B=D.pr.base,cap=t=>String(t||'').charAt(0).toUpperCase()+String(t||'').slice(1);
   return{B,E:prEff(),wl:w=>w<1?Math.round(w*1000)+' g':w+' kg',cats:[{k:'cakes',l:'Cakes'}].concat(B.pc.map(g=>({k:'pc:'+g.group,l:cap(g.group)})),[{k:'cookies',l:'Cookies'}])}}
 function quoPick(x,i,M){const pk=x.pk||{},o=(v,l,sl)=>`<option value="${esc(v)}"${sl?' selected':''}>${esc(l)}</option>`,sel=(k,inner)=>`<select class="i" data-qp="${i}:${k}" style="flex:1 1 140px;min-width:0">${inner}</select>`,none=v=>v===undefined||v===null||v==='';
@@ -1437,18 +1500,15 @@ function quoSugShow(k){const el=$('quoSug');if(!el)return;const s=String(QU&&QU[
 function quoHtml(){
   if(!D.pr&&!D.prBusy)loadPrices();if(!D.acc&&!D.accBusy)loadAcc();
   if(!QU)QU=quoNew();const q=QU,cat=quoCat(),M=quoMenu(),all=quoLoad(),L=all.filter(x=>!!x.arch===QSHOWARCH).slice().reverse(),na=all.filter(x=>x.arch).length;
-  const f=(k,l,ph,ty)=>`<label style="display:block;margin-top:8px"><small style="color:var(--mut)">${l}</small><input class="i" data-qf="${k}" ${ty==='date'?'type="date"':'type="text"'+(ty==='tel'?' inputmode="tel"':ty==='email'?' inputmode="email" autocapitalize="off"':'')} ${quoNA(k)} value="${esc(q[k])}" placeholder="${esc(ph||'')}" style="width:100%"></label>`;
-  return `<div class="card"><b>${q.no?'Edit quotation '+esc(q.no):'New quotation'}</b><div class="hint">Make a price quote for a company, institution or person. It is a quote only, not a tax invoice, so it does not touch your GST register or invoice numbers.</div>
-  ${f('name','Name (person to address) *','Type to find a Cravella customer, or write a name')}<div id="quoSug"></div>${f('org','Company / institution','e.g. ABC School')}${f('gstin','GSTIN (if any)','')}${f('addr','Address','')}
-  <div style="display:flex;gap:8px">${f('phone','Mobile','98xxxxxxxx','tel').replace('<label','<label style="flex:1;margin-top:8px"')}${f('email','Email','name@company.com','email').replace('<label','<label style="flex:1;margin-top:8px"')}</div>
-  <div style="display:flex;gap:8px">${f('date','Quote date','','date').replace('<label','<label style="flex:1;margin-top:8px"')}${f('valid','Valid till','','date').replace('<label','<label style="flex:1;margin-top:8px"')}</div>
-  <div style="margin-top:14px"><b>Items</b> <small style="color:var(--mut)">Pick from the menu, or just write the item yourself</small></div>
-  ${q.items.map((x,i)=>`<div style="display:flex;gap:6px;align-items:center;margin-top:${i?14:8}px;${i?'padding-top:12px;border-top:1px dashed var(--line);':''}flex-wrap:wrap">${M?`<div style="display:flex;gap:6px;flex-wrap:wrap;flex:1 1 100%">${quoPick(x,i,M)}</div>`:''}<input class="i" data-qi="${i}:d" ${quoNA('d'+i)} value="${esc(x.d)}" placeholder="Item (filled from the menu, or write your own)" style="flex:1 1 100%"><input class="i" data-qi="${i}:q" type="number" min="0" step="any" value="${x.q}" style="width:70px" aria-label="Quantity"><span style="color:var(--mut)">×</span><input class="i" data-qi="${i}:r" type="number" min="0" step="any" value="${x.r||''}" placeholder="Rate ₹" style="width:100px" aria-label="Rate"><b data-qamt="${i}" style="flex:1;text-align:right">${inr2((+x.q||0)*(+x.r||0))}</b><button class="btn ol sm" data-qdel="${i}" aria-label="Remove item">✕</button></div>`).join('')}
-  <button class="btn ol sm" data-qadd style="margin-top:10px">+ Add item</button>${!cat.length?'<small style="color:var(--mut);margin-left:8px">'+(D.pr?'':'Loading your menu…')+'</small>':''}
-  <div style="display:flex;gap:8px;margin-top:12px"><label style="flex:1"><small style="color:var(--mut)">Discount ₹</small><input class="i" data-qf="disc" type="number" min="0" value="${q.disc||''}" style="width:100%"></label><label style="flex:1"><small style="color:var(--mut)">GST</small><select class="i" data-qf="gst" style="width:100%">${[0,5,12,18].map(v=>`<option value="${v}"${+q.gst===v?' selected':''}>${v?v+'%':'No GST'}</option>`).join('')}</select></label></div>
-  <div id="quoTot" style="margin-top:12px">${quoTotHtml()}</div>
-  <label style="display:block;margin-top:10px"><small style="color:var(--mut)">Terms and conditions (shown on the PDF, edit as needed)</small><textarea class="i" data-qf="note" rows="7" style="width:100%">${esc(q.note)}</textarea></label>
-  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" data-qsave style="flex:2">💾 Save quotation</button><button class="btn ol" data-qprev="" style="flex:1.2">👁 Preview</button><button class="btn ol" data-qnew style="flex:1">Clear</button></div></div>
+  const f=(k,l,ph,ty,c)=>`<label class="qxfl ${c||''}"><small>${l}</small><input class="i" data-qf="${k}" ${ty==='date'?'type="date"':'type="text"'+(ty==='tel'?' inputmode="tel"':ty==='email'?' inputmode="email" autocapitalize="off"':'')} ${quoNA(k)} value="${esc(q[k])}" placeholder="${esc(ph||'')}"></label>`,sec=(n,t)=>`<div class="qxs"><b>${n}</b><h2>${t}</h2></div>`;
+  const lines=q.items.map((x,i)=>`<div class="qxl"><div class="qxlh"><span class="qxn">${i+1}</span><b class="qxlt">${x.pk&&x.pk.c?'From the menu':'Pick from the menu, or write your own'}</b><button class="qxx" data-qdel="${i}" aria-label="Remove item ${i+1}">✕</button></div><div class="qxlb">${M?`<div class="qxp">${quoPick(x,i,M)}</div>`:''}<input class="i" data-qi="${i}:d" ${quoNA('d'+i)} value="${esc(x.d)}" placeholder="Item (filled from the menu, or write your own)"></div><div class="qxlq"><input class="i" data-qi="${i}:q" type="number" min="0" step="any" value="${x.q}" aria-label="Quantity"><span class="qxm">×</span><input class="i" data-qi="${i}:r" type="number" min="0" step="any" value="${x.r||''}" placeholder="Rate ₹" aria-label="Rate"><b class="qxa" data-qamt="${i}">${inr2((+x.q||0)*(+x.r||0))}</b></div></div>`).join('');
+  return `<div class="qx"><div class="qxc qd"><div class="qxh"><div><small>PRO-FORMA</small><h1 class="t">QUOTATION</h1></div><div style="text-align:right"><span class="st">${q.no?'Editing':'Draft'}</span><div class="no">${q.no?'No. '+esc(q.no):'No. given when saved'}</div></div></div>
+  <div class="qxb">${sec(1,'Quote for')}<div class="qxf"><div class="qxfw">${f('name','Name (person to address) *','Type to find a Cravella customer, or write a name')}<div id="quoSug"></div></div>${f('org','Company / institution','e.g. ABC School','','qxfw')}${f('gstin','GSTIN (if any)','','','qxfw')}${f('addr','Address','Street, area, city, pincode','','qxfw')}${f('phone','Mobile','98xxxxxxxx','tel')}${f('email','Email','name@company.com','email')}${f('date','Quote date','','date')}${f('valid','Valid till','','date')}</div>
+  ${sec(2,'Items')}<div class="qxt"><div class="qxth"><span>#</span><span>ITEM</span><span style="text-align:right">QTY</span><span style="text-align:right">RATE ₹</span><span style="text-align:right">AMOUNT</span><span></span></div>${lines}</div>
+  <button class="qxadd" data-qadd>+ Add item</button>${!cat.length?'<div class="hint">'+(D.pr?'':'Loading your menu…')+'</div>':''}</div></div>
+  <div class="qxc qt"><div class="qxb">${sec(3,'Totals')}<div class="qxdg"><label class="qxfl"><small>Discount ₹</small><input class="i" data-qf="disc" type="number" min="0" value="${q.disc||''}"></label><label class="qxfl"><small>GST</small><select class="i" data-qf="gst">${[0,5,12,18].map(v=>`<option value="${v}"${+q.gst===v?' selected':''}>${v?v+'%':'No GST'}</option>`).join('')}</select></label></div><div class="qxbox" id="quoTot">${quoTotHtml()}</div></div></div>
+  <div class="qxc qn"><div class="qxb">${sec(4,'Terms and conditions')}<label class="qxfl"><small>Shown on the PDF. Edit as needed.</small><textarea class="i" data-qf="note" rows="7">${esc(q.note)}</textarea></label></div></div>
+  <div class="qac"><button class="btn ol" data-qprev="">👁 Preview</button><button class="btn" data-qsave>💾 Save quotation</button><button class="clr" data-qnew>Clear form</button></div></div>
   <div class="card" style="padding:0"><div class="hint" style="padding:12px 12px 6px;display:flex;justify-content:space-between;align-items:center"><b>${QSHOWARCH?'Archived':'Saved'} quotations · ${L.length}</b>${na||QSHOWARCH?`<button class="btn ol sm" data-qarchv>${QSHOWARCH?'← Back':'Archived ('+na+')'}</button>`:''}</div>
   ${L.length?L.map(x=>`<div style="padding:10px 12px;border-top:1px solid var(--line)"><div style="display:flex;gap:10px;align-items:center"><div style="flex:1;min-width:0"><b>${esc(x.no)}</b> <small style="color:var(--mut)">· ${esc(x.date)}</small><div style="font-size:13px">${esc(x.org||x.name)} <small style="color:var(--mut)">${x.org?'· '+esc(x.name):''}</small></div>${x.oid?`<div style="font-size:12.5px;margin-top:3px;color:#1f7a4d;font-weight:700">✅ Confirmed · order ${esc(x.oid)}</div>`:(x.valid&&x.valid<quoDay(new Date())?'<div style="font-size:12.5px;margin-top:3px;color:#b3302e">Expired '+esc(x.valid)+'</div>':'<div style="font-size:12.5px;margin-top:3px;color:var(--mut)">Waiting for the client</div>')}</div><b>${inr2(quoT(x).tot)}</b></div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${x.oid?'':`<button class="btn sm" data-qconf="${esc(x.no)}" style="background:#1f7a4d;border-color:#1f7a4d">✅ Client confirmed → make order</button>`}<button class="btn sm" data-qpdf="${esc(x.no)}">⬇ PDF</button><button class="btn ol sm" data-qshare="${esc(x.no)}">📤 Share</button><button class="btn ol sm" data-qwa="${esc(x.no)}">WhatsApp</button><button class="btn ol sm" data-qmail="${esc(x.no)}">Email</button><button class="btn ol sm" data-qprev="${esc(x.no)}">👁 Preview</button><button class="btn ol sm" data-qedit="${esc(x.no)}">✏️ Edit</button><button class="btn ol sm" data-qarch="${esc(x.no)}">${x.arch?'↩ Restore':'🗄 Archive'}</button><button class="btn ol sm" data-qrm="${esc(x.no)}" style="color:#b3302e;border-color:#e3b5b3">🗑 Delete</button></div></div>`).join(''):`<div class="hint" style="padding:14px">${QSHOWARCH?'Nothing archived.':'No quotations yet. Fill the form above and tap Save.'}</div>`}</div>
