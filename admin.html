@@ -948,7 +948,7 @@ function moneyHtml(o,f){
   if(f.later){const bs=f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):'';const canMark=!f.full&&!f.cx&&o.status==='Ready';rows=row(f.full,'Full payment',(f.full?'Received':'No advance asked. '+(o.status==='Ready'?(f.reqT?'Request sent.':'Request it now.'):'Request it once ready.'))+bs,canMark?`<button class="btn sm" data-plpaid="${esc(o.id)}">Mark received</button>`:inr(o.total))}
   else if(f.once)rows=row(true,'Paid in full',(pd?'Received '+pd:'Received')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(o.total));
   else{
-    rows=row(f.advPaid,'Advance 50%',(f.advPaid?'Received'+(o.paid&&o.paid.k==='adv'&&pd?' '+pd:''):'Not received yet')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(f.adv));
+    rows=row(f.advPaid,'Advance 50%',(f.advPaid?'Received'+(o.paid&&o.paid.k==='adv'&&pd?' '+pd:''):'Not received yet')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(f.adv)+(o.paid&&o.paid.k==='adv'&&!f.cx?` <button class="btn ol sm" data-advfix="${esc(o.id)}">Correct</button>`:''));
     if(!f.advPaid&&!f.full&&!f.cx)rows+=row(false,'Paid in full','Customer paid the whole amount upfront',`<button class="btn sm" data-payfullup="${esc(o.id)}">Mark paid in full</button>`);
     const bs=f.balShots.length?' · '+shotBtns(f.balShots,'screenshot'):'';
     const canMark=!f.full&&f.advPaid&&!f.cx&&o.status!=='Ready';
@@ -1008,7 +1008,7 @@ function orderCard(o){
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
   ${termsPick(o,f,pk)}
   ${nextHtml(o,f)}
-  ${D.payAsk===o.id?`<div class="wcf opay"><span><b>Which payment did you receive?</b> The confirmation PDF goes to the customer on WhatsApp straight away.</span><button class="btn sm" data-s="Advance received" data-pk="adv">50% advance · ${inr(Math.round(o.total/2))}</button><button class="btn sm" data-s="Advance received" data-pk="full">Paid in full · ${inr(o.total)}</button><button class="btn ol sm" data-s="Advance received" data-pk="" data-paycx="1">Cancel</button></div>`:''}
+  ${D.payAsk===o.id?`<div class="wcf opay"><span><b>Which payment did you receive?</b> The confirmation PDF goes to the customer on WhatsApp straight away.</span><label style="display:flex;align-items:center;gap:6px;flex-basis:100%"><small style="color:var(--mut)">Advance received ₹</small><input class="i" data-advamt type="number" inputmode="numeric" min="1" max="${o.total}" value="${Math.round(o.total/2)}" style="width:110px" aria-label="Advance amount received"><small style="color:var(--mut)">50% is ${inr(Math.round(o.total/2))}</small></label><button class="btn sm" data-s="Advance received" data-pk="adv">💰 Advance received</button><button class="btn sm" data-s="Advance received" data-pk="full">Paid in full · ${inr(o.total)}</button><button class="btn ol sm" data-s="Advance received" data-pk="" data-paycx="1">Cancel</button></div>`:''}
   ${cx||o.status==='Delivered'?'':`<div class="ocds" data-id="${esc(o.id)}">${ocdHtml(o)}</div>`}
   <div class="osec">Payment</div>
   ${moneyHtml(o,f)}
@@ -1111,8 +1111,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-plse
     if(b.dataset.plreq!==undefined){const due=o.total-(o.paid&&o.paid.amt?Number(o.paid.amt):0);if(!confirm('Send '+fn+' the '+inr(due)+' payment request on WhatsApp now?'))return;b.disabled=true;toast('Sending…');const r=await api({action:'admin_wa_pl_req',id:o.id});b.disabled=false;if(!r.ok){toast(r.error||'Could not send');return}o.plReq=r.at;redo();toast('Payment request sent to '+fn+' on WhatsApp');return}
     if(b.dataset.plpaid!==undefined){if(!confirm('Mark the '+inr(o.total)+' payment as received for '+o.id+'? Nothing is sent to the customer.'))return;b.disabled=true;const r=await api({action:'admin_wa_paid',id:o.id,kind:'full'});if(!r.ok){b.disabled=false;toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;if(r.inv)o.inv=r.inv;redo();toast('Payment received · '+o.id+' is paid in full')}
   }catch(_){b.disabled=false;toast('No connection')}},true);
-async function payMark(o,k){if(k!=='adv'&&k!=='full')return;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:k});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;if(r.inv)o.inv=r.inv;saveCache();const y=scrollY;render();scrollTo(0,y);
+async function payMark(o,k,amt){if(k!=='adv'&&k!=='full')return;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:k,amt:k==='adv'?amt:undefined});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;if(k==='adv'&&amt&&Number(r.paid&&r.paid.amt)!==amt){saveCache();render();toast('Saved as '+inr(Number(r.paid&&r.paid.amt))+', not '+inr(amt)+'. The server needs the latest update, so the PDF was NOT sent. Use Correct once it is updated.');return}if(r.inv)o.inv=r.inv;saveCache();const y=scrollY;render();scrollTo(0,y);
   toast('Saved. Sending the invoice PDF…');const p=await epMake(o);const s=await api({action:'admin_wa_send_pdf',id:o.id,pdf:p.b64,conf:1});toast(s.ok?'Invoice PDF sent to '+String(o.name).split(' ')[0]+' on WhatsApp':'Payment saved, but the PDF was not sent: '+(s.error||'error'))}catch(_){toast('No connection')}}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-advfix]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.advfix);if(!o||!o.paid||o.paid.k!=='adv')return;
+  const cur=Number(o.paid.amt)||Math.round(o.total/2),inp=prompt('Advance amount actually received for '+o.id+' (₹)',cur);if(inp===null)return;const v=Math.round(+inp);
+  if(!(v>=1&&v<=o.total)){toast('Enter an amount between ₹1 and '+inr(o.total));return}if(v===cur){toast('That is already the amount saved');return}
+  b.disabled=true;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:'adv',amt:v,fix:1});if(!r.ok){toast(r.error||'Could not save');b.disabled=false;return}
+    o.paid=r.paid;saveCache();const y=scrollY;render();scrollTo(0,y);toast('Advance corrected to '+inr(v)+'. Balance is '+inr(o.total-v)+'.');
+    if(confirm('Send the corrected confirmation PDF to '+String(o.name).split(' ')[0]+' on WhatsApp now?\n\nCancel keeps it unsent. You can still download it from the order.')){toast('Sending the corrected PDF…');const p=await epMake(o);const s2=await api({action:'admin_wa_send_pdf',id:o.id,pdf:p.b64,conf:1});toast(s2.ok?'Corrected PDF sent':'Saved, but the PDF was not sent: '+(s2.error||'error'))}}catch(_){toast('No connection');b.disabled=false}},true);
 async function payLate(o,btn){if(D.plBusy)return;if(!confirm('Mark the '+inr(o.total-Math.round(o.total/2))+' balance as received for '+o.id+'? The order stays Delivered and nothing is sent to the customer.'))return;
   D.plBusy=1;if(btn){btn.disabled=true}toast('Saving…');
   const fresh=async()=>{try{const q=await api({action:'admin_orders'});return q.ok?(q.orders||[]).find(x=>x.id===o.id):null}catch(_){return null}};
@@ -1790,13 +1796,15 @@ $('panel').addEventListener('click',async e=>{
   const sb=e.target.closest('[data-s]');if(sb){
     const card=sb.closest('.o'),id=card.dataset.id,st=sb.dataset.s,o=D.orders.find(x=>x.id===id),pk=sb.dataset.pk;if(!o||o.status===st&&!pk)return;
     if(st==='Advance received'&&!pk){D.payAsk=D.payAsk===id?null:id;const y0=scrollY;render();scrollTo(0,y0);return}
-    if(pk){D.payAsk=null;if(o.status===st){payMark(o,pk);return}}
+    let amt;if(pk==='adv'){const inp=card.querySelector('[data-advamt]'),v=Math.round(+(inp&&inp.value));if(!(v>=1&&v<=o.total)){toast('Enter the amount received, between ₹1 and '+inr(o.total));return}
+      if(v<Math.round(o.total/2)&&!confirm('This is less than the 50% advance ('+inr(Math.round(o.total/2))+'). Save '+inr(v)+' as the advance received?'))return;amt=v}
+    if(pk){D.payAsk=null;if(o.status===st){payMark(o,pk,amt);return}}
     if(st==='Cancelled'&&!confirm('Cancel order '+id+'?'))return;
     if(st==='Delivered'&&!confirmDelivered(o))return;
     const nc=card.querySelector('[data-notify]'),notify=st!=='Confirmed'&&(nc?nc.checked:!!o.email);
     const prev=o.status;o.status=st;let y=scrollY;render();scrollTo(0,y);   // show the change at once, save in the background
     try{const r=await api({action:'admin_status',id,status:st,notify});
-      if(r.ok){toast(st+(r.mailed?' · customer emailed':''));saveCache();if(st==='Confirmed')openMail(id,'confirm');if(pk)payMark(o,pk)}
+      if(r.ok){toast(st+(r.mailed?' · customer emailed':''));saveCache();if(st==='Confirmed')openMail(id,'confirm');if(pk)payMark(o,pk,amt)}
       else{o.status=prev;y=scrollY;render();scrollTo(0,y);toast(r.error||'Could not update')}}
     catch(_){o.status=prev;y=scrollY;render();scrollTo(0,y);toast('No connection. Change not saved.')}
     return
