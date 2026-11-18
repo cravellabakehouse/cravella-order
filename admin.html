@@ -1028,8 +1028,8 @@ function stepsHtml(o,f){
   const T={auto:'<span class="ftg auto">auto WhatsApp</span>',you:'<span class="ftg you">you tap</span>'};
   const S=[
     {l:'Order placed',done:true,m:esc(String(o.placed||'').replace(/,.*$/,''))},
-    {l:'Confirmed',s:'Confirmed',done:ix>=1,tag:'you',m:ix>=1?'':'Confirm, then send the payment request'},
-    {l:'Advance paid',s:'Advance received',done:ix>=2||f.full,tag:'you',m:f.once?'Paid in full · '+inr(o.total):(ix>=2?inr(f.adv)+' received':'Check the screenshot, then tap')},
+    {l:'Price confirmed',s:'Confirmed',done:ix>=1,tag:'you',m:ix>=1?'Waiting for the advance':'Confirm, then send the payment request'},
+    {l:'Booked',s:'Advance received',done:ix>=2||f.full,tag:(o.paid&&o.paid.via&&/razorpay/.test(o.paid.via))?'auto':'you',m:f.once?'Paid in full · '+inr(o.total):(ix>=2?inr(f.adv)+' advance received · order is booked':'Booked when the advance arrives. Pay link pays it by itself, otherwise check the screenshot and tap')},
     {l:'Ready',s:'Ready',done:ix>=3,tag:bqOn&&!f.once?'auto':'you',m:f.balT?'Balance request sent '+tShort(f.balT):bqOn&&!f.full?'Balance request goes out by itself':''},
     {l:'Balance paid',pay:1,done:f.full,tag:'you',m:f.full?'Received':dl?'Tap to mark the balance received':'Check the screenshot, then tap'},
     pk?null:{l:'Send with Porter',done:dl,tag:'you',m:dl?'':'Book Porter once fully paid'},
@@ -1060,6 +1060,30 @@ function termsPick(o,f,pk){
   <label class="tp-m"><input type="checkbox" data-tprem="${esc(o.id)}"${t.rem?' checked':''}><span>Remember for ${fn}. Every new order follows ${t.sel}.</span></label>
   <button class="btn sm tp-u" data-tpuse="${esc(o.id)}">${same&&!t.rem?'Keep steps '+t.sel:'Use steps '+t.sel}</button></div>`
 }
+/* Razorpay pay link: any order (phone orders too). The customer opens the link and pays, no sign-in needed. */
+const plkOk=o=>o.status!=='Cancelled'&&o.status!=='Delivered'&&!(o.paid&&o.paid.k==='full');
+const plkBtn=o=>plkOk(o)?`<button class="btn ol sm" data-plkopen="${esc(o.id)}">💳 Pay link</button>`:'';
+function plkPanel(o){
+  if(!D.plk||D.plk.id!==o.id||!plkOk(o))return '';
+  const L=D.plk,tot=Math.round(o.total||0),pd=o.paid,first=String(o.name||'').split(' ')[0]||'there';
+  const bs=pd&&pd.k==='adv'?[['bal','Balance '+inr(tot-pd.amt)]]:[['adv','Advance '+inr(Math.round(tot/2))],['full','Full '+inr(tot)]];
+  const btn=bs.map(([k,t])=>`<button class="btn sm" data-plk="${k}" ${L.busy?'disabled':''}>${esc(t)}</button>`).join('');
+  let res='';
+  if(L.busy)res='<small style="color:var(--mut)">Creating the link…</small>';
+  else if(L.err)res=`<small style="color:#9b1c1c">${esc(L.err)}</small>`;
+  else if(L.url){const w=o.phone?'https://wa.me/91'+String(o.phone).replace(/\D/g,'').slice(-10)+'?text='+encodeURIComponent('Hi '+first+', here is the link to pay '+inr(L.amt)+' ('+(L.kind==='full'?'full payment':L.kind==='bal'?'balance':'advance')+') for your Cravella Bake House order '+o.id+': '+L.url):'';
+    res=`<div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input class="i" readonly value="${esc(L.url)}" style="flex:1;min-width:200px" aria-label="Payment link"><button class="btn ol sm" data-plkcopy="1">Copy</button>${w?`<a class="btn ol sm" target="_blank" rel="noopener" href="${esc(w)}">Send on WhatsApp</a>`:''}</div><small style="flex-basis:100%;color:var(--mut)">${inr(L.amt)} · the order is marked paid automatically when the customer pays.</small>`}
+  return `<div class="wcf opay"><span><b>Payment link</b> The customer opens it and pays by any UPI app or card. No sign-in needed.</span>${btn}${res}</div>`}
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-plkopen],[data-plk],[data-plkcopy]');if(!t)return;
+  e.preventDefault();e.stopPropagation();
+  const y0=scrollY,rr=()=>{render();scrollTo(0,y0)};
+  if(t.dataset.plkopen!==undefined){D.plk=D.plk&&D.plk.id===t.dataset.plkopen?null:{id:t.dataset.plkopen};if(D.oopen)D.oopen[t.dataset.plkopen]=true;rr();return}
+  if(t.dataset.plkcopy!==undefined){const u=D.plk&&D.plk.url;if(!u)return;try{await navigator.clipboard.writeText(u);toast('Link copied')}catch(_){const i=t.parentNode.querySelector('input');if(i){i.select();document.execCommand('copy');toast('Link copied')}}return}
+  if(t.dataset.plk&&D.plk){const L=D.plk,k=t.dataset.plk;L.busy=1;L.err='';L.url='';rr();
+    try{const r=await api({action:'admin_rzp_link',id:L.id,kind:k});L.busy=0;if(D.plk!==L)return;if(r.ok){L.url=r.url;L.amt=r.amount;L.kind=r.kind}else L.err=r.error||'Could not create the link.'}catch(_){L.busy=0;L.err='Could not reach the server. Please try again.'}
+    rr()}
+},true);
 function orderCard(o){
   if(!D.wa&&!D.waBusy&&nf('wa'))setTimeout(loadWa,0);
   const sc=o.status==='Advance received'?'Advance':o.status,cx=o.status==='Cancelled',pk=o.mode==='Pickup',f=payInfo(o);
@@ -1074,6 +1098,7 @@ function orderCard(o){
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
   ${termsPick(o,f,pk)}
   ${nextHtml(o,f)}
+  ${plkPanel(o)}
   ${D.payAsk===o.id?`<div class="wcf opay"><span><b>Which payment did you receive?</b> The confirmation PDF goes to the customer on WhatsApp straight away.</span><label style="display:flex;align-items:center;gap:6px;flex-basis:100%"><small style="color:var(--mut)">Advance received ₹</small><input class="i" data-advamt type="number" inputmode="numeric" min="1" max="${o.total}" value="${Math.round(o.total/2)}" style="width:110px" aria-label="Advance amount received"><small style="color:var(--mut)">50% is ${inr(Math.round(o.total/2))}</small></label><button class="btn sm" data-s="Advance received" data-pk="adv">💰 Advance received</button><button class="btn sm" data-s="Advance received" data-pk="full">Paid in full · ${inr(o.total)}</button><button class="btn ol sm" data-s="Advance received" data-pk="" data-paycx="1">Cancel</button></div>`:''}
   ${cx||o.status==='Delivered'?'':`<div class="ocds" data-id="${esc(o.id)}">${ocdHtml(o)}</div>`}
   <div class="osec">Payment</div>
@@ -1093,7 +1118,7 @@ function orderCard(o){
   ${o.notes?`<div class="note">📝 ${esc(o.notes)}</div>`:''}
   ${o.photos.filter(u=>/^https:\/\//.test(u)).length?`<div class="ph">${o.photos.filter(u=>/^https:\/\//.test(u)).map((u,i)=>`<a class="btn ol sm" href="${esc(u)}" target="_blank" rel="noopener">🖼 Reference photo${o.photos.length>1?' '+(i+1):''}</a>`).join(' ')}</div>`:''}
   <div class="osec">Message the customer</div>
-  <div class="oacts">${wa('c','✅ Confirm + payment request')}${wa('a','💰 Advance received')}${wa('r','🎂 Order ready')}<button class="btn ol sm" data-epdf="${esc(o.id)}">📄 ${o.paid&&o.paid.k==='full'&&!o.noGst?'Tax Invoice':'Estimate'} PDF</button><button class="btn ol sm" data-epget="${esc(o.id)}">⬇ Download PDF</button><button class="btn ol sm" data-mail="${esc(o.id)}">✉ Email</button>${histBtn(o)}${gstInclBtn(o)}</div>
+  <div class="oacts">${wa('c','✅ Confirm + payment request')}${wa('a','💰 Advance received')}${wa('r','🎂 Order ready')}<button class="btn ol sm" data-epdf="${esc(o.id)}">📄 ${o.paid&&o.paid.k==='full'&&!o.noGst?'Tax Invoice':'Estimate'} PDF</button><button class="btn ol sm" data-epget="${esc(o.id)}">⬇ Download PDF</button>${plkBtn(o)}<button class="btn ol sm" data-mail="${esc(o.id)}">✉ Email</button>${histBtn(o)}${gstInclBtn(o)}</div>
   ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status</label>`:''}
   ${mailNote(o)}
   <div class="ofoot">${cx||o.status==='Delivered'?'':`<button class="btn ol sm ocx" data-s="Cancelled">✖ Cancel order</button>`}${odelBtn(o)}</div>${odelBox(o)}${histBox(o)}</div></details>`

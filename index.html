@@ -1478,7 +1478,7 @@ function prefill(){const p=A.profile;if(!p)return;
   if(!$('fEmail').value){const em=/@mobile\.cravella$/.test(p.email||'')?p.email2:p.email;if(em)$('fEmail').value=em}
   if(!$('fAddr').value&&(p.line||p.address))$('fAddr').value=p.line?p.line+(p.landmark?', near '+p.landmark:''):p.address;
   if(!$('fPin').value&&/^\d{6}$/.test(p.pin||''))$('fPin').value=p.pin}
-const STL={New:'Received',Confirmed:'Confirmed','Advance received':'Advance received',Delivered:'Completed',Cancelled:'Cancelled'};
+const STL={New:'Received',Confirmed:'Price confirmed · advance due','Advance received':'Booked',Delivered:'Completed',Cancelled:'Cancelled'};
 const stCls=s=>s==='Advance received'?'Advance':s;
 /* Razorpay Standard Checkout: the customer pays an order online. The amount is always worked out on our server. */
 /* Hidden rollout: online payment shows only on a device opened once with ?pay=1 (clear it with ?pay=0). Remove this switch to open it to everyone. */
