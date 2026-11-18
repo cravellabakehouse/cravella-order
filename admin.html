@@ -938,7 +938,7 @@ function visible(){
   return D.orders.filter(o=>{
     if(s&&!(o.id+' '+o.name+' '+o.phone).toLowerCase().includes(s))return false;
     if(filt==='active')return ACTIVE.includes(o.status);
-    if(filt==='today')return o.status!=='Cancelled'&&(o.date===t||(o.split&&o.split.date===t));
+    if(filt==='today')return o.status!=='Cancelled'&&(o.date===t||(o.split&&o.split.date===t)||(o.placedMs&&ymd(new Date(o.placedMs))===t));
     if(filt==='new')return o.status==='New';
     return true;
   }).sort((a,b)=>filt==='all'?0:(a.date+a.time).localeCompare(b.date+b.time))
