@@ -1420,8 +1420,8 @@ function quoHtml(){
   <label style="display:block;margin-top:10px"><small style="color:var(--mut)">Terms and conditions (shown on the PDF, edit as needed)</small><textarea class="i" data-qf="note" rows="7" style="width:100%">${esc(q.note)}</textarea></label>
   <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" data-qsave style="flex:2">💾 Save quotation</button><button class="btn ol" data-qnew style="flex:1">Clear</button></div></div>
   <div class="card" style="padding:0"><div class="hint" style="padding:12px 12px 6px;display:flex;justify-content:space-between;align-items:center"><b>${QSHOWARCH?'Archived':'Saved'} quotations · ${L.length}</b>${na||QSHOWARCH?`<button class="btn ol sm" data-qarchv>${QSHOWARCH?'← Back':'Archived ('+na+')'}</button>`:''}</div>
-  ${L.length?L.map(x=>`<div style="padding:10px 12px;border-top:1px solid var(--line)"><div style="display:flex;gap:10px;align-items:center"><div style="flex:1;min-width:0"><b>${esc(x.no)}</b> <small style="color:var(--mut)">· ${esc(x.date)}</small><div style="font-size:13px">${esc(x.org||x.name)} <small style="color:var(--mut)">${x.org?'· '+esc(x.name):''}</small></div></div><b>${inr2(quoT(x).tot)}</b></div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-qpdf="${esc(x.no)}">⬇ PDF</button><button class="btn ol sm" data-qshare="${esc(x.no)}">📤 Share</button><button class="btn ol sm" data-qwa="${esc(x.no)}">WhatsApp</button><button class="btn ol sm" data-qmail="${esc(x.no)}">Email</button><button class="btn ol sm" data-qedit="${esc(x.no)}">✏️ Edit</button><button class="btn ol sm" data-qarch="${esc(x.no)}">${x.arch?'↩ Restore':'🗄 Archive'}</button></div></div>`).join(''):`<div class="hint" style="padding:14px">${QSHOWARCH?'Nothing archived.':'No quotations yet. Fill the form above and tap Save.'}</div>`}</div>
+  ${L.length?L.map(x=>`<div style="padding:10px 12px;border-top:1px solid var(--line)"><div style="display:flex;gap:10px;align-items:center"><div style="flex:1;min-width:0"><b>${esc(x.no)}</b> <small style="color:var(--mut)">· ${esc(x.date)}</small><div style="font-size:13px">${esc(x.org||x.name)} <small style="color:var(--mut)">${x.org?'· '+esc(x.name):''}</small></div>${x.oid?`<div style="font-size:12.5px;margin-top:3px;color:#1f7a4d;font-weight:700">✅ Confirmed · order ${esc(x.oid)}</div>`:(x.valid&&x.valid<quoDay(new Date())?'<div style="font-size:12.5px;margin-top:3px;color:#b3302e">Expired '+esc(x.valid)+'</div>':'<div style="font-size:12.5px;margin-top:3px;color:var(--mut)">Waiting for the client</div>')}</div><b>${inr2(quoT(x).tot)}</b></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${x.oid?'':`<button class="btn sm" data-qconf="${esc(x.no)}" style="background:#1f7a4d;border-color:#1f7a4d">✅ Client confirmed → make order</button>`}<button class="btn sm" data-qpdf="${esc(x.no)}">⬇ PDF</button><button class="btn ol sm" data-qshare="${esc(x.no)}">📤 Share</button><button class="btn ol sm" data-qwa="${esc(x.no)}">WhatsApp</button><button class="btn ol sm" data-qmail="${esc(x.no)}">Email</button><button class="btn ol sm" data-qedit="${esc(x.no)}">✏️ Edit</button><button class="btn ol sm" data-qarch="${esc(x.no)}">${x.arch?'↩ Restore':'🗄 Archive'}</button></div></div>`).join(''):`<div class="hint" style="padding:14px">${QSHOWARCH?'Nothing archived.':'No quotations yet. Fill the form above and tap Save.'}</div>`}</div>
   <div class="hint" style="margin:8px 4px">Quotations are kept on this device and browser. Download the PDF to keep a copy elsewhere.</div>`}
 function quoPdf(q,lg){const {jsPDF}=window.jspdf,p=new jsPDF({unit:'mm',format:'a4',compress:true}),T=quoT(q),M=14,R=196;let y=16;
   const tx=(s,x,yy,o)=>p.text(String(s),x,yy,o),R2=n=>'Rs. '+qf(n);
@@ -1443,6 +1443,16 @@ function quoPdf(q,lg){const {jsPDF}=window.jspdf,p=new jsPDF({unit:'mm',format:'
   const n=p.getNumberOfPages();for(let k=1;k<=n;k++){p.setPage(k);p.setDrawColor(40,26,16);p.setLineWidth(0.3);p.line(M,276,R,276);p.setFont('helvetica','normal');p.setTextColor(70);p.setFontSize(8);tx('Cravella Bake House By Priyanka LLP  |  DS MAX SYNERGY, 246, Block - C, Yelahanka, Bengaluru, Karnataka',105,281,{align:'center'});tx('Email: connect@cravellabakehouse.in  |  WhatsApp 81477 33224  |  Call 98459 04310  |  order.cravellabakehouse.com',105,285.5,{align:'center'});p.setFontSize(7.5);p.setTextColor(120);tx('This is a quotation and not a tax invoice. A tax invoice is issued on full payment.',105,290,{align:'center'});p.setTextColor(0)}
   return p}
 const quoFind=no=>quoLoad().find(x=>x.no===no);
+async function quoConfirm(no){const q=quoFind(no);if(!q)return;
+  const ex=q.items.filter(x=>String(x.d).trim()&&(+x.q||0)*(+x.r||0)>0).map(x=>({desc:(String(x.d).trim()+((+x.q||1)!==1?' × '+(+x.q):'')).slice(0,80),amount:Math.round((+x.q||0)*(+x.r||0))}));
+  if(!ex.length){toast('This quotation has no priced items');return}
+  const ph=String(q.phone||'').replace(/\D/g,'').slice(-10),g=String(q.gstin||'').replace(/\s+/g,'').toUpperCase(),co=!!(q.org&&g&&gstinOk(g));
+  PO.open=1;PO.done=null;PO.it=[];PO.ex=ex;PO.q='';PO.fq=q.no;PO.a={t:'cake',q:1,boxes:1,g:500,cn:'Custom cake'};
+  PO.f={mode:'Pickup',time:'12:00 PM',name:q.name||q.org||'',phone:ph.length===10?ph:'',disc:Math.round(+q.disc||0)||'',notes:'From quotation '+q.no};
+  if(co){PO.f.co=true;PO.f.coN=q.org;PO.f.coG=g;PO.f.coA=q.addr||''}
+  poRender();toast('Quotation filled in. Choose the date, then save the order.'+(+q.gst?' Quoted GST was '+(+q.gst)+'%.':''));
+  if(!D.pr){await loadPrices();poRender()}}
+function quoMark(no,oid){const all=quoLoad(),x=all.find(y=>y.no===no);if(x){x.oid=oid;x.cat=Date.now();quoPut(all)}}
 const quoName=q=>'Cravella-Quotation-'+q.no.replace(/\//g,'-')+'.pdf';
 async function quoLogo(){const im=$('lgTop');if(!im||!im.src)return null;if(!im.naturalWidth)await new Promise(r=>{im.onload=r;setTimeout(r,1500)});return im.naturalWidth?{src:im.src,w:im.naturalWidth,h:im.naturalHeight}:null}
 async function quoBlob(q){await epLoad();return quoPdf(q,await quoLogo()).output('blob')}
@@ -1452,7 +1462,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!QU||!t.dataset)return
   if(t.dataset.qf){QU[t.dataset.qf]=t.type==='number'||t.dataset.qf==='gst'?(t.value===''?0:+t.value):t.value;if(['disc','gst','ship'].includes(t.dataset.qf)){const el=$('quoTot');if(el)el.innerHTML=quoTotHtml()}}
   else if(t.dataset.qi){const[i,k]=t.dataset.qi.split(':'),x=QU.items[+i];if(!x)return;x[k]=k==='d'?t.value:(t.value===''?0:+t.value);const a=document.querySelector('[data-qamt="'+i+'"]');if(a)a.textContent=inr2((+x.q||0)*(+x.r||0));const el=$('quoTot');if(el)el.innerHTML=quoTotHtml()}});
 document.addEventListener('change',e=>{const t=e.target;if(!QU||!t.dataset||!t.dataset.qi)return;const[i,k]=t.dataset.qi.split(':');if(k!=='d')return;const x=QU.items[+i],c=quoCat().find(c=>c.d===t.value);if(x&&c&&!+x.r){x.r=c.r;const y=scrollY;render();scrollTo(0,y)}});
-document.addEventListener('click',async e=>{const t=e.target.closest('[data-qadd],[data-qdel],[data-qsave],[data-qnew],[data-qedit],[data-qarch],[data-qarchv],[data-qpdf],[data-qshare],[data-qwa],[data-qmail]');if(!t)return;e.preventDefault();e.stopPropagation();
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-qadd],[data-qdel],[data-qsave],[data-qnew],[data-qedit],[data-qarch],[data-qarchv],[data-qpdf],[data-qshare],[data-qwa],[data-qmail],[data-qconf]');if(!t)return;e.preventDefault();e.stopPropagation();
   const re=()=>{const y=scrollY;render();scrollTo(0,y)},d=t.dataset;
   if(d.qadd!==undefined){QU.items.push({d:'',q:1,r:0});re();return}
   if(d.qdel!==undefined){QU.items.splice(+d.qdel,1);if(!QU.items.length)QU.items.push({d:'',q:1,r:0});re();return}
@@ -1464,6 +1474,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-qadd
     const i=all.findIndex(x=>x.no===q.no),rec=JSON.parse(JSON.stringify(q));if(i>=0)all[i]=Object.assign(all[i],rec);else all.push(rec);if(!quoPut(all))return;toast('Saved '+q.no);QU=quoNew();re();return}
   if(d.qedit!==undefined){const x=quoFind(d.qedit);if(!x)return;QU=JSON.parse(JSON.stringify(x));re();scrollTo(0,0);return}
   if(d.qarch!==undefined){const all=quoLoad(),x=all.find(y=>y.no===d.qarch);if(!x)return;x.arch=x.arch?0:1;quoPut(all);re();return}
+  if(d.qconf!==undefined){quoConfirm(d.qconf);return}
   const q=quoFind(d.qpdf||d.qshare||d.qwa||d.qmail);if(!q)return;
   if(d.qwa!==undefined){const ph=String(q.phone||'').replace(/\D/g,'').slice(-10);toast('Download the PDF first, then attach it in WhatsApp');window.open('https://wa.me/'+(ph.length===10?'91'+ph:'')+'?text='+encodeURIComponent(quoMsg(q)),'_blank');return}
   if(d.qmail!==undefined){window.location.href='mailto:'+encodeURIComponent(q.email||'')+'?subject='+encodeURIComponent('Quotation '+q.no+' from Cravella Bake House')+'&body='+encodeURIComponent(quoMsg(q)+'\n\n(Please attach the downloaded PDF.)');return}
@@ -1535,7 +1546,7 @@ function poHtml(){
 function poRender(){let o=document.getElementById('poOv');if(!PO.open){o&&o.remove();return}
   if(!o){o=document.createElement('div');o.id='poOv';o.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(40,26,16,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:12px';o.innerHTML='<div id="poIn" style="background:#fbf6ee;border-radius:18px;padding:16px;width:100%;max-width:540px;margin-bottom:24px"></div>';document.body.appendChild(o)}
   const y=o.scrollTop;document.getElementById('poIn').innerHTML=poHtml();o.scrollTop=y}
-async function poOpen(){PO.open=1;PO.done=null;PO.it=[];PO.ex=[];PO.q='';PO.f={mode:'Pickup',time:'12:00 PM'};PO.a={t:'cake',q:1,boxes:1,g:500,cn:'Custom cake'};poRender();if(!D.pr){await loadPrices();poRender()}}
+async function poOpen(){PO.open=1;PO.done=null;PO.fq='';PO.it=[];PO.ex=[];PO.q='';PO.f={mode:'Pickup',time:'12:00 PM'};PO.a={t:'cake',q:1,boxes:1,g:500,cn:'Custom cake'};poRender();if(!D.pr){await loadPrices();poRender()}}
 document.addEventListener('click',async e=>{const t=e.target.closest('[data-po-open],[data-pox],[data-poadd],[data-porm],[data-posave],[data-popick],[data-pocontacts],[data-poa-t],[data-pokg],[data-poco],[data-pof-mode],[data-poshare],[data-poview],[data-ponew]');if(!t)return;e.preventDefault();e.stopPropagation();
   if(t.hasAttribute('data-po-open')){poOpen();return}
   if(t.dataset.pox){PO.open=0;poRender();return}
@@ -1561,7 +1572,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-po-o
     const notes=[F.msg?'Cake message: '+F.msg.trim():'',F.cnote?'Custom cake: '+F.cnote:'',F.notes?'Kitchen note: '+F.notes.trim():''].filter(Boolean).join(' · ').slice(0,500);
     PO.busy=1;poRender();
     try{const r=await api({action:'admin_order_create',phone:F.phone,name:F.name,mode:F.mode,address:F.address||'',date:F.date,time:F.time,notes:notes,discount:Math.round(+F.disc||0),co:co,items:PO.it.map(x=>({t:x.t,id:x.id,cream:x.cream,kg:x.kg,q:x.q})),extra:PO.ex});
-      PO.busy=0;if(r&&r.ok){await loadOrders();PO.done={id:r.id,total:r.total,name:F.name,phone:F.phone,when:new Date(F.date+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' · '+F.time};render();poRender()}else{poRender();toast(r&&r.error||'Could not save the order')}}
+      PO.busy=0;if(r&&r.ok){if(PO.fq){quoMark(PO.fq,r.id);PO.fq=''}await loadOrders();PO.done={id:r.id,total:r.total,name:F.name,phone:F.phone,when:new Date(F.date+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' · '+F.time};render();poRender()}else{poRender();toast(r&&r.error||'Could not save the order')}}
     catch(_){PO.busy=0;poRender();toast('Could not save. Check the connection.')}}},true);
 document.addEventListener('input',e=>{const f=e.target.closest('[data-pof]');if(f){const k=f.dataset.pof;PO.f[k]=f.value;
     if(k==='phone'){const ph=f.value.replace(/\D/g,'').slice(-10);if(ph.length===10){const c=poCustomers().find(x=>x.phone===ph);if(c&&!PO.f.name){PO.f.name=c.name;const n=document.querySelector('[data-pof="name"]');if(n)n.value=c.name}}}
