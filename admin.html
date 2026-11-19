@@ -72,7 +72,7 @@ label.f{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-t
 .sec{font:700 13px 'Hanken Grotesk';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:20px 0 4px}
 .save{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);z-index:6}
 .save .btn{display:block;width:100%;max-width:720px;margin:0 auto}
-.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:20;opacity:0;pointer-events:none;transition:.2s;max-width:90%}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:10050;opacity:0;pointer-events:none;transition:.2s;max-width:90%}
 .toast.on{opacity:1}
 .stat{display:flex;gap:10px;margin:12px 0}
 .stat div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
@@ -1779,6 +1779,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-po-o
   if(t.dataset.poshare){const o=D.orders.find(x=>x.id===t.dataset.poshare);if(!o){toast('Order not found. Pull to refresh Orders.');return}PO.open=0;poRender();EP.o=o;EP.pdf=null;EP.err='';epModal();try{EP.pdf=await epMake(o)}catch(er){EP.err='Could not make the PDF. Check the connection and try again.'}epModal();return}
   if(t.dataset.posave){const F=PO.f;if(!PO.it.length&&!PO.ex.length){toast('Add at least one item');return}
     if(!F.phone||!F.name||!F.date){toast('Enter the customer mobile, name and date');return}
+    if(F.mode==='Delivery'&&!String(F.address||'').trim()){toast('Enter the delivery address');return}
     let co=null;if(F.co){const g=String(F.coG||'').replace(/\s+/g,'').toUpperCase();if(String(F.coN||'').trim().length<2){toast('Enter the company name');return}if(!gstinOk(g)){toast('Check the GST number. It has 15 characters, e.g. 29ABCDE1234F1Z5');return}co={n:F.coN.trim(),g:g,a:String(F.coA||'').trim()}}
     const notes=[F.msg?'Cake message: '+F.msg.trim():'',F.cnote?'Custom cake: '+F.cnote:'',F.notes?'Kitchen note: '+F.notes.trim():''].filter(Boolean).join(' · ').slice(0,500);
     PO.busy=1;poRender();
