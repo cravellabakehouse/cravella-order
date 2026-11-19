@@ -932,6 +932,9 @@ function todayHtml(){
 }
 /* ---------- orders ---------- */
 const ACTIVE=['New','Confirmed','Advance received','Ready'];
+/* Unpaid = nothing received yet, still New/Confirmed, placed over 24h ago (pay-later orders are not counted). Only a marker: nothing is cancelled automatically. */
+const unpaidMs=o=>(['New','Confirmed'].indexOf(o.status)>=0&&!o.paid&&!o.later&&o.placedMs&&Date.now()-o.placedMs>864e5)?Date.now()-o.placedMs:0;
+const unpaidChip=o=>{const m=unpaidMs(o);if(!m)return '';const d=Math.floor(m/864e5);return `<span class="oc-chip" style="background:#fff0cf;color:#8a5a00;border-color:#f0d9a0">⏳ Unpaid · ${d}d</span>`};
 function confirmDelivered(o){const t=todayS(),dd=[o.date,o.split&&o.split.date].filter(Boolean).sort().pop()||'',fut=dd&&dd>t;return confirm((fut?'This order is due '+new Date(dd+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+', not today yet.\n\n':'')+'Mark '+o.id+' as '+(o.mode==='Pickup'?'collected':'delivered')+'? This sends the customer a thank-you and a Google review request on WhatsApp.')}
 function visible(){
   const t=todayS(),s=q.trim().toLowerCase();
@@ -940,13 +943,14 @@ function visible(){
     if(filt==='active')return ACTIVE.includes(o.status);
     if(filt==='today')return o.status!=='Cancelled'&&(o.date===t||(o.split&&o.split.date===t)||(o.placedMs&&ymd(new Date(o.placedMs))===t));
     if(filt==='new')return o.status==='New';
+    if(filt==='unpaid')return unpaidMs(o)>0;
     return true;
   }).sort((a,b)=>filt==='all'?0:(a.date+a.time).localeCompare(b.date+b.time))
 }
 function ordersHtml(){
   const t=todayS(),act=D.orders.filter(o=>ACTIVE.includes(o.status)),tod=D.orders.filter(o=>o.status!=='Cancelled'&&(o.date===t||(o.split&&o.split.date===t)));
   const adv=act.filter(o=>o.status==='Confirmed').length;
-  let h=`  <div class="chips">${[['active','Active'],['new','New'],['today','Today'],['all','All']].map(([k,n])=>`<button class="chip ${filt===k?'on':''}" data-f="${k}">${n}</button>`).join('')}<button class="chip" id="refresh">↻ Refresh</button><button class="chip" data-po-open="1">➕ New manual order</button></div>
+  let h=`  <div class="chips">${[['active','Active'],['new','New'],['today','Today'],['unpaid','Unpaid'+(D.orders.filter(o=>unpaidMs(o)>0).length?' ('+D.orders.filter(o=>unpaidMs(o)>0).length+')':'')],['all','All']].map(([k,n])=>`<button class="chip ${filt===k?'on':''}" data-f="${k}">${n}</button>`).join('')}<button class="chip" id="refresh">↻ Refresh</button><button class="chip" data-po-open="1">➕ New manual order</button></div>
   <input class="i" id="search" placeholder="Search name, phone or order number" value="${esc(q)}">`;
   const L=visible();
   h+=L.length?L.map(orderCard).join(''):`<div class="card"><div class="hint">No orders here.</div></div>`;
@@ -1097,7 +1101,7 @@ function orderCard(o){
   const first=o.lines.filter(Boolean),prod=first.length?lineRow(first[0]).n+(first.length>1?` +${first.length-1} more`:''):'',plc=String(o.placed||'').replace(/,.*$/,'');
   const pill=(o.later?'<span class="pill pif" style="background:#3b2416;color:#fbf4ea">Pay later</span>':'')+(o.status==='Ready'&&f.full?'<span class="pill pif">Paid in full</span>':'');
   return `<details class="card o ocrd${cx?' isx':''}" data-hu="${(parseInt(String(o.id).replace(/\D/g,''),10)||0)%10}" data-id="${esc(o.id)}"${D.oopen&&D.oopen[o.id]?' open':''}>
-  <summary class="oc-sum"><span class="oc-nb"><b>${esc(o.id)}</b> · ${esc(o.name)}</span><span class="oc-row"><span class="oc-chev">›</span><span class="oc-sm"><span class="oc-l2">${esc(prod)}</span><span class="oc-l3"><span class="oc-chip dl${pk?' pk':''}">${pk?'🛍 Pickup':'🚚 Delivery'} · ${fmtD(o.date)}, ${esc(o.time)}</span><span class="oc-chip">${inr(o.total)}</span><span class="oc-chip">📞 ${esc(o.phone)}</span></span></span><span class="oc-rt"><span class="pill ${esc(sc)}">${esc(o.status==='Delivered'&&pk?'Collected':o.status)}</span>${pill}<span class="ocmw" data-id="${esc(o.id)}">${ocmHtml(o)}</span></span></span></summary>
+  <summary class="oc-sum"><span class="oc-nb"><b>${esc(o.id)}</b> · ${esc(o.name)}</span><span class="oc-row"><span class="oc-chev">›</span><span class="oc-sm"><span class="oc-l2">${esc(prod)}</span><span class="oc-l3"><span class="oc-chip dl${pk?' pk':''}">${pk?'🛍 Pickup':'🚚 Delivery'} · ${fmtD(o.date)}, ${esc(o.time)}</span><span class="oc-chip">${inr(o.total)}</span>${unpaidChip(o)}<span class="oc-chip">📞 ${esc(o.phone)}</span></span></span><span class="oc-rt"><span class="pill ${esc(sc)}">${esc(o.status==='Delivered'&&pk?'Collected':o.status)}</span>${pill}<span class="ocmw" data-id="${esc(o.id)}">${ocmHtml(o)}</span></span></span></summary>
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
   ${termsPick(o,f,pk)}
   ${nextHtml(o,f)}
