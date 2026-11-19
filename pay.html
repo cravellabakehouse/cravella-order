@@ -44,14 +44,12 @@ function view(){
   const o=S.opts.find(x=>x.kind===kind)||S.opts[0];kind=o.kind;
   const tabs=S.opts.length>1?'<div class="seg">'+S.opts.map(x=>'<button data-k="'+x.kind+'" class="'+(x.kind===kind?'on':'')+'"><b>'+inr(x.amt)+'</b><small>'+label(x)+'</small></button>').join('')+'</div>':'';
   const upi='upi://pay?pa='+encodeURIComponent(S.upi)+'&pn='+encodeURIComponent('Cravella Bake House')+'&am='+o.amt+'&cu=INR&tn='+encodeURIComponent('Order '+S.id);
-  const claimed=S.claim?'<div class="note ok" style="margin-top:10px">Thanks! You told us you paid '+inr(S.claim.amt)+'. We will confirm once we see it.</div>':'';
   root.innerHTML='<h1>Hi'+(S.first?' '+esc(S.first):'')+', pay for order '+esc(S.id)+'</h1><p class="sub">Order total '+inr(S.total)+(S.paid?' · '+inr(S.paid.amt)+' received':'')+'</p>'+
   '<div class="card"><p class="h">How much?</p>'+(tabs||'<p class="m">'+label(o)+' · '+inr(o.amt)+'</p>')+'</div>'+
   '<div class="card"><p class="h">Pay by UPI</p><p class="m">Scan the QR with any UPI app, or tap the button on your phone.</p><img class="qr" src="pay-qr.jpg" alt="Cravella UPI QR code"><p class="upi">'+esc(S.upi)+'</p>'+
-  '<a class="btn" href="'+upi+'">Pay '+inr(o.amt)+' with UPI app</a><button class="btn alt" id="paid">I\'ve paid '+inr(o.amt)+'</button>'+claimed+'</div>'+
+  '<a class="btn" href="'+upi+'">Pay '+inr(o.amt)+' with UPI app</a><p class="m" style="margin:12px 0 0;text-align:center">If you scan the QR, please type <b>'+esc(S.id)+'</b> in the payment note so we know which order it is for. Then send us the payment screenshot on WhatsApp.</p></div>'+
   (S.rzp?'<div class="card"><p class="h">Cards or Netbanking</p><p class="m">Secure payment by Razorpay.</p><div class="chips"><span>Visa</span><span>Mastercard</span><span>Amex</span><span>RuPay</span><span>Netbanking</span></div><button class="btn" id="rz">Pay '+inr(o.amt)+' by card / netbanking</button><div class="err" id="er"></div></div>':'');
   root.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{kind=b.dataset.k;view()});
-  const pd=document.getElementById('paid');if(pd)pd.onclick=async()=>{pd.disabled=true;const r=await call('pay_claim',{kind:kind});if(r&&r.ok){S.claim={kind:kind,amt:o.amt};view()}else{pd.disabled=false;alert((r&&r.error)||'Could not save. Please WhatsApp us on 98459-04310.')}};
   const rz=document.getElementById('rz');if(rz)rz.onclick=async()=>{rz.disabled=true;const r=await call('pay_rzp',{kind:kind});if(r&&r.ok&&r.url){location.href=r.url}else{rz.disabled=false;document.getElementById('er').textContent=(r&&r.error)||'Could not start the payment. Please try again.'}};
 }
 (async()=>{S=await call('pay_get');view();setInterval(async()=>{if(document.hidden||!S||!S.ok)return;const n=await call('pay_get');if(n&&n.ok&&(n.state!==S.state||JSON.stringify(n.paid)!==JSON.stringify(S.paid))){S=n;view()}},20000)})();

@@ -1101,7 +1101,6 @@ function orderCard(o){
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
   ${termsPick(o,f,pk)}
   ${nextHtml(o,f)}
-  ${o.payClaim&&plkOk(o)&&!(o.paid&&o.paid.k==='full')?`<div class="wcf opay"><span><b>Customer says they paid ${inr(o.payClaim.amt)} by UPI.</b> Check your bank app, then tap “Advance received” (or the full-payment option) below.</span></div>`:''}
   ${plkPanel(o)}
   ${D.payAsk===o.id?`<div class="wcf opay"><span><b>Which payment did you receive?</b> The confirmation PDF goes to the customer on WhatsApp straight away.</span><label style="display:flex;align-items:center;gap:6px;flex-basis:100%"><small style="color:var(--mut)">Advance received ₹</small><input class="i" data-advamt type="number" inputmode="numeric" min="1" max="${o.total}" value="${Math.round(o.total/2)}" style="width:110px" aria-label="Advance amount received"><small style="color:var(--mut)">50% is ${inr(Math.round(o.total/2))}</small></label><button class="btn sm" data-s="Advance received" data-pk="adv">💰 Advance received</button><button class="btn sm" data-s="Advance received" data-pk="full">Paid in full · ${inr(o.total)}</button><button class="btn ol sm" data-s="Advance received" data-pk="" data-paycx="1">Cancel</button></div>`:''}
   ${cx||o.status==='Delivered'?'':`<div class="ocds" data-id="${esc(o.id)}">${ocdHtml(o)}</div>`}
