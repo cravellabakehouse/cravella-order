@@ -1067,19 +1067,22 @@ function plkPanel(o){
   if(!D.plk||D.plk.id!==o.id||!plkOk(o))return '';
   const L=D.plk,tot=Math.round(o.total||0),pd=o.paid,first=String(o.name||'').split(' ')[0]||'there';
   const bs=pd&&pd.k==='adv'?[['bal','Balance '+inr(tot-pd.amt)]]:[['adv','Advance '+inr(Math.round(tot/2))],['full','Full '+inr(tot)]];
-  const btn=bs.map(([k,t])=>`<button class="btn sm" data-plk="${k}" ${L.busy?'disabled':''}>${esc(t)}</button>`).join('');
+  const btn=`<button class="btn sm" data-plkpg="1" ${L.busy?'disabled':''}>📄 Payment page (UPI + card)</button>`+bs.map(([k,t])=>`<button class="btn ol sm" data-plk="${k}" ${L.busy?'disabled':''}>${esc(t)}</button>`).join('');
   let res='';
   if(L.busy)res='<small style="color:var(--mut)">Creating the link…</small>';
   else if(L.err)res=`<small style="color:#9b1c1c">${esc(L.err)}</small>`;
-  else if(L.url){const w=o.phone?'https://wa.me/91'+String(o.phone).replace(/\D/g,'').slice(-10)+'?text='+encodeURIComponent('Hi '+first+', here is the link to pay '+inr(L.amt)+' ('+(L.kind==='full'?'full payment':L.kind==='bal'?'balance':'advance')+') for your Cravella Bake House order '+o.id+': '+L.url):'';
-    res=`<div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input class="i" readonly value="${esc(L.url)}" style="flex:1;min-width:200px" aria-label="Payment link"><button class="btn ol sm" data-plkcopy="1">Copy</button>${w?`<a class="btn ol sm" target="_blank" rel="noopener" href="${esc(w)}">Send on WhatsApp</a>`:''}</div><small style="flex-basis:100%;color:var(--mut)">${inr(L.amt)} · the order is marked paid automatically when the customer pays.</small>`}
+  else if(L.url){const w=o.phone?'https://wa.me/91'+String(o.phone).replace(/\D/g,'').slice(-10)+'?text='+encodeURIComponent(L.kind==='page'?'Hi '+first+', your Cravella Bake House order '+o.id+' is confirmed. Please choose how you would like to pay (UPI or card / netbanking): '+L.url:'Hi '+first+', here is the link to pay '+inr(L.amt)+' ('+(L.kind==='full'?'full payment':L.kind==='bal'?'balance':'advance')+') for your Cravella Bake House order '+o.id+': '+L.url):'';
+    res=`<div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input class="i" readonly value="${esc(L.url)}" style="flex:1;min-width:200px" aria-label="Payment link"><button class="btn ol sm" data-plkcopy="1">Copy</button>${w?`<a class="btn ol sm" target="_blank" rel="noopener" href="${esc(w)}">Send on WhatsApp</a>`:''}</div><small style="flex-basis:100%;color:var(--mut)">${L.kind==='page'?'Private link for this order. The customer picks 50% or full, then UPI or card. Card payments mark the order paid automatically; for UPI you confirm after checking your bank app.':inr(L.amt)+' · the order is marked paid automatically when the customer pays.'}</small>`}
   return `<div class="wcf opay"><span><b>Payment link</b> The customer opens it and pays by any UPI app or card. No sign-in needed.</span>${btn}${res}</div>`}
 document.addEventListener('click',async e=>{
-  const t=e.target.closest('[data-plkopen],[data-plk],[data-plkcopy]');if(!t)return;
+  const t=e.target.closest('[data-plkopen],[data-plk],[data-plkcopy],[data-plkpg]');if(!t)return;
   e.preventDefault();e.stopPropagation();
   const y0=scrollY,rr=()=>{render();scrollTo(0,y0)};
   if(t.dataset.plkopen!==undefined){D.plk=D.plk&&D.plk.id===t.dataset.plkopen?null:{id:t.dataset.plkopen};if(D.oopen)D.oopen[t.dataset.plkopen]=true;rr();return}
   if(t.dataset.plkcopy!==undefined){const u=D.plk&&D.plk.url;if(!u)return;try{await navigator.clipboard.writeText(u);toast('Link copied')}catch(_){const i=t.parentNode.querySelector('input');if(i){i.select();document.execCommand('copy');toast('Link copied')}}return}
+  if(t.dataset.plkpg!==undefined&&D.plk){const L=D.plk;L.busy=1;L.err='';L.url='';rr();
+    try{const r=await api({action:'admin_pay_token',id:L.id});L.busy=0;if(D.plk!==L)return;if(r.ok){L.url=r.url;L.amt=0;L.kind='page'}else L.err=r.error||'Could not create the link.'}catch(_){L.busy=0;L.err='Could not reach the server. Please try again.'}
+    rr();return}
   if(t.dataset.plk&&D.plk){const L=D.plk,k=t.dataset.plk;L.busy=1;L.err='';L.url='';rr();
     try{const r=await api({action:'admin_rzp_link',id:L.id,kind:k});L.busy=0;if(D.plk!==L)return;if(r.ok){L.url=r.url;L.amt=r.amount;L.kind=r.kind}else L.err=r.error||'Could not create the link.'}catch(_){L.busy=0;L.err='Could not reach the server. Please try again.'}
     rr()}
@@ -1098,6 +1101,7 @@ function orderCard(o){
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
   ${termsPick(o,f,pk)}
   ${nextHtml(o,f)}
+  ${o.payClaim&&plkOk(o)&&!(o.paid&&o.paid.k==='full')?`<div class="wcf opay"><span><b>Customer says they paid ${inr(o.payClaim.amt)} by UPI.</b> Check your bank app, then tap “Advance received” (or the full-payment option) below.</span></div>`:''}
   ${plkPanel(o)}
   ${D.payAsk===o.id?`<div class="wcf opay"><span><b>Which payment did you receive?</b> The confirmation PDF goes to the customer on WhatsApp straight away.</span><label style="display:flex;align-items:center;gap:6px;flex-basis:100%"><small style="color:var(--mut)">Advance received ₹</small><input class="i" data-advamt type="number" inputmode="numeric" min="1" max="${o.total}" value="${Math.round(o.total/2)}" style="width:110px" aria-label="Advance amount received"><small style="color:var(--mut)">50% is ${inr(Math.round(o.total/2))}</small></label><button class="btn sm" data-s="Advance received" data-pk="adv">💰 Advance received</button><button class="btn sm" data-s="Advance received" data-pk="full">Paid in full · ${inr(o.total)}</button><button class="btn ol sm" data-s="Advance received" data-pk="" data-paycx="1">Cancel</button></div>`:''}
   ${cx||o.status==='Delivered'?'':`<div class="ocds" data-id="${esc(o.id)}">${ocdHtml(o)}</div>`}
@@ -2804,6 +2808,11 @@ addEventListener('popstate',e=>{
 });
 addEventListener('pageshow',e=>{if(e.persisted&&!tok)showLogin()});
 
+/* Auto-refresh: every 20s look for changes (e.g. a card payment arriving by webhook) and redraw only when something changed and you are not typing */
+let ARB=false;setInterval(async()=>{if(ARB||document.hidden||!tok||['home','today','orders','porder'].indexOf(tab)<0)return;
+  const ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)&&!ae.readOnly)return;
+  if(D.plk&&D.plk.busy||D.payAsk||['cpSheet','pwSheet','edSheet','mailSheet','moreSheet'].some(i=>$(i)&&!$(i).classList.contains('hide')))return;
+  ARB=true;try{const sig=()=>JSON.stringify((D.orders||[]).map(o=>[o.id,o.status,o.total,o.paid,o.payClaim]));const b=sig(),pk=new Map((D.orders||[]).map(o=>[o.id,o.paid&&o.paid.k]));await loadOrders();if(sig()!==b){const y=scrollY;render();scrollTo(0,y);(D.orders||[]).forEach(o=>{if(o.paid&&!pk.get(o.id))toast('Payment received on '+o.id)})}}catch(_){}ARB=false},20000);
 setInterval(()=>{if(document.hidden||!tok||(tab!=='today'&&tab!=='home')||['cpSheet','pwSheet','edSheet','mailSheet','moreSheet'].some(i=>!$(i).classList.contains('hide')))return;loadOrders().then(()=>{if(tab==='today'||tab==='home')render()}).catch(()=>{})},60000);
 boot();
 $('panel').addEventListener('change',e=>{if(e.target.id==='brkMsg'&&D.site&&(tab==='home'||tab==='settings')){const v=brkV();D.brkDraft={on:v.on,t:e.target.value};if(!brkDirty())D.brkDraft=null;render()}});
