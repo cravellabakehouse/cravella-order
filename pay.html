@@ -19,7 +19,7 @@ h1{font:700 22px/1.2 'Bricolage Grotesque',system-ui,sans-serif;margin:4px 0 2px
 .btn.alt{background:transparent;color:var(--acc);border:1.5px solid var(--acc)}.btn[disabled]{opacity:.6}
 .qr{display:block;margin:10px auto;width:190px;max-width:70%;border-radius:10px;border:1px solid var(--line)}
 .upi{text-align:center;font-weight:700;letter-spacing:.02em;margin:0}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}.chips span{border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;color:var(--mut)}
+.sec{display:flex;align-items:center;gap:6px;color:#2f6b3a}.chips span{display:inline-flex;align-items:center;gap:5px}.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}.chips span{border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;color:var(--mut)}
 .note{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink);border-radius:12px;padding:12px;font-size:14px}
 .ok{background:#e9f6ee;border-color:#bfe3cc;color:var(--ok)}@media (prefers-color-scheme:dark){.ok{background:#1c2e24;border-color:#2f5440}}
 .err{color:#b3261e;font-size:14px;margin:8px 0 0}
@@ -35,7 +35,7 @@ const inr=n=>'₹'+Number(n).toLocaleString('en-IN');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function call(action,extra){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(Object.assign({action:action,id:OID,k:KEY},extra||{}))});let b={};try{b=await r.json()}catch(_){}return b}
 function msg(t,cls){root.innerHTML='<h1>'+(cls==='ok'?'Thank you':'Pay for your order')+'</h1><div class="note '+(cls||'')+'" style="margin-top:12px">'+t+'</div>'}
-function label(o){return o.kind==='bal'?'Balance':o.kind==='full'?'Full amount':'50% advance'}
+function label(o){return o.kind==='bal'?'Balance':o.kind==='full'?'Full amount':(S&&o.amt*2===S.total?'50% advance':'Advance')}
 function view(){
   if(!S||!S.ok){msg(esc((S&&S.error)||'This payment link is not valid. Please WhatsApp us on 98459-04310.'));return}
   if(S.state==='paid'){msg('Order '+esc(S.id)+' is paid in full. Nothing more to pay.','ok');return}
@@ -48,7 +48,7 @@ function view(){
   '<div class="card"><p class="h">How much?</p>'+(tabs||'<p class="m">'+label(o)+' · '+inr(o.amt)+'</p>')+'</div>'+
   '<div class="card"><p class="h">Pay by UPI</p><p class="m">Scan the QR with any UPI app, or tap the button on your phone.</p><img class="qr" src="pay-qr.jpg" alt="Cravella UPI QR code"><p class="upi">'+esc(S.upi)+'</p>'+
   '<a class="btn" href="'+upi+'">Pay '+inr(o.amt)+' with UPI app</a><p class="m" style="margin:12px 0 0;text-align:center">If you scan the QR, please type <b>'+esc(S.id)+'</b> in the payment note so we know which order it is for. Then send us the payment screenshot on WhatsApp.</p></div>'+
-  (S.rzp?'<div class="card"><p class="h">Cards or Netbanking</p><p class="m">Secure payment by Razorpay.</p><div class="chips"><span>Visa</span><span>Mastercard</span><span>Amex</span><span>RuPay</span><span>Netbanking</span></div><button class="btn" id="rz">Pay '+inr(o.amt)+' by card / netbanking</button><div class="err" id="er"></div></div>':'');
+  (S.rzp?'<div class="card"><p class="h">Cards or Netbanking</p><p class="m sec"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>Secure payment by Razorpay</p><div class="chips"><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Visa</span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Mastercard</span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Amex</span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>RuPay</span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>Netbanking</span></div><button class="btn" id="rz">Pay '+inr(o.amt)+' by card / netbanking</button><div class="err" id="er"></div></div>':'');
   root.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{kind=b.dataset.k;view()});
   const rz=document.getElementById('rz');if(rz)rz.onclick=async()=>{rz.disabled=true;const r=await call('pay_rzp',{kind:kind});if(r&&r.ok&&r.url){location.href=r.url}else{rz.disabled=false;document.getElementById('er').textContent=(r&&r.error)||'Could not start the payment. Please try again.'}};
 }
