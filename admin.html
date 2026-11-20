@@ -423,6 +423,7 @@ body{background:#fbf6ee}.ng{display:grid;grid-template-columns:repeat(3,minmax(0
 .wcv-dq{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;font-weight:700;color:#4a3626}.wcv-ab.dng{color:#b42318;border-color:#f3c5c0}.wcv-dn{flex-basis:100%;font-size:11.5px;color:#8a7b6a;line-height:1.35}
 .wcv-at{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;padding:8px;border:1px solid var(--line);border-radius:14px;background:#fbf8f2}.wcv-at img{width:84px;height:84px;object-fit:cover;border-radius:10px;flex:none}.wcv-atr{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.wcv-atr b{font-size:14px}.wcv-atr small{font-size:12px;color:var(--mut)}.wcv-atr .i{margin:2px 0 0}.wcv-atb{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .tp{margin:10px 0 4px}.tp-h{font-size:12px;font-weight:800;letter-spacing:.1em;color:#7d6a58;margin:0 0 8px}.tp-g{display:flex;gap:10px;align-items:stretch}.tp-c{all:unset;box-sizing:border-box;flex:1;min-width:0;background:#fff;border:1.5px solid #e4d8c6;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer}.tp-c.on{background:#eef6ef;border:2px solid #3d7a4a;padding:11.5px}.tp-c:focus-visible{outline:3px solid #a5582f;outline-offset:2px}.tp-t{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;letter-spacing:.08em;color:#7d6a58}.tp-c.on .tp-t{color:#1d5e35}.tp-r{width:18px;height:18px;border-radius:99px;border:2px solid #cdbfa9;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:900}.tp-c.on .tp-r{background:#3d7a4a;border-color:#3d7a4a}.tp-n{font-size:16px;font-weight:800;line-height:1.15;color:#3b2416}.tp-d{font-size:12.5px;color:#6f5c4b;line-height:1.3}.tp-l{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#6f5c4b}.tp-l span{display:flex;gap:8px}.tp-l i{font-style:normal;color:#8a7765;min-width:10px}.tp-c.on .tp-l i{color:#3d7a4a}.tp-m{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #eadfce;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:700;min-height:44px;margin-top:10px}.tp-m input{width:20px;height:20px;accent-color:#3d7a4a;flex:none}.tp-u{margin-top:10px;width:100%}
+.qrb{margin:10px 0}.qrs{padding:10px 12px;border-radius:12px;background:#f3ede2;color:#6b5a4c;font-size:13px;line-height:1.4;margin-bottom:8px}.qrs.ok{background:#e3f3e7;color:#1f5a30}.qrs.bad{background:#fbe4e1;color:#8c1d18}.owa-main{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;min-height:58px;padding:12px 16px;border-radius:14px;font-size:17px}.owa-main small{font-size:12.5px;font-weight:500;opacity:.95}
 </style>
 </head>
 <body>
@@ -1110,13 +1111,16 @@ document.addEventListener('click',async e=>{
     try{const r=await api({action:'admin_rzp_link',id:L.id,kind:k});L.busy=0;if(D.plk!==L)return;if(r.ok){L.url=r.url;L.amt=r.amount;L.kind=r.kind}else L.err=r.error||'Could not create the link.'}catch(_){L.busy=0;L.err='Could not reach the server. Please try again.'}
     rr()}
 },true);
+function qrBlock(o){const L=(D.wa&&D.wa.log)||[],l4=String(o.phone).replace(/\D/g,'').slice(-4);let last=null;L.forEach(x=>{if(/qr|payment/i.test(x.tpl||'')&&String(x.to).slice(-4)===l4&&x.t>=(o.placedMs||0)&&(!last||x.t>last.t))last=x});
+  const st=last?(last.ok?`<div class="qrs ok">Payment QR handed to WhatsApp at ${esc(tShort(last.t))}. If the chat shows it red, send it again.</div>`:`<div class="qrs bad">Payment QR was not accepted${last.err?': '+esc(last.err):''}. Send it again.</div>`):'<div class="qrs">No payment QR sent from here yet.</div>';
+  return `<div class="qrb">${st}<button class="btn owa-main" data-wasend="${esc(o.id)}|c"><b>Send payment QR again</b><small>Shows a preview first. Nothing is sent until you confirm.</small></button></div>`}
 function orderCard(o){
   if(!D.wa&&!D.waBusy&&nf('wa'))setTimeout(loadWa,0);
   const sc=o.status==='Advance received'?'Advance':o.status,cx=o.status==='Cancelled',pk=o.mode==='Pickup',f=payInfo(o);
   const when=o.split?`Cakes: ${fmtD(o.date)}, ${esc(o.time)} (${esc(o.mode)})<br>Other bakes: ${fmtD(o.split.date)}, ${esc(o.split.time)} (${esc(o.split.mode||o.mode)})`:`${fmtD(o.date)}, ${esc(o.time)}`;
   const ph=String(o.phone).replace(/\D/g,'').slice(-10),adv=f.adv,ix=f.ix;
   const rec=o.status==='New'?'c':o.status==='Confirmed'?'a':o.status==='Advance received'?'r':'';
-  const MI={c:1,a:2,r:3},wa=(k,t)=>cx||MI[k]<ix||(o.later&&(k==='c'||k==='a'))?'':`<button class="btn sm owa${rec===k?' rec':''}" data-wasend="${esc(o.id)}|${k}">${t}</button>`;
+  const MI={c:1,a:2,r:3},wa=(k,t)=>cx||MI[k]<ix||(o.later&&(k==='c'||k==='a'))?'':`<button class="btn sm owa" data-wasend="${esc(o.id)}|${k}">${t}</button>`;
   const first=o.lines.filter(Boolean),prod=first.length?lineRow(first[0]).n+(first.length>1?` +${first.length-1} more`:''):'',plc=String(o.placed||'').replace(/,.*$/,'');
   const pill=(o.later?'<span class="pill pif" style="background:#3b2416;color:#fbf4ea">Pay later</span>':'')+(o.status==='Ready'&&f.full?'<span class="pill pif">Paid in full</span>':'');
   return `<details class="card o ocrd${cx?' isx':''}" data-st="${esc(o.status)}" data-hu="${(parseInt(String(o.id).replace(/\D/g,''),10)||0)%10}" data-id="${esc(o.id)}"${D.oopen&&D.oopen[o.id]?' open':''}>
@@ -1124,26 +1128,26 @@ function orderCard(o){
   <div class="oc-body"><div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>
   ${(()=>{const tp=termsPick(o,f,pk);return tp?`<details class="opp" data-k="pp|${esc(o.id)}"${D.oopen&&D.oopen['pp|'+o.id]?' open':''}><summary>Payment plan: ${o.later?'pay later':'advance first'}</summary>${tp}</details>`:''})()}
   ${nextHtml(o,f)}
+  ${o.status==='Confirmed'&&!cx&&!o.later?qrBlock(o):''}
   ${plkPanel(o)}
   ${D.payAsk===o.id?`<div class="wcf opay"><span><b>Which payment did you receive?</b> The confirmation PDF goes to the customer on WhatsApp straight away.</span><label style="display:flex;align-items:center;gap:6px;flex-basis:100%"><small style="color:var(--mut)">Advance received ₹</small><input class="i" data-advamt type="number" inputmode="numeric" min="1" max="${o.total}" value="${advAmt(o)}" style="width:110px" aria-label="Advance amount received"><small style="color:var(--mut)">Asked for ${inr(advAmt(o))} (minimum 50%)</small></label><button class="btn sm" data-s="Advance received" data-pk="adv">💰 Advance received</button><button class="btn sm" data-s="Advance received" data-pk="full">Paid in full · ${inr(o.total)}</button><button class="btn ol sm" data-s="Advance received" data-pk="" data-paycx="1">Cancel</button></div>`:''}
   ${cx||o.status==='Delivered'?'':`<div class="ocds" data-id="${esc(o.id)}">${ocdHtml(o)}</div>`}
   <div class="osec">Payment</div>
   ${moneyHtml(o,f)}
   ${miniSteps(o,f)}
-  <div class="osec">Order details</div>
-  <div class="oc-grid">
+  ${o.address?`<div class="oc-grid"><div class="oi wide"><small>📍 Address</small><b>${esc(o.address)}</b></div></div>`:''}
+  <details class="opp" data-k="bd|${esc(o.id)}"${D.oopen&&D.oopen['bd|'+o.id]?' open':''}><summary>Order details and bill · ${inr(o.total)}</summary><div class="oc-grid">
     <div class="oi"><small>${pk?'🛍 Pickup':'🚚 Delivery'}</small><b>${when}</b></div>
     <div class="oi"><small>📞 Customer</small><b><a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></b><button class="oi-wa" data-wchat="91${esc(ph)}">💬 Chat on WhatsApp</button></div>
     <div class="oi wide"><small>💳 Payment terms</small><b>${o.later?'Pay later, no advance':'Advance of '+inr(f.adv)+' (minimum 50%), balance on '+(pk?'pickup':'delivery')}</b></div>
-    ${o.address?`<div class="oi wide"><small>📍 Address</small><b>${esc(o.address)}</b></div>`:''}
     ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<div class="oi"><small>✉ Email</small><b>${esc(o.email)}</b></div>`:''}
   </div>
   <table class="otb"><thead><tr><th>Item</th><th class="q">Qty</th><th class="p">Price</th></tr></thead><tbody>${o.lines.filter(Boolean).map(l=>{const r=lineRow(l);return `<tr><td>${esc(r.n)}</td><td class="q">${esc(r.q)}</td><td class="p">${r.a!=null?inr(r.a):''}</td></tr>`}).join('')}</tbody>
-  <tfoot>${o.discount?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount</td><td class="p">−${inr(o.discount)}</td></tr>`:''}${o.gst?`<tr><td colspan="2">GST ${o.gstRate||5}%</td><td class="p">${inr(o.gst)}</td></tr>`:''}<tr class="tt"><td colspan="2">Total${o.toConfirm?' <span class="hint">(price to confirm)</span>':''}</td><td class="p">${inr(o.total)}</td></tr></tfoot></table>
+  <tfoot>${o.discount?`<tr><td colspan="2">Subtotal</td><td class="p">${inr(o.subtotal)}</td></tr><tr><td colspan="2">Discount</td><td class="p">−${inr(o.discount)}</td></tr>`:''}${o.gst?`<tr><td colspan="2">GST ${o.gstRate||5}%</td><td class="p">${inr(o.gst)}</td></tr>`:''}<tr class="tt"><td colspan="2">Total${o.toConfirm?' <span class="hint">(price to confirm)</span>':''}</td><td class="p">${inr(o.total)}</td></tr></tfoot></table></details>
   ${o.notes?`<div class="note">📝 ${esc(o.notes)}</div>`:''}
   ${o.photos.filter(u=>/^https:\/\//.test(u)).length?`<div class="ph">${o.photos.filter(u=>/^https:\/\//.test(u)).map((u,i)=>`<a class="btn ol sm" href="${esc(u)}" target="_blank" rel="noopener">🖼 Reference photo${o.photos.length>1?' '+(i+1):''}</a>`).join(' ')}</div>`:''}
   <details class="opp omore" data-k="mo|${esc(o.id)}"${D.oopen&&D.oopen['mo|'+o.id]?' open':''}><summary>More: messages, PDF, cancel, delete</summary><div class="osec">Message the customer</div>
-  <div class="oacts">${wa('c','✅ Confirm + payment request')}${wa('a','💰 Advance received')}${wa('r','🎂 Order ready')}<button class="btn ol sm" data-epdf="${esc(o.id)}">📄 ${o.paid&&o.paid.k==='full'&&!o.noGst?'Tax Invoice':'Estimate'} PDF</button><button class="btn ol sm" data-epget="${esc(o.id)}">⬇ Download PDF</button>${plkBtn(o)}<button class="btn ol sm" data-mail="${esc(o.id)}">✉ Email</button>${histBtn(o)}${gstInclBtn(o)}</div>
+  <div class="oacts">${wa('c','Send payment QR')}${wa('a','Tell customer: advance received')}${wa('r','Tell customer: order ready')}<button class="btn ol sm" data-epdf="${esc(o.id)}">📄 ${o.paid&&o.paid.k==='full'&&!o.noGst?'Tax Invoice':'Estimate'} PDF</button><button class="btn ol sm" data-epget="${esc(o.id)}">⬇ Download PDF</button>${plkBtn(o)}<button class="btn ol sm" data-mail="${esc(o.id)}">✉ Email</button>${histBtn(o)}${gstInclBtn(o)}</div>
   ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-notify checked> Email the customer when I change status</label>`:''}
   ${mailNote(o)}
   <div class="ofoot">${cx||o.status==='Delivered'?'':`<button class="btn ol sm ocx" data-s="Cancelled">✖ Cancel order</button>`}${odelBtn(o)}</div></details>${odelBox(o)}${histBox(o)}</div></details>`
@@ -1992,6 +1996,7 @@ $('panel').addEventListener('click',async e=>{
     let pv=null;try{pv=await api({action:'admin_wa_order_preview',id:wid,kind:wk})}catch(_){}
     ws.textContent=lab;ws.disabled=false;
     if(!pv||!pv.ok){toast(pv&&pv.error?pv.error:'Could not load the preview, nothing was sent');return}
+    if(wk==='a'){const od=(D.orders||[]).find(x=>x.id===wid),pf=od?payInfo(od):null;if(pf&&!pf.advPaid&&!pf.full)pv.warn='No payment is recorded for this order yet. Only send this if you have seen the money in your UPI app.'}
     waPrevShow(pv,()=>waDoSend(ws,wid,wk,lab));return}
   const cfb=e.target.closest('[data-cf]');if(cfb){cf=cfb.dataset.cf;render();return}
   const cvb=e.target.closest('[data-cv]');if(cvb){cv=cvb.dataset.cv;render();if(cv==='acc')loadAcc(true);return}
@@ -2336,9 +2341,10 @@ function waPrevShow(pv,go){const old=document.getElementById('wpv');if(old)old.r
   o.innerHTML=`<div role="dialog" aria-label="Message preview" style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:90vh;overflow:auto;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)">
     <b style="font-size:16px;color:#3b2416">This is what ${esc(fn)} will receive</b>
     <div style="font-size:13px;color:#6b5a4c;margin:2px 0 10px">${esc(pv.name||'')} · ${esc(pv.id||'')}${ph?' · +91 '+esc(ph):''}</div>
+    ${pv.warn?`<div style="margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#FBE4E1;color:#8C1D18;font-size:13.5px;font-weight:600">${esc(pv.warn)}</div>`:''}
     <div style="background:#e7f6dc;border-radius:12px;padding:10px;font-size:14px;line-height:1.4;white-space:pre-wrap;color:#1f2d1a">${pv.image?`<img src="${esc(pv.image)}" alt="Payment QR" style="width:100%;max-width:240px;border-radius:8px;display:block;margin-bottom:8px">`:''}${pv.text?esc(pv.text):'<i>The exact wording could not be loaded from WhatsApp. It will go as the approved template.</i>'}</div>
     <div style="font-size:12.5px;color:#6b5a4c;margin:10px 0 14px">${esc(pv.note||'')}</div>
-    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ol" id="wpvNo">Cancel</button><button class="btn" id="wpvGo">Send now</button></div></div>`;
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ol" id="wpvNo">Cancel</button><button class="btn" id="wpvGo">${pv.warn?'Send anyway':'Send now'}</button></div></div>`;
   document.body.appendChild(o);
   o.querySelector('#wpvNo').onclick=()=>o.remove();
   o.addEventListener('click',ev=>{if(ev.target===o)o.remove()});
