@@ -1,0 +1,5 @@
+# backend code must never be published with the website
+Code.gs
+worker*.js
+*.gs
+.env*
