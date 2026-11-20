@@ -1586,7 +1586,7 @@ function quoApply(x){const M=quoMenu(),pk=x.pk;if(!M||!pk||!pk.c)return;let d=''
   else if(pk.c==='cookies'){const c=M.B.cookies.find(z=>z.id===pk.i);if(!c||!pk.s)return;d=c.name+' Cookies - '+(+pk.s<1000?pk.s+' g':'1 kg');r=Math.round((+M.E['k|'+c.id]||0)*(+pk.s)/250)}
   else{const g=M.B.pc.find(z=>'pc:'+z.group===pk.c),c=g&&g.items.find(z=>z.id===pk.i);if(!c)return;d=c.name+' - box of '+c.size;r=+M.E['p|'+c.id+'|box']||0}
   x.d=d;x.r=r}
-const quoNA=k=>'autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" name="q_'+k+'_'+Math.random().toString(36).slice(2,7)+'"';
+const quoNA=k=>'autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" name="q_'+k+'_'+Math.random().toString(36).slice(2,7)+'"'+((k==='name'||k==='phone')&&window.matchMedia&&matchMedia('(pointer:fine)').matches?' readonly onfocus="this.removeAttribute(\'readonly\')"':'');
 function quoSugShow(k){const el=$('quoSug');if(!el)return;const s=String(QU&&QU[k]||'').trim().toLowerCase();if((k!=='name'&&k!=='phone')||s.length<2){el.innerHTML='';return}
   const h=poCustomers().filter(c=>(c.name+' '+c.phone).toLowerCase().includes(s)).slice(0,6);
   el.innerHTML=h.length?`<div style="border:1px solid var(--line);border-radius:12px;margin-top:4px;overflow:hidden">${h.map(c=>`<button type="button" data-qsug="${c.phone}" style="display:flex;justify-content:space-between;width:100%;padding:10px 12px;border:0;border-top:1px solid var(--line);background:#fff;text-align:left"><b>${esc(c.name||'No name')}</b><span style="color:var(--mut)">${c.phone}</span></button>`).join('')}</div>`:''}
