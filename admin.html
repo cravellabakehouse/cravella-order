@@ -1130,7 +1130,7 @@ function qrStat(ph){const M=D.msc&&D.msc[ph];if(!M)return '<div class="qrs" data
   const q=M.filter(m=>m.dir==='out'&&msLab(m)==='Payment QR').slice(-1)[0];
   if(!q)return '<div class="qrs" data-ph="'+ph+'">No payment QR has been sent to this customer yet.</div>';
   const tm=new Date(q.t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'});
-  if(q.status==='failed')return '<div class="qrs bad" data-ph="'+ph+'">Payment QR NOT delivered at '+tm+(q.err?' ('+esc(String(q.err).slice(0,50))+')':'')+'. She has not got it. Send it again.</div>';
+  if(q.status==='failed')return '<div class="qrs bad" data-ph="'+ph+'">Payment QR NOT delivered at '+tm+(q.err?' ('+esc(String(q.err).slice(0,50))+')':'')+'. The customer has not got it. Send it again.</div>';
   if(q.status==='read'||q.status==='delivered')return '<div class="qrs ok" data-ph="'+ph+'">Payment QR '+(q.status==='read'?'read':'delivered')+' at '+tm+'. Waiting for her payment.</div>';
   return '<div class="qrs" data-ph="'+ph+'">Payment QR sent at '+tm+', not yet delivered. Check again in a minute.</div>'}
 function qrBlock(o){const ph='91'+String(o.phone).replace(/\D/g,'').slice(-10);if(!(D.msc&&D.msc[ph]))setTimeout(()=>msKick(ph),0);
