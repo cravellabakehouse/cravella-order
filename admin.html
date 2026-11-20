@@ -1118,13 +1118,19 @@ function msLab(m){const b=String(m.body||''),k=/^\[([a-z0-9_]+)\]/.exec(b);if(k)
 function msLines(msgs){const out=(msgs||[]).filter(m=>m.dir==='out'&&m.kind!=='reaction').slice(-8).reverse();if(!out.length)return '<div class="hint">Nothing sent to this customer yet.</div>';
   const tf=t=>{const d=new Date(t),same=d.toDateString()===new Date().toDateString();return d.toLocaleString('en-IN',same?{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'}:{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'})};
   return out.map(m=>{const s=MSS[m.status]||['','#6b5a4c'];return `<div class="msr"><span>${esc(tf(m.t))} · ${esc(msLab(m))}</span><b style="color:${s[1]}">${esc(s[0])}${m.status==='failed'&&m.err?' ('+esc(String(m.err).slice(0,40))+')':''}</b></div>`}).join('')}
-async function msKick(ph){D.msb=D.msb||{};if(D.msb[ph])return;D.msb[ph]=1;try{const r=await api({action:'admin_wa_thread',phone:ph});if(r&&r.ok){D.msc=D.msc||{};D.msc[ph]=r.msgs||[]}}catch(_){}D.msb[ph]=0;const h=D.msc&&D.msc[ph]?msLines(D.msc[ph]):'Could not load. Close and open this again.';document.querySelectorAll('.msb[data-ph="'+ph+'"]').forEach(el=>{el.innerHTML=h})}
+async function msKick(ph){D.msb=D.msb||{};if(D.msb[ph])return;D.msb[ph]=1;try{const r=await api({action:'admin_wa_thread',phone:ph});if(r&&r.ok){D.msc=D.msc||{};D.msc[ph]=r.msgs||[]}}catch(_){}D.msb[ph]=0;const h=D.msc&&D.msc[ph]?msLines(D.msc[ph]):'Could not load. Close and open this again.';document.querySelectorAll('.msb[data-ph="'+ph+'"]').forEach(el=>{el.innerHTML=h});document.querySelectorAll('.qrs[data-ph="'+ph+'"]').forEach(el=>{el.outerHTML=qrStat(ph)})}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.classList&&d.classList.contains('opp')&&/^ms\|/.test(d.dataset.k||'')&&d.open){const b=d.querySelector('.msb');if(b)msKick(b.dataset.ph)}},true);
 function msSec(o){const ph='91'+String(o.phone).replace(/\D/g,'').slice(-10),open=D.oopen&&D.oopen['ms|'+o.id];if(open&&!(D.msc&&D.msc[ph]))setTimeout(()=>msKick(ph),0);
   return `<details class="opp" data-k="ms|${esc(o.id)}"${open?' open':''}><summary>Messages sent to customer</summary><div class="msb" data-ph="${ph}">${D.msc&&D.msc[ph]?msLines(D.msc[ph]):'Loading…'}</div><button class="btn ol sm" data-wchat="${ph}" style="margin-top:8px">Open chat</button></details>`}
-function qrBlock(o){const L=(D.wa&&D.wa.log)||[],l4=String(o.phone).replace(/\D/g,'').slice(-4);let last=null;L.forEach(x=>{if(/qr|payment/i.test(x.tpl||'')&&String(x.to).slice(-4)===l4&&x.t>=(o.placedMs||0)&&(!last||x.t>last.t))last=x});
-  const st=last?(last.ok?`<div class="qrs ok">Payment QR handed to WhatsApp at ${esc(tShort(last.t))}. If the chat shows it red, send it again.</div>`:`<div class="qrs bad">Payment QR was not accepted${last.err?': '+esc(last.err):''}. Send it again.</div>`):'<div class="qrs">No payment QR sent from here yet.</div>';
-  return `<div class="qrb">${st}<button class="btn owa-main" data-wasend="${esc(o.id)}|c"><b>Send payment QR again</b><small>Shows a preview first. Nothing is sent until you confirm.</small></button></div>`}
+function qrStat(ph){const M=D.msc&&D.msc[ph];if(!M)return '<div class="qrs" data-ph="'+ph+'">Checking the chat…</div>';
+  const q=M.filter(m=>m.dir==='out'&&msLab(m)==='Payment QR').slice(-1)[0];
+  if(!q)return '<div class="qrs" data-ph="'+ph+'">No payment QR has been sent to this customer yet.</div>';
+  const tm=new Date(q.t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'});
+  if(q.status==='failed')return '<div class="qrs bad" data-ph="'+ph+'">Payment QR NOT delivered at '+tm+(q.err?' ('+esc(String(q.err).slice(0,50))+')':'')+'. She has not got it. Send it again.</div>';
+  if(q.status==='read'||q.status==='delivered')return '<div class="qrs ok" data-ph="'+ph+'">Payment QR '+(q.status==='read'?'read':'delivered')+' at '+tm+'. Waiting for her payment.</div>';
+  return '<div class="qrs" data-ph="'+ph+'">Payment QR sent at '+tm+', not yet delivered. Check again in a minute.</div>'}
+function qrBlock(o){const ph='91'+String(o.phone).replace(/\D/g,'').slice(-10);if(!(D.msc&&D.msc[ph]))setTimeout(()=>msKick(ph),0);
+  return `<div class="qrb">${qrStat(ph)}<button class="btn owa-main" data-wasend="${esc(o.id)}|c"><b>Send payment QR again</b><small>Shows a preview first. Nothing is sent until you confirm.</small></button></div>`}
 function orderCard(o){
   if(!D.wa&&!D.waBusy&&nf('wa'))setTimeout(loadWa,0);
   const sc=o.status==='Advance received'?'Advance':o.status,cx=o.status==='Cancelled',pk=o.mode==='Pickup',f=payInfo(o);
