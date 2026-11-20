@@ -751,7 +751,7 @@ function pcCard(d,unit){
   return `<div class="card pcx" data-pc="${d.id}"><div class="pcx-in"><div class="pcx-top">${thumbHtml(d,0,1)}<div class="pcx-tx"><div class="t">${esc(d.name)}</div><div class="d">Box of ${d.size} · <b class="pxp">${price}</b></div>${pxd(d)}</div></div>
   ${multi?`<div class="d" style="font-weight:700;margin:10px 0 4px;width:100%">Choice of Frosting</div><div class="chips fr fx" style="width:100%">${vs.map(x=>`<button class="chip cr ${x.id===sid?'on':''}${isOff(x.id)?' dis':''}" data-fr="${x.id}">${esc(x.fl)}<b>${inr(x.box)}</b></button>`).join('')}</div>`:''}
   ${inord}
-  ${off?'<span class="soldout">Sold out</span>':(multi&&!ready?'<div class="row" style="width:100%;align-items:center;justify-content:space-between;gap:10px"><div class="pr" style="color:#b3302e">Choose a frosting<small>to see the price</small></div><div class="ctl"><button class="add off" data-padd>Add</button></div></div>':ctlHtml(v?v.id:d.id,'pc',pe,pe))}</div>
+  ${off?'<span class="soldout">Sold out</span>':(multi&&!ready?'<div class="row" style="width:100%;align-items:center;justify-content:space-between;gap:10px"><div class="pr" style="color:#b3302e">Choose a frosting<small>to see the price</small></div><div class="ctl"><div class="step pend"><button data-pm aria-label="Less">−</button><span>0</span><button class="p" data-pp aria-label="More">+</button></div><button class="add off" data-padd>Add</button></div></div>':ctlHtml(v?v.id:d.id,'pc',pe,pe))}</div>
   ${v&&pe&&pe!==q?`<div class="row" style="margin-top:6px"><span class="d">${pe/v.size} ${pe/v.size>1?'boxes':'box'} = ${pe} ${unit}</span><span class="pr" style="font-size:15px">${inr(pcAmount(v,pe))}</span></div>`:''}</div>`;
 }
 function cookieCard(d){
