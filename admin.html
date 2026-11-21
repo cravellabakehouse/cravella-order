@@ -1047,7 +1047,7 @@ function moneyHtml(o,f){
     rows+=row(f.full,'Balance',(f.full?'Received':dl?'Not marked as received':'Not received yet')+bs,f.full?inr(o.total-f.adv):canMark?`<button class="btn sm" ${dl?'data-paylate':'data-payfull'}="${esc(o.id)}">Mark received</button>`:inr(o.total-f.adv));
   }
   return `<div class="pm"><div class="pm-top"><div><small>Total</small><b>${inr(o.total)}</b></div><div class="g"><small>Paid</small><b>${inr(f.paidAmt)}</b></div><div class="${f.due?'d':'g'}"><small>Still due</small><b>${inr(f.due)}</b></div></div>
-  <div class="pm-bar"><i style="width:${pct}%"></i></div>${rows}</div>${(!f.cx&&!f.full&&o.status!=='Cancelled')?`<div class="pm-h"><button class="btn ol sm" data-sbill="${esc(o.id)}">🧾 ${o.inv?'Send bill again':'Send bill'}</button> <button class="btn ol sm" data-sbillcopy="${esc(o.id)}">⬇ Download bill copy</button> <span>Copy to check or print first. Uses no invoice number and sends nothing. Send bill = tax invoice + pay link on WhatsApp, works before or after delivery.</span></div>`:''}${pk?'':o.own?'<div class="pm-h">We deliver this order ourselves. No delivery charge.</div>':'<div class="pm-h">Porter delivery charge is at actuals, collected separately.</div>'}`
+  <div class="pm-bar"><i style="width:${pct}%"></i></div>${rows}</div>${(!f.cx&&!f.full&&o.status!=='Cancelled')?`<div class="pm-h"><button class="btn ol sm" data-sbill="${esc(o.id)}">🧾 ${o.inv?'Send bill again':'Send bill'}</button> ${(/^Phone order/i.test(String(o.notes||''))&&!o.paid&&!o.inv&&!o.gstIncl&&o.status!=='Delivered')?`<button class="btn ol sm" data-adjp="${esc(o.id)}">✏️ Adjust price</button> `:''}<button class="btn ol sm" data-sbillcopy="${esc(o.id)}">⬇ Download bill copy</button> <span>Copy to check or print first. Uses no invoice number and sends nothing. Send bill = tax invoice + pay link on WhatsApp, works before or after delivery.</span></div>`:''}${pk?'':o.own?'<div class="pm-h">We deliver this order ourselves. No delivery charge.</div>':'<div class="pm-h">Porter delivery charge is at actuals, collected separately.</div>'}`
 }
 function stepsHtml(o,f){
   const pk=o.mode==='Pickup',bqOn=D.bq&&D.bq.on,rvOn=D.rv2&&D.rv2.on,ix=f.ix,dl=o.status==='Delivered';
@@ -1269,6 +1269,19 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-plse
   }catch(_){b.disabled=false;toast('No connection')}},true);
 async function payMark(o,k,amt){if(k!=='adv'&&k!=='full')return;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:k,amt:k==='adv'?amt:undefined});if(!r.ok){toast(r.error||'Could not save the payment');return}o.paid=r.paid;o.status=r.status;if(k==='adv'&&amt&&Number(r.paid&&r.paid.amt)!==amt){saveCache();render();toast('Saved as '+inr(Number(r.paid&&r.paid.amt))+', not '+inr(amt)+'. The server needs the latest update, so the PDF was NOT sent. Use Correct once it is updated.');return}if(r.inv)o.inv=r.inv;saveCache();const y=scrollY;render();scrollTo(0,y);
   toast('Saved. Sending the invoice PDF…');const p=await epMake(o);const s=await api({action:'admin_wa_send_pdf',id:o.id,pdf:p.b64,conf:1});toast(s.ok?'Invoice PDF sent to '+String(o.name).split(' ')[0]+' on WhatsApp':'Payment saved, but the PDF was not sent: '+(s.error||'error'))}catch(_){toast('No connection')}}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-adjp]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.adjp);if(!o||b.disabled)return;
+  const sub=Math.round(Number(o.subtotal)||0),rate=o.noGst?0:(Number(o.gstRate)>0?Number(o.gstRate):5),calc=d=>{const g=o.noGst?0:Math.round((sub-d)*rate/100);return{d:d,g:g,t:sub-d+g}};
+  const v=prompt('New final amount for '+o.id+' (the total the customer pays, GST included).\nCurrent total: '+inr(o.total)+'\nSubtotal before discount: '+inr(sub),String(Math.round(o.total)));if(v===null)return;
+  const want=Math.round(Number(String(v).replace(/[^0-9.]/g,'')));if(!(want>0)){toast('Please enter an amount.');return}
+  let best=null;for(let d=0;d<sub;d++){const c=calc(d);if(!best||Math.abs(c.t-want)<Math.abs(best.t-want))best=c;if(c.t===want)break}
+  if(!best||want>sub+calc(0).g){toast('That amount is higher than the order subtotal. Nothing changed.');return}
+  if(!confirm('Change '+o.id+' to '+inr(best.t)+'?\n\nSubtotal: '+inr(sub)+'\nDiscount: −'+inr(best.d)+'\n'+(o.noGst?'No GST':'GST '+rate+'%: '+inr(best.g))+'\nNew total: '+inr(best.t)+(best.t!==want?'\n\nNote: '+inr(want)+' is not exactly possible with whole-rupee discounts, this is the closest.':'')+'\n\nOld estimate PDFs already sent will show the old price.'))return;
+  b.disabled=true;const t0=b.textContent;b.textContent='Saving…';
+  try{const r=await api({action:'admin_order_adjust',id:o.id,discount:best.d});
+    if(r&&r.ok){o.discount=r.discount;o.discNote=r.discNote;o.gst=r.gst;o.total=r.total;saveCache();const y=scrollY;render();scrollTo(0,y);toast(o.id+' is now '+inr(r.total))}
+    else toast((r&&r.error)||'Could not change the price. The server may need the latest update.')}
+  catch(_){toast('No connection. Check it and try again.')}
+  finally{b.disabled=false;b.textContent=t0}},true);
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-sbillcopy]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.sbillcopy);if(!o||b.disabled)return;
   if(o.paid&&o.paid.k==='full'){toast('Already paid in full. Use the Tax invoice PDF in More.');return}
   b.disabled=true;const t0=b.textContent;b.textContent='Preparing…';o.billPrev=1;
