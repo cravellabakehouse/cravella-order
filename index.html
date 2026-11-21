@@ -130,11 +130,11 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .inord{font-size:12px;font-weight:600;color:var(--ok);margin-top:3px}.incart{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line,#e6d6c2)}.incart .line{padding:6px 0}
 .banner{background:#fff4e4;color:#7a5a30;border-bottom:1px solid #f0dcb8;text-align:center;font-size:14px;font-weight:600;padding:9px 16px;line-height:1.35}.banner:empty{display:none}
 .soldout{color:var(--mut);font-weight:700;font-size:13px;padding:6px 10px;border:1px dashed var(--line);border-radius:10px}
-.offer{background:#1f6b3f;color:#fff;text-align:center;font-size:11px;font-weight:700;padding:9px 14px;line-height:1.35}
+.offer{background:#1f6b3f;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:9px 14px;line-height:1.35}
 .offer:empty{display:none}
 .offer{overflow:hidden;white-space:nowrap;padding:9px 0}
 .offer .trk{display:inline-flex;animation:offs 32s linear infinite;will-change:transform}
-.offer .trk span{padding:0 9px;font-size:11px!important}.offer .trk span+span::before{content:'•';margin-right:18px;opacity:.6}
+.offer .trk span{padding:0 9px;font-size:13px!important}.offer .trk span+span::before{content:'•';margin-right:18px;opacity:.6}
 .offer:hover .trk{animation-play-state:paused}
 @keyframes offs{to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){.offer{overflow-x:auto;scrollbar-width:none}.offer .trk{animation:none}}
@@ -1265,7 +1265,7 @@ function offerStrip(){const asc=[...TIERS()].sort((a,b)=>a[0]-b[0]);const disc=a
   const src=Array.isArray(ST.items)&&ST.items.length?ST.items:def;
   const items=src.filter(q=>q.on!==false).map(q=>q.k==='disc'?disc:q.k==='fest'?fst:q.t).filter(Boolean),one=items.map(t=>'<span>'+esc(t)+'</span>').join('');
   if(!items.length){$('offer').innerHTML='';return}
-  $('offer').style.fontSize='11px';$('offer').innerHTML='<div class="trk" style="animation-duration:'+(+ST.speed||32)+'s" aria-label="'+esc(items.join('. '))+'">'+one+one+'</div>'}
+  $('offer').style.fontSize='13px';$('offer').innerHTML='<div class="trk" style="animation-duration:'+(+ST.speed||32)+'s" aria-label="'+esc(items.join('. '))+'">'+one+one+'</div>'}
 offerStrip();
 $('cpnGo').onclick=async()=>{
   const code=$('cpnIn').value.trim();if(!code)return setCpn('Please enter a coupon code.','bad');
