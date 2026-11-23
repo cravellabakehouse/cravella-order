@@ -1167,7 +1167,7 @@ function orderCard(o){
   <details class="opp" data-k="bd|${esc(o.id)}"${D.oopen&&D.oopen['bd|'+o.id]?' open':''}><summary>Order details and bill · ${inr(o.total)}</summary><div class="oc-grid">
     <div class="oi"><small>${pk?'🛍 Pickup':'🚚 Delivery'}</small><b>${when}</b></div>
     <div class="oi"><small>📞 Customer</small><b><a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></b><button class="oi-wa" data-wchat="91${esc(ph)}">💬 Chat on WhatsApp</button></div>
-    <div class="oi wide"><small>💳 Payment terms</small><b>${o.later?'Pay later, no advance':'Advance of '+inr(f.adv)+' (minimum 50%), balance on '+(pk?'pickup':'delivery')}</b></div>
+    <div class="oi wide"><small>💳 Payment terms</small><b>${o.later?'Pay later, no advance':'Advance of '+inr(f.adv)+' (minimum 50%), balance on '+(pk?'pickup':'delivery')}</b>${o.paid&&o.paid.k==='full'&&!cx?`<button class="btn ol sm" style="margin-top:6px" data-advfix="${esc(o.id)}">Correct payment</button>`:''}</div>
     ${o.email&&!/@mobile\.cravella$/.test(o.email)?`<div class="oi"><small>✉ Email</small><b>${esc(o.email)}</b></div>`:''}
   </div>
   <table class="otb"><thead><tr><th>Item</th><th class="q">Qty</th><th class="p">Price</th></tr></thead><tbody>${o.lines.filter(Boolean).map(l=>{const r=lineRow(l);return `<tr><td>${esc(r.n)}</td><td class="q">${esc(r.q)}</td><td class="p">${r.a!=null?inr(r.a):''}</td></tr>`}).join('')}</tbody>
@@ -1300,11 +1300,11 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-sbil
     else toast((r&&r.error)||'Could not send the bill')}
   catch(_){toast('No connection. Check it and try again.')}
   finally{delete o.billNow;b.disabled=false;b.textContent=t0}},true);
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-advfix]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.advfix);if(!o||!o.paid||o.paid.k!=='adv')return;
-  const cur=Number(o.paid.amt)||Math.round(o.total/2),inp=prompt('Advance amount actually received for '+o.id+' (₹)',cur);if(inp===null)return;const v=Math.round(+inp);
-  if(!(v>=1&&v<=o.total)){toast('Enter an amount between ₹1 and '+inr(o.total));return}if(v===cur){toast('That is already the amount saved');return}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-advfix]');if(!b)return;e.preventDefault();e.stopPropagation();const o=D.orders.find(x=>x.id===b.dataset.advfix);if(!o||!o.paid||(o.paid.k!=='adv'&&o.paid.k!=='full'))return;
+  const fullFix=o.paid.k==='full',cur=fullFix?0:(Number(o.paid.amt)||Math.round(o.total/2)),inp=prompt(fullFix?'This order is marked as paid in full ('+inr(o.total)+'). Enter the amount actually received for '+o.id+' (₹). It will be saved as the advance and the balance will be due.':'Advance amount actually received for '+o.id+' (₹)',fullFix?'':cur);if(inp===null)return;const v=Math.round(+inp);
+  if(!(v>=1&&v<=o.total)||(fullFix&&v>=o.total)){toast(fullFix?'Enter the amount actually received, less than '+inr(o.total):'Enter an amount between ₹1 and '+inr(o.total));return}if(!fullFix&&v===cur){toast('That is already the amount saved');return}
   b.disabled=true;try{const r=await api({action:'admin_wa_paid',id:o.id,kind:'adv',amt:v,fix:1});if(!r.ok){toast(r.error||'Could not save');b.disabled=false;return}
-    o.paid=r.paid;saveCache();const y=scrollY;render();scrollTo(0,y);toast('Advance corrected to '+inr(v)+'. Balance is '+inr(o.total-v)+'.');
+    o.paid=r.paid;if(fullFix){o.inv=r.inv||null;if(r.status)o.status=r.status}saveCache();const y=scrollY;render();scrollTo(0,y);toast((fullFix?'Payment corrected to ':'Advance corrected to ')+inr(v)+'. Balance is '+inr(o.total-v)+'.'+(r.voided?' Invoice '+r.voided+' was cancelled and archived. Tell your CA.':''));
     if(confirm('Send the corrected confirmation PDF to '+String(o.name).split(' ')[0]+' on WhatsApp now?\n\nCancel keeps it unsent. You can still download it from the order.')){toast('Sending the corrected PDF…');const p=await epMake(o);const s2=await api({action:'admin_wa_send_pdf',id:o.id,pdf:p.b64,conf:1});toast(s2.ok?'Corrected PDF sent':'Saved, but the PDF was not sent: '+(s2.error||'error'))}}catch(_){toast('No connection');b.disabled=false}},true);
 async function payLate(o,btn){if(D.plBusy)return;if(!confirm('Mark the '+inr(o.total-Math.round(o.total/2))+' balance as received for '+o.id+'? The order stays Delivered and nothing is sent to the customer.'))return;
   D.plBusy=1;if(btn){btn.disabled=true}toast('Saving…');
