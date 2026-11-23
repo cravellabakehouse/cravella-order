@@ -1038,7 +1038,7 @@ function moneyHtml(o,f){
   const pd=o.paid&&o.paid.at?new Date(o.paid.at).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
   let rows='';
   if(f.later){const bs=f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):'';const canMark=!f.full&&!f.cx&&o.status==='Ready';rows=row(f.full,'Full payment',(f.full?'Received':'No advance asked. '+(o.status==='Ready'?(f.reqT?'Request sent.':'Request it now.'):'Request it once ready.'))+bs,canMark?`<button class="btn sm" data-plpaid="${esc(o.id)}">Mark received</button>`:inr(o.total))}
-  else if(f.once)rows=row(true,'Paid in full',(pd?'Received '+pd:'Received')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(o.total));
+  else if(f.once)rows=row(true,'Paid in full',(pd?'Received '+pd:'Received')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(o.total)+(o.paid&&o.paid.k==='full'&&!f.cx?` <button class="btn ol sm" data-advfix="${esc(o.id)}">Correct</button>`:''));
   else{
     rows=row(f.advPaid,'Advance'+(f.adv*2===o.total?' 50%':''),(f.advPaid?'Received'+(o.paid&&o.paid.k==='adv'&&pd?' '+pd:''):'Not received yet')+(f.advShots.length?' · '+shotBtns(f.advShots,'screenshot'):''),inr(f.adv)+(o.paid&&o.paid.k==='adv'&&!f.cx?` <button class="btn ol sm" data-advfix="${esc(o.id)}">Correct</button>`:''));
     if(!f.advPaid&&!f.full&&!f.cx)rows+=row(false,'Paid in full','Customer paid the whole amount upfront',`<button class="btn sm" data-payfullup="${esc(o.id)}">Mark paid in full</button>`);
