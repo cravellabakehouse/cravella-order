@@ -1077,16 +1077,16 @@ function homeHtml(){
    hero:()=>{const hc=sx('col').hero||{},ok=v=>/^#[0-9a-f]{6}$/i.test(v||''),hs=(bgCss(hc)?'background:'+bgCss(hc)+' !important;':'')+(ok(hc.fg)?'color:'+hc.fg+' !important;':''),ts=ok(hc.fg)?' style="color:'+hc.fg+' !important;text-shadow:none"':'';return `<div class="hero hasEgg${galOn?' sm':''}${(!GAL.length&&FX().props&&festOn())?' fxp':''}"${hs?' style="'+hs+'"':''}><span class="egg" aria-label="100% Eggless"><b>100%</b>Eggless</span><h2${ts}>${esc(H.t||'Fresh, eggless & baked to order')}</h2><h2 class="sub"${ts}>${esc(H.s||"Cakes and bakes need 1 day's notice. Theme cakes need 2 days.")}</h2><button data-go="custom">${esc(H.b||'Custom theme cakes ›')}</button><i>🎂</i>${GAL.length?'':heroFx()}</div>`},
    cakes:q=>car(T(q,'Cakes'),'cakes',cakes.map((c,i)=>tile(c,cakeFrom(c),c.desc||'','cakes','🎂',i)).join('')),
    cupcakes:q=>car(T(q,'Cupcakes · box of 6'),'cupcakes',pcTop(MENU.cupcakes).map((d,i)=>tile(d,'from '+inr(Math.min(...pcVars(d).map(x=>x.box))),'Box of '+d.size,'cupcakes','🧁',i+2)).join('')),
-   muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
-   cookies:q=>car(T(q,'Cookies · per 250 g'),'cookies',MENU.cookies.map((d,i)=>tile(d,inr(d.rate),'per 250 g','cookies','🍪',i+1)).join('')),
-   brownies:q=>car(T(q,'Brownies &amp; blondies'),'brownies',bro.map((d,i)=>tile(d,inr(d.box),'Box of '+d.size,'brownies','🍫',i+6)).join('')),
+   muffins:q=>car(T(q,'Muffins · box of 6'),'muffins',MENU.muffins.map((d,i)=>tile(d,'from '+inr(d.box),inr(d.rate)+' each','muffins','🧁',i+4)).join('')),
+   cookies:q=>car(T(q,'Cookies · per 250 g'),'cookies',MENU.cookies.map((d,i)=>tile(d,'from '+inr(d.rate),'per 250 g','cookies','🍪',i+1)).join('')),
+   brownies:q=>car(T(q,'Brownies &amp; blondies'),'brownies',bro.map((d,i)=>tile(d,'from '+inr(d.box),'Box of '+d.size,'brownies','🍫',i+6)).join('')),
    diwali:()=>diwaliHtml(),
    dwchoc:q=>chocHtml(q),
    puzzle:()=>puzzleHtml(),
    crumb:()=>crumbHtml(),
    wa:()=>waCardHtml(),
    reviews:()=>reviewsHtml()};
-  return hgHtml()+secs.filter(q=>q.on!==false).map((q,i)=>P[q.id](q)+(i===0?rvBadge():'')).join('')}
+  return hgHtml()+secs.filter(q=>q.on!==false).map((q,i)=>P[q.id](q)).join('')}
 function dwItems(d){return `<ul class="dwl">${d.items.map(i=>`<li><span>${i[0]}</span><div><b>${esc(i[1])}</b>${i[2]?` <small>(${esc(i[2])})</small>`:''}</div><em>${esc(i[3])}</em></li>`).join('')}</ul>`}
 function diwaliHtml(){if(siteSecs().some(q=>q.id==='dwchoc'&&q.on!==false))return '';const d=GIFTS[0],q=S.gift[d.id]||0;return `<div class="hs dwhs"><span>🪔 Diwali special ✨</span></div><div class="dwc"><button class="dwi" data-gzoom aria-label="View full photo"><img src="${dwImg()}" alt="Cravella Diwali gift box" loading="lazy"><i>⤢</i>${dwOff(d)?`<s class="dwoff">${dwOff(d)}% OFF</s>`:''}</button><div class="dwt"><b class="dwh">🪔 ${esc(d.name)}</b><p class="dwtag">${esc(d.tag)}</p>${dwItems(d)}${dwOff(d)?`<p class="dwofl">🎉 Diwali offer: ${dwOff(d)}% off till 15 Nov</p>`:''}<div class="dwr"><b>${dwOff(d)?`<del>${inr(d.price)}</del> `:''}${inr(dwPrice(d))} <span>/ box${d.min>1?' · min '+d.min:''}</span></b>${q?`<div class="step"><button data-gm aria-label="One box less">−</button><span>${q}</span><button class="p" data-gp aria-label="One box more">+</button></div>`:`<button class="add" data-gadd>Add${d.min>1?' '+d.min:''}</button>`}</div></div></div>`}
 const CHOC_TAG='Indulge in handcrafted Chocolate Truffles &amp; Fruit-Filled Chocolates in Strawberry, Blueberry, Pineapple and Mango flavours. ❤️';
