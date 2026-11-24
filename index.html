@@ -1725,13 +1725,13 @@ if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'
   function sync(){
     var a=document.getElementById('acct'),acctOpen=!!(a&&a.classList.contains('on')),n=0;
     try{n=totals().count}catch(_){}
-    try{if(S.placed||homeHide)eng=false;else if(n>0)eng=true}catch(_){}
+    try{eng=!S.placed&&n>0}catch(_){eng=false}
     b.classList.toggle('nav-on',acctOpen||eng);
   }
   window.navSync=sync;
   document.addEventListener('click',function(e){
     var t=e.target;if(!t||!t.closest||!t.closest('#panel'))return;
-    if(t.closest('button,a,input,label,[role="button"],[tabindex],[data-cake],[data-pc],[data-ck],[data-gadd],[data-gp],[data-gm],[data-gzoom]')){homeHide=false;eng=true;sync()}
+    if(t.closest('button,a,input,label,[role="button"],[tabindex],[data-cake],[data-pc],[data-ck],[data-gadd],[data-gp],[data-gm],[data-gzoom]')){sync()}
   },true);
   /* coming back to the home screen hides the dock again (until the next tap on an item).
      The check runs BEFORE the screen redraws, so the dock starts sliding down straight away. */
