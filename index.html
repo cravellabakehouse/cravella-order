@@ -151,6 +151,7 @@ input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--acc);outli
 .gal .hs{margin:8px 0 6px;font-size:14px}.gal .hs button{font-size:12px}.hero.sm{min-height:0;padding:12px 16px;margin:6px 0 2px;border-radius:16px}.hero.sm h2{font-size:17px;max-width:none}.hero.sm p{margin:3px 0 0;max-width:none;font-size:12px}.hero.sm button,.hero.sm>i{display:none}
 .gbtn{display:block;width:100%;margin:12px 0 0;padding:14px 16px;border-radius:14px;background:var(--ok,#2f7d4f);color:#fff;font-weight:800;font-size:16px;text-align:center;line-height:1.25}.gbtn.sm{display:inline-block;width:auto;margin:0;padding:10px 18px;font-size:14.5px;border-radius:999px}.gbtn.sm small{display:inline;margin:0 0 0 6px;font-size:inherit;font-weight:inherit;opacity:1}.gbtn.sm{background:none;border:0;box-shadow:none;color:#16236b;padding:4px 2px;border-radius:0;font-size:15.5px;text-decoration:underline;text-decoration-color:rgba(22,35,107,.35);text-underline-offset:4px}.gbtn.sm::before{content:'\1F449';margin-right:7px;text-decoration:none;display:inline-block}.gbtn.sm small{font-weight:600;opacity:.75}.gbw{text-align:center;margin:8px 0 4px}
 .gbtn small{display:block;font-weight:600;font-size:13px;opacity:.92;margin-top:2px}
+.hgx{margin:6px 0 10px}.hgx .gl-tr{gap:0;padding:0;border-radius:24px}.hgs{flex:0 0 100%;height:210px;scroll-snap-align:center;overflow:hidden;position:relative;margin:0;background:#eee3d3;border-radius:24px}.hgs img{width:100%;height:100%;object-fit:cover;object-position:50% 45%;display:block;transform:scale(var(--z,1))}.hgs figcaption{position:absolute;left:12px;bottom:12px;max-width:80%;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 12.5px 'Hanken Grotesk',sans-serif}
 .gl-dots{display:flex;gap:6px;justify-content:center;margin:6px 0 0}.gl-dots i{width:7px;height:7px;border-radius:50%;background:#d9c7a6;transition:.2s}.gl-dots i.on{background:var(--ok,#1f7a4d);width:18px;border-radius:5px}
 .gl-cta{display:block;margin:6px auto 0;text-align:center;font-weight:700;font-size:13px}
 .gift{font-weight:700;margin-bottom:6px}.gcode{font-size:26px;font-weight:800;letter-spacing:.08em;margin:6px 0;color:var(--ok);user-select:all}
@@ -1032,6 +1033,12 @@ document.addEventListener('click',e=>{const z=e.target.closest('[data-gz]');if(!
 window.addEventListener('message',e=>{if(!PV||e.source!==parent||!e.data||e.data.cbSite===undefined)return;SITE=e.data.cbSite;applySite()});
 function siteLoad(){if(PV)return;if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
   fetch(API_URL+'?site=1').then(r=>r.json()).then(o=>{if(!o||typeof o!=='object')return;const ns=Object.keys(o).length?o:null;if(JSON.stringify(ns)===JSON.stringify(SITE))return;SITE=ns;try{localStorage.setItem('cb_site',JSON.stringify(ns))}catch(_){}applySite()}).catch(()=>{})}
+let HGAL=[];try{HGAL=JSON.parse(localStorage.getItem('cb_hgal')||'[]')||[]}catch(_){}
+function hgHtml(){const L=HGAL.length?HGAL:[{fb:1,cap:'Honey Coconut Cake'}];
+  return `<div class="gal hgx"><div class="gl-tr">${L.map((g,i)=>`<figure class="hgs"><img src="${g.fb?'honey-coconut-cake.webp':esc(galUrl(g))}" alt="${esc(g.cap||'Cravella Bake House')}"${g.fb?'':galSt(g)} ${i?'loading="lazy"':''}>${g.cap?`<figcaption>${esc(g.cap)}</figcaption>`:''}</figure>`).join('')}</div>${L.length>1?`<div class="gl-dots">${L.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div>`:''}</div>`}
+function hgLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
+  fetch(API_URL+'?hgal=1').then(r=>r.json()).then(l=>{if(!Array.isArray(l))return;if(JSON.stringify(l)===JSON.stringify(HGAL))return;HGAL=l;try{localStorage.setItem('cb_hgal',JSON.stringify(l))}catch(_){}
+    if(!S.q.trim()&&S.tab==='home')renderPanel();galWire()}).catch(()=>{})}
 function galLoad(){if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
   fetch(API_URL+'?gal=1').then(r=>r.json()).then(l=>{if(!Array.isArray(l))return;if(JSON.stringify(l)===JSON.stringify(GAL))return;GAL=l;try{localStorage.setItem('cb_gal',JSON.stringify(l))}catch(_){}
     if(!S.q.trim()&&(S.tab==='home'||S.tab==='custom'))renderPanel();galWire()}).catch(()=>{})}
@@ -1079,7 +1086,7 @@ function homeHtml(){
    crumb:()=>crumbHtml(),
    wa:()=>waCardHtml(),
    reviews:()=>reviewsHtml()};
-  return secs.filter(q=>q.on!==false).map((q,i)=>P[q.id](q)+(i===0?rvBadge():'')).join('')}
+  return hgHtml()+secs.filter(q=>q.on!==false).map((q,i)=>P[q.id](q)+(i===0?rvBadge():'')).join('')}
 function dwItems(d){return `<ul class="dwl">${d.items.map(i=>`<li><span>${i[0]}</span><div><b>${esc(i[1])}</b>${i[2]?` <small>(${esc(i[2])})</small>`:''}</div><em>${esc(i[3])}</em></li>`).join('')}</ul>`}
 function diwaliHtml(){if(siteSecs().some(q=>q.id==='dwchoc'&&q.on!==false))return '';const d=GIFTS[0],q=S.gift[d.id]||0;return `<div class="hs dwhs"><span>🪔 Diwali special ✨</span></div><div class="dwc"><button class="dwi" data-gzoom aria-label="View full photo"><img src="${dwImg()}" alt="Cravella Diwali gift box" loading="lazy"><i>⤢</i>${dwOff(d)?`<s class="dwoff">${dwOff(d)}% OFF</s>`:''}</button><div class="dwt"><b class="dwh">🪔 ${esc(d.name)}</b><p class="dwtag">${esc(d.tag)}</p>${dwItems(d)}${dwOff(d)?`<p class="dwofl">🎉 Diwali offer: ${dwOff(d)}% off till 15 Nov</p>`:''}<div class="dwr"><b>${dwOff(d)?`<del>${inr(d.price)}</del> `:''}${inr(dwPrice(d))} <span>/ box${d.min>1?' · min '+d.min:''}</span></b>${q?`<div class="step"><button data-gm aria-label="One box less">−</button><span>${q}</span><button class="p" data-gp aria-label="One box more">+</button></div>`:`<button class="add" data-gadd>Add${d.min>1?' '+d.min:''}</button>`}</div></div></div>`}
 const CHOC_TAG='Indulge in handcrafted Chocolate Truffles &amp; Fruit-Filled Chocolates in Strawberry, Blueberry, Pineapple and Mango flavours. ❤️';
@@ -1693,7 +1700,7 @@ document.addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if
   setTimeout(()=>send(''),600);
   try{if(navigator.userAgentData&&navigator.userAgentData.getHighEntropyValues)navigator.userAgentData.getHighEntropyValues(['model','platform']).then(h=>send(h&&h.model?(h.platform||'Android')+' · '+h.model:'')).catch(()=>send(''));else send('')}catch(_){send('')}
   timeTrack();liveTrack()}catch(_){}})();
-loadCart();purgeOff();footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();galWire();siteLoad();if(PV)try{parent.postMessage({cbReady:1},'*')}catch(_){}
+loadCart();purgeOff();footApply();renderAll();accBtn();hdrH();if(A.tok)loadMe();galLoad();hgLoad();galWire();siteLoad();if(PV)try{parent.postMessage({cbReady:1},'*')}catch(_){}
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))fetch(API_URL+'?mp=_map').then(r=>r.json()).then(m=>{if(m&&typeof m==='object'&&JSON.stringify(m)!==JSON.stringify(PHM)){PHM=m;try{localStorage.setItem('cb_ph',JSON.stringify(m))}catch(_){}renderAll()}}).catch(()=>{});
 if(!(API_URL.startsWith('__')||API_URL.includes('PASTE')))api({action:'settings'}).then(r=>{
   if(!r||!r.ok||!r.settings)return;CFG=r.settings;applyNames();applyOrder();try{localStorage.setItem('cb_cfg',JSON.stringify(CFG))}catch(_){}
