@@ -319,7 +319,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .tl{flex:none;width:158px;text-align:left;scroll-snap-align:start;display:block}
 .tl .im{display:grid;place-items:center;height:128px;border-radius:18px;font-size:60px;position:relative;overflow:hidden}
 .tl .im s{position:absolute;left:8px;bottom:8px;text-decoration:none;background:rgba(0,0,0,.68);color:#fff;font:800 11.5px 'Hanken Grotesk';padding:4px 9px;border-radius:8px}
-.tl b{display:block;margin-top:8px;font-size:15px;line-height:1.2}.tl .sb{display:block;margin-top:2px;font-size:12.5px;color:var(--mut);line-height:1.3}.tl .pr{display:block;margin-top:3px;font-size:13px;font-weight:700;color:#2b3a8f;line-height:1.3}
+.tl b{display:block;margin-top:8px;font-size:15px;line-height:1.2}.tl .sb{display:block;margin-top:2px;font-size:12.5px;color:var(--mut);line-height:1.3}.tl .tpx{display:block;margin-top:3px;font-size:13px;font-weight:700;color:#2b3a8f;line-height:1.3}
 .tl.off{opacity:.55}
 /* hover zoom on pictures (mouse devices only) */
 @media (hover:hover) and (pointer:fine){
@@ -901,7 +901,7 @@ const GR=[['#7b4a2b','#3b2416'],['#d97a8a','#8c2f45'],['#f7c04d','#e2872b'],['#8
 function emo(n,f){for(const [r,e] of EM)if(r.test(n))return e;return f}
 function tile(d,price,sub,go,fb,i){
   const off=isOff(d.id),g=GR[i%GR.length],ph=IMG[d.id],rp=phUrl(d.id),bg=rp?`background:#fff url('${rp}') center/cover`:ph?`background:url('${ph}') center 42%/62% no-repeat,linear-gradient(135deg,#fff6cf,#ffe3c6)`:d.img?`background:#fff url('${esc(d.img)}') center/cover`:`background:linear-gradient(135deg,${g[0]},${g[1]})`;
-  return `<button class="tl${off?' off':''}" data-go="${go}" data-jump="${esc(d.id)}"><span class="im" style="${bg}">${d.img||ph||rp?'':emo(d.name,fb)}${d.img||ph||rp?`<span class="tz" data-zoom="${esc(d.id)}" role="button" aria-label="See a bigger photo of ${esc(d.name)}"></span>`:''}${off?'<s>Sold out</s>':''}</span><b>${esc(d.name)}</b><span class="sb">${esc(sub)}</span>${off?'':`<span class="pr">${price}</span>`}</button>`}
+  return `<button class="tl${off?' off':''}" data-go="${go}" data-jump="${esc(d.id)}"><span class="im" style="${bg}">${d.img||ph||rp?'':emo(d.name,fb)}${d.img||ph||rp?`<span class="tz" data-zoom="${esc(d.id)}" role="button" aria-label="See a bigger photo of ${esc(d.name)}"></span>`:''}${off?'<s>Sold out</s>':''}</span><b>${esc(d.name)}</b><span class="sb">${esc(sub)}</span>${off?'':`<span class="tpx">${price}</span>`}</button>`}
 function cakeFrom(c){return 'from '+inr(Math.min(...c.creams.map(x=>x.prices[0])))}
 function car(title,go,tiles){return `<div class="hs"><span>${title}</span><button data-go="${go}">See all ›</button></div><div class="car">${tiles}</div>`}
 const GMAP='https://www.google.com/maps/place/Cravella+Bake+House/@13.0969234,77.6199817,17z/data=!4m8!3m7!1s0x3bae192e00319eef:0x6a29d6d8ca416182!8m2!3d13.0969182!4d77.6225566!9m1!1b1!16s%2Fg%2F11yq1h0x70';
