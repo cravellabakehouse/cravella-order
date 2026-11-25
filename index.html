@@ -322,6 +322,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 .tl .tz::before{content:"";position:absolute;inset:-10px}
 .tl .im .tz~s{left:56px}
 #zoomBox .zx{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+#zoomBox .zb{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;height:44px;padding:0 18px;border-radius:22px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:#fff;font:700 15px 'Hanken Grotesk',sans-serif;cursor:pointer}.hgs{cursor:zoom-in}
 #zoomBox .zt{color:#e6dcf7;font:600 14px 'Hanken Grotesk',sans-serif;text-align:center}
 .rv-btn{display:block;text-align:center;margin:12px 0 8px;padding:11px;border:1.5px solid var(--acc);border-radius:12px;color:var(--acc);font-weight:700;font-size:14px;text-decoration:none}
 .car{scroll-padding-left:16px;display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scroll-snap-type:x proximity;scrollbar-width:none}.car::-webkit-scrollbar{display:none}
@@ -1039,7 +1040,9 @@ function galTick(){const G=sx('gal');setTimeout(galTick,Math.max(2000,(+G.secs||
 setTimeout(galTick,3500);
 setInterval(()=>{if(sx('gal').auto===false||document.hidden||Date.now()<galHold||matchMedia('(prefers-reduced-motion:reduce)').matches)return;document.querySelectorAll('.hgx .gl-tr').forEach(tr=>{const n=tr.children.length;if(n<2)return;const r=tr.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;galGo(tr,(galIdx(tr)+1)%n)})},2200);
 document.addEventListener('click',e=>{if(e.target.closest('[data-hgo]')){const hs=[...document.querySelectorAll('#panel .hs')],t=hs.find(h=>/^cakes/i.test(h.textContent.trim()))||hs[0];if(t){const tb=$('tabs'),off=(parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+14;scrollTo({top:Math.max(0,t.getBoundingClientRect().top+scrollY-off),behavior:'smooth'})}return}const z=e.target.closest('[data-gz]');if(!z)return;const g=GAL[+z.dataset.gz];if(!g)return;
-  const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<img alt="" src="${esc(galUrl(g))}">${g.cap?`<b>${esc(g.cap)}</b>`:''}`;b.onclick=()=>b.remove();document.body.appendChild(b)});
+  openZoom(galUrl(g),g.cap)});
+function openZoom(src,cap){if(document.getElementById('zoomBox'))return;const b=document.createElement('div');b.id='zoomBox';b.innerHTML=`<button class="zb" aria-label="Go back">‹ Back</button><img alt="" src="${esc(src)}">${cap?`<b>${esc(cap)}</b>`:''}`;const cl=()=>{b.remove();document.removeEventListener('keydown',kd)},kd=e=>{if(e.key==='Escape')cl()};b.onclick=cl;document.addEventListener('keydown',kd);document.body.appendChild(b)}
+document.addEventListener('click',e=>{const h=e.target.closest('.hgs');if(!h||e.target.closest('button,a,[data-hgo]'))return;const im=h.querySelector('img');if(im&&im.src)openZoom(im.currentSrc||im.src,h.querySelector('figcaption')?h.querySelector('figcaption').textContent:'')});
 window.addEventListener('message',e=>{if(!PV||e.source!==parent||!e.data||e.data.cbSite===undefined)return;SITE=e.data.cbSite;applySite()});
 function siteLoad(){if(PV)return;if(API_URL.startsWith('__')||API_URL.includes('PASTE'))return;
   fetch(API_URL+'?site=1').then(r=>r.json()).then(o=>{if(!o||typeof o!=='object')return;const ns=Object.keys(o).length?o:null;if(JSON.stringify(ns)===JSON.stringify(SITE))return;SITE=ns;try{localStorage.setItem('cb_site',JSON.stringify(ns))}catch(_){}applySite()}).catch(()=>{})}
