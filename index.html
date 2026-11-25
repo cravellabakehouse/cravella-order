@@ -673,6 +673,9 @@ function renderTabs(){
   $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${n}${cnt[k]?`<span class="n">${cnt[k]}</span>`:''}</button>`).join('');
 }
 let CFG={unavailable:[],closed:[],full:{cake:[],other:[]},banner:''};
+(function(){const W=x=>/^whipped cream$/i.test(String(x||'').trim());
+MENU.cakes.forEach(c=>{if(Array.isArray(c.creams)&&c.creams.length>1){const k=c.creams.filter(x=>!W(x.label));if(k.length)c.creams=k}});
+const cu=MENU.cupcakes;cu.filter(d=>W(d.fl)).forEach(w=>{const kids=cu.filter(x=>x.par===w.id);if(kids.length){const h=kids[0];delete h.par;kids.slice(1).forEach(x=>{x.par=h.id})}const i=cu.indexOf(w);if(i>-1)cu.splice(i,1)})})();
 const MENU0=JSON.parse(JSON.stringify(MENU)),PRK=n=>Number.isInteger(n)&&n>0&&n<=200000;
 function applyPrices(){const P=(CFG&&CFG.prices&&typeof CFG.prices==='object')?CFG.prices:{};
   MENU.cakes.forEach(d=>{const o=MENU0.cakes.find(z=>z.id===d.id);if(!o)return;d.creams.forEach((cr,j)=>{const b=o.creams[j]?o.creams[j].prices:cr.prices,pc=P.c&&P.c[d.id]&&P.c[d.id][cr.id||'_'];cr.prices=Array.isArray(pc)&&pc.length===b.length&&pc.every(PRK)?pc.slice():b.slice()})});
