@@ -300,6 +300,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 #hdr .hrow{gap:6px}
 #hdr .hr2{gap:6px}
 #hdr .acc{padding:9px 10px}
+body.xn #hdr{background:#0a1744}body.xn #hdr .band{position:relative;isolation:isolate;background:linear-gradient(180deg,#06103a,#0d2160 55%,#1b3b88)}.xsky{position:absolute;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none}.xsky .tw{animation:xtw 3.2s ease-in-out infinite}@keyframes xtw{50%{opacity:.2}}@media (prefers-reduced-motion:reduce){.xsky .tw{animation:none}}body.xn .lights g circle:first-child{opacity:.55}body.xn #hdr .lgp img{filter:drop-shadow(0 1px 6px rgba(0,0,0,.35))}
 #hdr #accBtn>span[aria-hidden="true"]{display:none}
 @media (max-width:380px){#hdr .lgp img{height:40px;width:auto}}
 @media (max-width:340px){#hdr .hrow{flex-wrap:wrap;row-gap:6px}}
@@ -997,12 +998,18 @@ function heroFx(){const F=FX(),T=TH[F.theme];if(!T||!F.props)return '';
   return fw+st+'<span aria-hidden="true" style="position:absolute;right:14px;bottom:8px;font-size:34px;filter:drop-shadow(0 0 8px #ffb300)">'+T.P[0]+'</span><span aria-hidden="true" style="position:absolute;right:62px;bottom:10px;font-size:26px">'+T.P[1]+'</span><span aria-hidden="true" style="position:absolute;right:100px;bottom:14px;font-size:20px">'+T.P[2]+'</span>'}
 let FXT=null;
 /* Christmas header scene: trees, big star and kids. Shown only until 31 Dec 2026 and only when there is room beside the logo. */
-const XD_END=new Date('2027-01-01T00:00:00+05:30').getTime();
+function xdOn(){return Date.now()<new Date('2027-01-01T00:00:00+05:30').getTime()}
 const xdTree=(h,c)=>`<svg width="${h*.72}" height="${h}" viewBox="0 0 36 50" aria-hidden="true"><rect x="15.5" y="41" width="5" height="8" rx="1" fill="#7a4b2a"/><path d="M18 7 L30 24 H6z" fill="${c[0]}"/><path d="M18 15 L33 34 H3z" fill="${c[1]}"/><path d="M18 24 L35 43 H1z" fill="${c[0]}"/><circle cx="14" cy="30" r="2" fill="#e53935"/><circle cx="23" cy="36" r="2" fill="#ffd54f"/><circle cx="12" cy="40" r="1.8" fill="#42a5f5"/><circle cx="26" cy="27" r="1.6" fill="#ff8a65"/><path d="M18 0.5l1.9 3.9 4.3.6-3.1 3 .7 4.2-3.8-2-3.8 2 .7-4.2-3.1-3 4.3-.6z" fill="#ffd54f"/></svg>`;
-const xdStar=s=>`<svg width="${s}" height="${s}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="21" r="19" fill="#ffd54f" opacity=".28"/><path d="M20 2l5.2 11.6 12.6 1.3-9.4 8.5 2.7 12.4L20 29l-11.1 6.8 2.7-12.4-9.4-8.5 12.6-1.3z" fill="#ffc107" stroke="#f59f00" stroke-width="1.2" stroke-linejoin="round"/><path d="M20 7l3.6 8.5 7.4.8-5.6 5 1.6 7.4L20 24.5" fill="#ffe082" opacity=".9"/></svg>`;
+const xdStar=s=>`<svg width="${s}" height="${s}" viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="xsg"><stop offset="0" stop-color="#ffe082" stop-opacity=".75"/><stop offset=".6" stop-color="#ffd54f" stop-opacity=".25"/><stop offset="1" stop-color="#ffd54f" stop-opacity="0"/></radialGradient></defs><circle cx="20" cy="21" r="20" fill="url(#xsg)"/><path d="M20 2l5.2 11.6 12.6 1.3-9.4 8.5 2.7 12.4L20 29l-11.1 6.8 2.7-12.4-9.4-8.5 12.6-1.3z" fill="#ffc107" stroke="#f59f00" stroke-width="1.2" stroke-linejoin="round"/><path d="M20 7l3.6 8.5 7.4.8-5.6 5 1.6 7.4L20 24.5" fill="#ffe082" opacity=".9"/></svg>`;
 const xdKid=(skin,coat,hat)=>`<svg width="30" height="46" viewBox="0 0 30 46" aria-hidden="true"><rect x="9" y="38" width="4.4" height="6" rx="1.5" fill="#4e342e"/><rect x="16.6" y="38" width="4.4" height="6" rx="1.5" fill="#4e342e"/><path d="M6 37c0-8 3-14 9-14s9 6 9 14z" fill="${coat}"/><path d="M6 27L2 20" stroke="${skin}" stroke-width="3.4" stroke-linecap="round"/><path d="M24 27L28 20" stroke="${skin}" stroke-width="3.4" stroke-linecap="round"/><circle cx="15" cy="16" r="8" fill="${skin}"/><path d="M6.6 14C7.4 6 22.6 6 23.4 14z" fill="${hat}"/><rect x="5.6" y="12.6" width="18.8" height="3.4" rx="1.7" fill="#fff"/><circle cx="23" cy="6" r="2.4" fill="#fff"/><circle cx="12" cy="18" r="1" fill="#3e2723"/><circle cx="18" cy="18" r="1" fill="#3e2723"/><path d="M12.4 21c1.6 1.6 3.6 1.6 5.2 0" stroke="#3e2723" stroke-width="1" fill="none" stroke-linecap="round"/><circle cx="9.8" cy="20" r="1.4" fill="#ff8a80" opacity=".6"/><circle cx="20.2" cy="20" r="1.4" fill="#ff8a80" opacity=".6"/></svg>`;
-function drawDeco(){const H=$('hdr');if(!H)return;H.querySelectorAll('.xdeco').forEach(n=>n.remove());
-  if(Date.now()>=XD_END)return;const br=H.querySelector('.brand'),eg=H.querySelector('.eggst'),r2=H.querySelector('.hr2');if(!br||!eg||!r2)return;
+function drawSky(){const H=$('hdr'),B=H&&H.querySelector('.band');if(!B)return;B.querySelectorAll('.xsky').forEach(n=>n.remove());if(!document.body.classList.contains('xn'))return;
+  const w=Math.max(320,Math.round(B.clientWidth||innerWidth)),h=Math.max(60,Math.round(B.clientHeight||90));let sd=7,r=()=>(sd=(sd*9301+49297)%233280)/233280,o='';
+  const n=Math.round(w/8);for(let i=0;i<n;i++){const x=(r()*w).toFixed(1),y=(r()*h).toFixed(1),rr=(.5+r()*1.1).toFixed(2),op=(.45+r()*.55).toFixed(2),tw=r()<.35;o+='<circle cx="'+x+'" cy="'+y+'" r="'+rr+'" fill="#fff" opacity="'+op+'"'+(tw?' class="tw" style="animation-delay:-'+(r()*4).toFixed(1)+'s"':'')+'/>'}
+  for(let i=0;i<Math.max(4,Math.round(w/150));i++){const x=r()*w,y=8+r()*(h-16),s=3+r()*3,c='#ffe9a8';o+='<path class="tw" style="animation-delay:-'+(r()*4).toFixed(1)+'s" d="M'+x.toFixed(1)+' '+(y-s).toFixed(1)+' Q'+x.toFixed(1)+' '+y.toFixed(1)+' '+(x+s).toFixed(1)+' '+y.toFixed(1)+' Q'+x.toFixed(1)+' '+y.toFixed(1)+' '+x.toFixed(1)+' '+(y+s).toFixed(1)+' Q'+x.toFixed(1)+' '+y.toFixed(1)+' '+(x-s).toFixed(1)+' '+y.toFixed(1)+' Q'+x.toFixed(1)+' '+y.toFixed(1)+' '+x.toFixed(1)+' '+(y-s).toFixed(1)+'z" fill="'+c+'"/>'}
+  B.insertAdjacentHTML('afterbegin','<svg class="xsky" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+o+'</svg>')}
+function xdLogo(on){const im=document.querySelector('#hdr .lgp img');if(!im)return;if(on){if(!im.dataset.orig)im.dataset.orig=im.getAttribute('src');im.src='cravella-logo-white.png'}else if(im.dataset.orig){im.src=im.dataset.orig;delete im.dataset.orig}}
+function drawDeco(){const H=$('hdr');if(!H)return;drawSky();H.querySelectorAll('.xdeco').forEach(n=>n.remove());
+  if(!xdOn())return;const br=H.querySelector('.brand'),eg=H.querySelector('.eggst'),r2=H.querySelector('.hr2');if(!br||!eg||!r2)return;
   const hb=H.getBoundingClientRect(),a=br.getBoundingClientRect(),b=eg.getBoundingClientRect(),c=r2.getBoundingClientRect();
   const g1=[a.right-hb.left,b.left-hb.left],g2=[b.right-hb.left,c.left-hb.left],top=Math.round(a.top-hb.top)-2;
   if(g1[1]-g1[0]<110||g2[1]-g2[0]<110)return;
@@ -1022,6 +1029,7 @@ function drawLights(){const T=FXT,L=document.querySelector('#hdr .lights');if(!L
   L.innerHTML=o+'</svg>';drawDeco()}
 let lrt;addEventListener('resize',()=>{clearTimeout(lrt);lrt=setTimeout(drawLights,120)});
 function fxApply(){const F=FX(),T=TH[F.theme],on=festOn(),b=document.body;FXT=T||null;
+  b.classList.toggle('xn',on&&xdOn());xdLogo(on&&xdOn());
   b.classList.toggle('fest',on&&F.colors);b.classList.toggle('fx-l',on&&F.lights);
   let st=$('festcss');if(on&&F.colors&&T.pal){if(!st){st=document.createElement('style');st.id='festcss';document.head.appendChild(st)}st.textContent=themeCss(T.pal)}else if(st)st.remove();
   document.querySelectorAll('#hdr .lights,#hdr .xdeco').forEach(n=>n.remove());
