@@ -996,16 +996,35 @@ function heroFx(){const F=FX(),T=TH[F.theme];if(!T||!F.props)return '';
   const fw=T.fw?'<svg class="ffw" viewBox="0 0 330 160" aria-hidden="true">'+festBurst(250,48,34,'#ffd23f')+festBurst(300,110,22,'#ff7ad9')+festBurst(205,115,18,'#4da3ff')+'</svg>':'';
   return fw+st+'<span aria-hidden="true" style="position:absolute;right:14px;bottom:8px;font-size:34px;filter:drop-shadow(0 0 8px #ffb300)">'+T.P[0]+'</span><span aria-hidden="true" style="position:absolute;right:62px;bottom:10px;font-size:26px">'+T.P[1]+'</span><span aria-hidden="true" style="position:absolute;right:100px;bottom:14px;font-size:20px">'+T.P[2]+'</span>'}
 let FXT=null;
+/* Christmas header scene: trees, big star and kids. Shown only until 31 Dec 2026 and only when there is room beside the logo. */
+const XD_END=new Date('2027-01-01T00:00:00+05:30').getTime();
+const xdTree=(h,c)=>`<svg width="${h*.72}" height="${h}" viewBox="0 0 36 50" aria-hidden="true"><rect x="15.5" y="41" width="5" height="8" rx="1" fill="#7a4b2a"/><path d="M18 7 L30 24 H6z" fill="${c[0]}"/><path d="M18 15 L33 34 H3z" fill="${c[1]}"/><path d="M18 24 L35 43 H1z" fill="${c[0]}"/><circle cx="14" cy="30" r="2" fill="#e53935"/><circle cx="23" cy="36" r="2" fill="#ffd54f"/><circle cx="12" cy="40" r="1.8" fill="#42a5f5"/><circle cx="26" cy="27" r="1.6" fill="#ff8a65"/><path d="M18 0.5l1.9 3.9 4.3.6-3.1 3 .7 4.2-3.8-2-3.8 2 .7-4.2-3.1-3 4.3-.6z" fill="#ffd54f"/></svg>`;
+const xdStar=s=>`<svg width="${s}" height="${s}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="21" r="19" fill="#ffd54f" opacity=".28"/><path d="M20 2l5.2 11.6 12.6 1.3-9.4 8.5 2.7 12.4L20 29l-11.1 6.8 2.7-12.4-9.4-8.5 12.6-1.3z" fill="#ffc107" stroke="#f59f00" stroke-width="1.2" stroke-linejoin="round"/><path d="M20 7l3.6 8.5 7.4.8-5.6 5 1.6 7.4L20 24.5" fill="#ffe082" opacity=".9"/></svg>`;
+const xdKid=(skin,coat,hat)=>`<svg width="30" height="46" viewBox="0 0 30 46" aria-hidden="true"><rect x="9" y="38" width="4.4" height="6" rx="1.5" fill="#4e342e"/><rect x="16.6" y="38" width="4.4" height="6" rx="1.5" fill="#4e342e"/><path d="M6 37c0-8 3-14 9-14s9 6 9 14z" fill="${coat}"/><path d="M6 27L2 20" stroke="${skin}" stroke-width="3.4" stroke-linecap="round"/><path d="M24 27L28 20" stroke="${skin}" stroke-width="3.4" stroke-linecap="round"/><circle cx="15" cy="16" r="8" fill="${skin}"/><path d="M6.6 14C7.4 6 22.6 6 23.4 14z" fill="${hat}"/><rect x="5.6" y="12.6" width="18.8" height="3.4" rx="1.7" fill="#fff"/><circle cx="23" cy="6" r="2.4" fill="#fff"/><circle cx="12" cy="18" r="1" fill="#3e2723"/><circle cx="18" cy="18" r="1" fill="#3e2723"/><path d="M12.4 21c1.6 1.6 3.6 1.6 5.2 0" stroke="#3e2723" stroke-width="1" fill="none" stroke-linecap="round"/><circle cx="9.8" cy="20" r="1.4" fill="#ff8a80" opacity=".6"/><circle cx="20.2" cy="20" r="1.4" fill="#ff8a80" opacity=".6"/></svg>`;
+function drawDeco(){const H=$('hdr');if(!H)return;H.querySelectorAll('.xdeco').forEach(n=>n.remove());
+  if(Date.now()>=XD_END)return;const br=H.querySelector('.brand'),eg=H.querySelector('.eggst'),r2=H.querySelector('.hr2');if(!br||!eg||!r2)return;
+  const hb=H.getBoundingClientRect(),a=br.getBoundingClientRect(),b=eg.getBoundingClientRect(),c=r2.getBoundingClientRect();
+  const g1=[a.right-hb.left,b.left-hb.left],g2=[b.right-hb.left,c.left-hb.left],top=Math.round(a.top-hb.top)-2;
+  if(g1[1]-g1[0]<110||g2[1]-g2[0]<110)return;
+  const G='#2e7d4f',G2='#1f6b3f',put=(x,y,h)=>`<span style="position:absolute;left:${Math.round(x)}px;top:${y}px;line-height:0">${h}</span>`;
+  const w1=g1[1]-g1[0],w2=g2[1]-g2[0],cx1=(g1[0]+g1[1])/2,cx2=(g2[0]+g2[1])/2;
+  let h='';
+  h+=put(cx1-w1*.36-13,top+6,xdTree(40,[G,G2]));
+  h+=put(cx1-21,top-6,xdStar(42));
+  h+=put(cx1+w1*.2,top-2,xdTree(50,[G2,G]));
+  h+=put(cx2-34,top+4,xdKid('#f1c27d','#d32f2f','#d32f2f'));
+  h+=put(cx2+2,top+4,xdKid('#a9714b','#2e7d4f','#c62828'));
+  H.insertAdjacentHTML('beforeend','<div class="xdeco" aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:hidden">'+h+'</div>')}
 function drawLights(){const T=FXT,L=document.querySelector('#hdr .lights');if(!L||!T)return;const cols=T.L,nc=cols.length,w=Math.max(320,Math.round(L.clientWidth||innerWidth)),n=Math.ceil(w/30)+1;
   let d='M0 4';for(let i=0;i<n;i++)d+=' Q '+(i*30+15)+' 16 '+(i*30+30)+' 4';
   let o='<svg width="'+w+'" height="34" viewBox="0 0 '+w+' 34" aria-hidden="true"><path d="'+d+'" fill="none" stroke="'+T.wire+'" stroke-width="1.5"/>';
   for(let i=0;i<n;i++){const x=i*30+15,c=cols[i%nc];if(x>w)break;o+='<g><circle cx="'+x+'" cy="22" r="10" fill="'+c+'" opacity=".28"/><rect x="'+(x-3)+'" y="10" width="6" height="5" rx="1.2" fill="#3b3b3b"/><rect x="'+(x-3.4)+'" y="12.2" width="6.8" height="1" fill="#6b6b6b"/><circle cx="'+x+'" cy="22" r="6.8" fill="'+c+'"/><circle cx="'+x+'" cy="22" r="6.8" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1"/><ellipse cx="'+(x-2.3)+'" cy="19.4" rx="2" ry="1.4" fill="#fff" opacity=".75" transform="rotate(-30 '+(x-2.3)+' 19.4)"/></g>'}
-  L.innerHTML=o+'</svg>'}
+  L.innerHTML=o+'</svg>';drawDeco()}
 let lrt;addEventListener('resize',()=>{clearTimeout(lrt);lrt=setTimeout(drawLights,120)});
 function fxApply(){const F=FX(),T=TH[F.theme],on=festOn(),b=document.body;FXT=T||null;
   b.classList.toggle('fest',on&&F.colors);b.classList.toggle('fx-l',on&&F.lights);
   let st=$('festcss');if(on&&F.colors&&T.pal){if(!st){st=document.createElement('style');st.id='festcss';document.head.appendChild(st)}st.textContent=themeCss(T.pal)}else if(st)st.remove();
-  document.querySelectorAll('#hdr .lights').forEach(n=>n.remove());
+  document.querySelectorAll('#hdr .lights,#hdr .xdeco').forEach(n=>n.remove());
   if(on&&F.lights){$('hdr').insertAdjacentHTML('afterbegin','<div class="lights"></div>');drawLights()}
   const fl=$('fall');if(fl)fl.remove();
   if(on&&F.anim==='fall'){const N=(innerWidth<500?10:16)+(F.amt-2)*4,sp=T.fall;let h='';for(let i=0;i<N;i++){const r=(i*61+13)%100,d=7+(i*37)%8,dl=-((i*53)%d),sz=14+(i*29)%10;h+='<span style="left:'+r+'%;animation-duration:'+d+'s;animation-delay:'+dl+'s;font-size:'+sz+'px">'+sp[i%sp.length]+'</span>'}
