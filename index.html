@@ -964,6 +964,7 @@ function applyOrder(){const ord=(CFG&&CFG.order)||[],rk={};ord.forEach((id,i)=>r
   ['cakes','cupcakes','muffins','brownies','blondies','cookies'].forEach(k=>{if(!MENU[k])return;if(!MORIG[k])MORIG[k]=MENU[k].slice();
     let pr=-1,a=MORIG[k].map((d,i)=>{if(d.id in rk){pr=rk[d.id];return [d,pr]}return [d,(k==='cakes'&&pr>=0)?pr+0.5+i/1e4:1e6+i]}).sort((x,y)=>x[1]-y[1]).map(x=>x[0]);
     if(k==='cakes'){const gs=[],by={};a.forEach(d=>{const g=d.group||'';if(!by[g]){by[g]=[];gs.push(g)}by[g].push(d)});a=[].concat(...gs.map(g=>by[g]))}
+    if(k==='cakes'&&Date.now()<new Date('2027-01-01T00:00:00+05:30').getTime()){const x=a.filter(d=>d.group==='Christmas plum cakes');a=x.concat(a.filter(d=>d.group!=='Christmas plum cakes'))} /* Christmas plum cakes sit on top until 31 Dec 2026, then drop to the bottom */
     const dl=(CFG&&CFG.del)||[];a=a.filter(d=>d.custom||!dl.includes(d.id));
     MENU[k].length=0;MENU[k].push(...a)})}
 
