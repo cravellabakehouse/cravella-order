@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>try{var _s=JSON.parse(localStorage.getItem('cb_site')||'null'),_f=_s&&_s.fx&&typeof _s.fx==='object'?_s.fx:{};if(Date.now()<new Date('2027-01-01T00:00:00+05:30').getTime()&&(_f.theme||'diwali')!=='none'&&!/[?&]sp=1/.test(location.search))document.documentElement.classList.add('xn')}catch(e){}</script>
 <meta charset="utf-8">
 <meta name="facebook-domain-verification" content="89d2gxf97izpfqfu5q7tsiah39w85b" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -300,7 +301,7 @@ body{background:radial-gradient(700px 300px at 90% -4%,#1c3470,transparent 70%),
 #hdr .hrow{gap:6px}
 #hdr .hr2{gap:6px}
 #hdr .acc{padding:9px 10px}
-body.xn #hdr{background:#0a1744}body.xn #hdr .band{position:relative;isolation:isolate;background:linear-gradient(180deg,#06103a,#0d2160 55%,#1b3b88)}.xsky{position:absolute;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none}.xsky .tw{animation:xtw 3.2s ease-in-out infinite}@keyframes xtw{50%{opacity:.2}}@media (prefers-reduced-motion:reduce){.xsky .tw{animation:none}}body.xn .lights g circle:first-child{opacity:.55}body.xn #hdr .acc,body.xn #hdr .cartb{background:#fff!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid #fff!important;box-shadow:0 3px 10px rgba(0,0,0,.28)}body.xn #hdr .lgp img{filter:drop-shadow(0 1px 6px rgba(0,0,0,.35))}
+.xn #hdr{background:#0a1744}.xn #hdr .band{position:relative;isolation:isolate;background:linear-gradient(180deg,#06103a,#0d2160 55%,#1b3b88)}.xsky{position:absolute;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none}.xsky .tw{animation:xtw 3.2s ease-in-out infinite}@keyframes xtw{50%{opacity:.2}}@media (prefers-reduced-motion:reduce){.xsky .tw{animation:none}}.xn .lights g circle:first-child{opacity:.55}.xn #hdr .acc,.xn #hdr .cartb{background:#fff!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid #fff!important;box-shadow:0 3px 10px rgba(0,0,0,.28)}.xn #hdr .lgp img{content:url(cravella-logo-white.png);filter:drop-shadow(0 1px 6px rgba(0,0,0,.35))}
 #hdr #accBtn>span[aria-hidden="true"]{display:none}
 @media (max-width:380px){#hdr .lgp img{height:40px;width:auto}}
 @media (max-width:340px){#hdr .hrow{flex-wrap:wrap;row-gap:6px}}
@@ -1029,7 +1030,7 @@ function drawLights(){const T=FXT,L=document.querySelector('#hdr .lights');if(!L
   L.innerHTML=o+'</svg>';drawDeco()}
 let lrt;addEventListener('resize',()=>{clearTimeout(lrt);lrt=setTimeout(drawLights,120)});
 function fxApply(){const F=FX(),T=TH[F.theme],on=festOn(),b=document.body;FXT=T||null;
-  b.classList.toggle('xn',on&&xdOn());xdLogo(on&&xdOn());
+  b.classList.toggle('xn',on&&xdOn());document.documentElement.classList.toggle('xn',on&&xdOn());xdLogo(on&&xdOn());
   b.classList.toggle('fest',on&&F.colors);b.classList.toggle('fx-l',on&&F.lights);
   let st=$('festcss');if(on&&F.colors&&T.pal){if(!st){st=document.createElement('style');st.id='festcss';document.head.appendChild(st)}st.textContent=themeCss(T.pal)}else if(st)st.remove();
   document.querySelectorAll('#hdr .lights,#hdr .xdeco').forEach(n=>n.remove());
