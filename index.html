@@ -999,7 +999,7 @@ let FXT=null;
 function drawLights(){const T=FXT,L=document.querySelector('#hdr .lights');if(!L||!T)return;const cols=T.L,nc=cols.length,w=Math.max(320,Math.round(L.clientWidth||innerWidth)),n=Math.ceil(w/30)+1;
   let d='M0 4';for(let i=0;i<n;i++)d+=' Q '+(i*30+15)+' 16 '+(i*30+30)+' 4';
   let o='<svg width="'+w+'" height="34" viewBox="0 0 '+w+' 34" aria-hidden="true"><path d="'+d+'" fill="none" stroke="'+T.wire+'" stroke-width="1.5"/>';
-  for(let i=0;i<n;i++){const x=i*30+15,c=cols[i%nc];if(x>w)break;o+='<g><circle cx="'+x+'" cy="20" r="9" fill="'+c+'" opacity=".25"/><rect x="'+(x-2)+'" y="9" width="4" height="4" rx="1" fill="'+T.wire+'"/><path d="M'+(x-3.6)+' 13 h7.2 q1 9 -3.6 11 q-4.6 -2 -3.6 -11z" fill="'+c+'"/></g>'}
+  for(let i=0;i<n;i++){const x=i*30+15,c=cols[i%nc];if(x>w)break;o+='<g><circle cx="'+x+'" cy="22" r="10" fill="'+c+'" opacity=".28"/><rect x="'+(x-3)+'" y="10" width="6" height="5" rx="1.2" fill="#3b3b3b"/><rect x="'+(x-3.4)+'" y="12.2" width="6.8" height="1" fill="#6b6b6b"/><circle cx="'+x+'" cy="22" r="6.8" fill="'+c+'"/><circle cx="'+x+'" cy="22" r="6.8" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1"/><ellipse cx="'+(x-2.3)+'" cy="19.4" rx="2" ry="1.4" fill="#fff" opacity=".75" transform="rotate(-30 '+(x-2.3)+' 19.4)"/></g>'}
   L.innerHTML=o+'</svg>'}
 let lrt;addEventListener('resize',()=>{clearTimeout(lrt);lrt=setTimeout(drawLights,120)});
 function fxApply(){const F=FX(),T=TH[F.theme],on=festOn(),b=document.body;FXT=T||null;
