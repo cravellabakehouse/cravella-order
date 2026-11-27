@@ -1184,7 +1184,7 @@ function orderCard(o){
   return `<details class="card o ocrd${cx?' isx':''}" data-st="${esc(o.status)}" data-hu="${(parseInt(String(o.id).replace(/\D/g,''),10)||0)%10}" data-id="${esc(o.id)}"${D.oopen&&D.oopen[o.id]?' open':''}>
   <summary class="oc-sum"><span class="tl-h"><small>${esc(o.id)}</small><b>${esc(o.name)}</b></span><span class="tl-b"><span class="tl-st"><span class="pill ${esc(sc)}">${esc(o.status==='Delivered'&&pk?'Collected':o.status)}</span>${pill}</span><span class="tl-mode ${pk?'pk':'dv'}">${pk?'Pickup':'Delivery'}</span><span class="tl-when">${fmtD(o.date)}, ${esc(o.time)}</span>${o.split?`<span class="tl-when">Other bakes: ${fmtD(o.split.date)}, ${esc(o.split.time)}</span>`:''}<span class="tl-its">${tlItems(o)}</span><span class="ocmw" data-id="${esc(o.id)}">${ocmHtml(o)}</span><span class="tl-ft"><span class="tl-tot">Total <b>${inr(o.total)}</b></span>${tlDue(o)}</span></span></summary>
   <div class="oc-body">${cbarHtml(o)}<div class="oc-pl">Placed ${esc(o.placed)}${repBadge(o)}</div>${xtraBox(o)}${ambBox(o)}
-  <div class="ofacts"><div style="font-size:15px;line-height:1.45"><b>${esc(prod)}</b><br><span style="color:var(--mut)">${pk?'Pickup':'Delivery'} · ${when}</span></div><div class="orow"><button class="btn ol" data-wchat="91${esc(ph)}">Chat on WhatsApp</button><a class="btn ol" href="tel:${esc(o.phone)}">Call ${esc(o.phone)}</a></div></div>
+  <div class="ofacts"><div style="font-size:15px;line-height:1.45"><b>${esc(prod)}</b><br><span style="color:var(--mut)">${pk?'Pickup':'Delivery'} · ${when}</span></div><div class="orow"><button class="btn ol" data-wchat="91${esc(ph)}">Chat on WhatsApp</button><a class="btn ol" href="tel:${esc(o.phone)}">Call ${esc(o.phone)}</a>${cx||o.status==='Delivered'?'':`<button class="btn ol" data-odt="${esc(o.id)}">📅 Change date &amp; time</button>`}</div></div>
   ${miniSteps(o,f)}
   <div class="nsbox"><div class="nshd">NEXT STEP</div>
   ${o.status==='Confirmed'&&!cx&&!o.later?qrBlock(o):''}
@@ -1832,6 +1832,30 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-poxe
 },true);
 document.addEventListener('input',e=>{const f=e.target.closest('[data-poed]');if(f&&PO.ed)PO.ed[f.dataset.poed]=f.value});
 document.addEventListener('change',e=>{const f=e.target.closest('[data-poed]');if(f&&PO.ed)PO.ed[f.dataset.poed]=f.value});
+/* ---------- Change the date and time of any order ---------- */
+const ODT={id:'',busy:0};
+function odtClose(){const o=document.getElementById('odtOv');o&&o.remove()}
+function odtOpen(id){const o=(D.orders||[]).find(x=>x.id===id);if(!o)return;odtClose();ODT.id=id;ODT.busy=0;
+  const ts=POTIMES.indexOf(o.time)<0&&o.time?[o.time].concat(POTIMES):POTIMES,ov=document.createElement('div');ov.id='odtOv';
+  ov.style.cssText='position:fixed;inset:0;z-index:9200;background:rgba(40,26,16,.55);display:flex;align-items:center;justify-content:center;padding:14px';
+  ov.innerHTML=`<div style="background:#fff;border-radius:16px;padding:16px 16px 14px;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.3)"><b style="font-size:17px">Change date &amp; time</b><div style="font-size:13px;color:var(--mut);margin-top:3px">${esc(o.id)} · ${esc(o.name)}<br>Now: ${fmtD(o.date)}, ${esc(o.time)} (${esc(o.mode)})</div>
+  <label style="display:block;margin-top:12px;font-size:13px;font-weight:600">New date<input class="i" id="odtDate" type="date" value="${esc(o.date||'')}" style="width:100%;margin-top:4px"></label>
+  <label style="display:block;margin-top:10px;font-size:13px;font-weight:600">New time<select class="i" id="odtTime" style="width:100%;margin-top:4px">${ts.map(t=>`<option${t===o.time?' selected':''}>${esc(t)}</option>`).join('')}</select></label>
+  <div style="font-size:12px;color:var(--mut);margin-top:8px">Only the date and time change. The customer is not messaged automatically, so tell them yourself.</div>
+  <div id="odtErr" style="color:#b3261e;font-size:13px;margin-top:6px"></div>
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="odtSave" style="flex:1">Save new date</button><button class="btn ol" id="odtX">Cancel</button></div></div>`;
+  document.body.appendChild(ov)}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-odt],#odtX,#odtSave');if(!b)return;e.preventDefault();e.stopPropagation();
+  if(b.dataset.odt){odtOpen(b.dataset.odt);return}
+  if(b.id==='odtX'){odtClose();return}
+  if(ODT.busy)return;const d=document.getElementById('odtDate').value,t=document.getElementById('odtTime').value,er=document.getElementById('odtErr');
+  if(!d){er.textContent='Please choose a date.';return}
+  ODT.busy=1;b.disabled=true;b.textContent='Saving…';er.textContent='';
+  try{const r=await api({action:'admin_order_date',id:ODT.id,date:d,time:t});ODT.busy=0;
+    if(r&&r.ok){const id=ODT.id;odtClose();await loadOrders();render();toast('Order '+id+' moved to '+fmtD(d)+', '+t)}
+    else{b.disabled=false;b.textContent='Save new date';er.textContent=(r&&r.error)||'Could not save. Please try again.'}
+  }catch(_){ODT.busy=0;b.disabled=false;b.textContent='Save new date';er.textContent='Could not save. Please check your connection.'}
+},true);
 /* ---------- New manual order (staff enter an order taken by phone) ---------- */
 const PO={open:0,busy:0,done:null,it:[],ex:[],q:'',f:{mode:'Pickup',time:'12:00 PM'},a:{t:'cake',q:1,boxes:1,g:500,cn:'Custom cake'}},POTIMES=(()=>{const o=[];for(let h=10;h<=20;h++){const hh=h>12?h-12:h,ap=h>=12?'PM':'AM';o.push(hh+':00 '+ap);if(h<20)o.push(hh+':30 '+ap)}return o})();
 const poKg=()=>{const m=(poFind().cake.custom?1:0.5);return Math.max(m,Math.min(15,+PO.a.kg||3))};
